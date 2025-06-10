@@ -35,29 +35,32 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
     { id: "3", name: "Goiabeira", category: "frutifera", icon: "🟢", spacing: "5x5m", season: "Verão/Outono", difficulty: "easy", waterNeeds: "medium" },
     { id: "4", name: "Açaizeiro", category: "frutifera", icon: "🫐", spacing: "3x3m", season: "Inverno", difficulty: "hard", waterNeeds: "high" },
     { id: "5", name: "Limoeiro", category: "frutifera", icon: "🍋", spacing: "3x3m", season: "Ano todo", difficulty: "easy", waterNeeds: "medium" },
+    { id: "6", name: "Bananeira", category: "frutifera", icon: "🍌", spacing: "3x3m", season: "Ano todo", difficulty: "easy", waterNeeds: "high" },
     
     // Hortaliças
-    { id: "6", name: "Alface", category: "hortalica", icon: "🥬", spacing: "30x30cm", season: "Outono/Inverno", difficulty: "easy", waterNeeds: "high" },
-    { id: "7", name: "Tomate", category: "hortalica", icon: "🍅", spacing: "50x50cm", season: "Primavera/Verão", difficulty: "medium", waterNeeds: "high" },
-    { id: "8", name: "Couve", category: "hortalica", icon: "🥬", spacing: "40x40cm", season: "Ano todo", difficulty: "easy", waterNeeds: "medium" },
-    { id: "9", name: "Pimentão", category: "hortalica", icon: "🫑", spacing: "50x50cm", season: "Primavera/Verão", difficulty: "medium", waterNeeds: "high" },
-    { id: "10", name: "Cenoura", category: "hortalica", icon: "🥕", spacing: "15x15cm", season: "Outono/Inverno", difficulty: "medium", waterNeeds: "medium" },
+    { id: "7", name: "Alface", category: "hortalica", icon: "🥬", spacing: "30x30cm", season: "Outono/Inverno", difficulty: "easy", waterNeeds: "high" },
+    { id: "8", name: "Tomate", category: "hortalica", icon: "🍅", spacing: "50x50cm", season: "Primavera/Verão", difficulty: "medium", waterNeeds: "high" },
+    { id: "9", name: "Couve", category: "hortalica", icon: "🥬", spacing: "40x40cm", season: "Ano todo", difficulty: "easy", waterNeeds: "medium" },
+    { id: "10", name: "Pimentão", category: "hortalica", icon: "🫑", spacing: "50x50cm", season: "Primavera/Verão", difficulty: "medium", waterNeeds: "high" },
+    { id: "11", name: "Cenoura", category: "hortalica", icon: "🥕", spacing: "15x15cm", season: "Outono/Inverno", difficulty: "medium", waterNeeds: "medium" },
+    { id: "12", name: "Rúcula", category: "hortalica", icon: "🌿", spacing: "20x20cm", season: "Outono/Inverno", difficulty: "easy", waterNeeds: "medium" },
     
     // Medicinais
-    { id: "11", name: "Capim-santo", category: "medicinal", icon: "🌿", spacing: "1x1m", season: "Ano todo", difficulty: "easy", waterNeeds: "low" },
-    { id: "12", name: "Erva-cidreira", category: "medicinal", icon: "🌿", spacing: "50x50cm", season: "Ano todo", difficulty: "easy", waterNeeds: "medium" },
-    { id: "13", name: "Boldo", category: "medicinal", icon: "🍃", spacing: "1.5x1.5m", season: "Ano todo", difficulty: "easy", waterNeeds: "low" },
-    { id: "14", name: "Hortelã", category: "medicinal", icon: "🌿", spacing: "30x30cm", season: "Ano todo", difficulty: "easy", waterNeeds: "high" },
+    { id: "13", name: "Capim-santo", category: "medicinal", icon: "🌿", spacing: "1x1m", season: "Ano todo", difficulty: "easy", waterNeeds: "low" },
+    { id: "14", name: "Erva-cidreira", category: "medicinal", icon: "🌿", spacing: "50x50cm", season: "Ano todo", difficulty: "easy", waterNeeds: "medium" },
+    { id: "15", name: "Boldo", category: "medicinal", icon: "🍃", spacing: "1.5x1.5m", season: "Ano todo", difficulty: "easy", waterNeeds: "low" },
+    { id: "16", name: "Hortelã", category: "medicinal", icon: "🌿", spacing: "30x30cm", season: "Ano todo", difficulty: "easy", waterNeeds: "high" },
+    { id: "17", name: "Alecrim", category: "medicinal", icon: "🌿", spacing: "60x60cm", season: "Ano todo", difficulty: "easy", waterNeeds: "low" },
     
     // Grãos
-    { id: "15", name: "Feijão", category: "grao", icon: "🫘", spacing: "10x40cm", season: "Outono/Inverno", difficulty: "easy", waterNeeds: "medium" },
-    { id: "16", name: "Milho", category: "grao", icon: "🌽", spacing: "80x30cm", season: "Primavera/Verão", difficulty: "easy", waterNeeds: "medium" },
-    { id: "17", name: "Quinoa", category: "grao", icon: "🌾", spacing: "30x30cm", season: "Outono", difficulty: "hard", waterNeeds: "low" },
+    { id: "18", name: "Feijão", category: "grao", icon: "🫘", spacing: "10x40cm", season: "Outono/Inverno", difficulty: "easy", waterNeeds: "medium" },
+    { id: "19", name: "Milho", category: "grao", icon: "🌽", spacing: "80x30cm", season: "Primavera/Verão", difficulty: "easy", waterNeeds: "medium" },
+    { id: "20", name: "Quinoa", category: "grao", icon: "🌾", spacing: "30x30cm", season: "Outono", difficulty: "hard", waterNeeds: "low" },
     
     // Raízes
-    { id: "18", name: "Mandioca", category: "raiz", icon: "🥔", spacing: "1x1m", season: "Primavera", difficulty: "easy", waterNeeds: "low" },
-    { id: "19", name: "Batata-doce", category: "raiz", icon: "🍠", spacing: "40x30cm", season: "Primavera/Verão", difficulty: "easy", waterNeeds: "medium" },
-    { id: "20", name: "Inhame", category: "raiz", icon: "🟤", spacing: "50x50cm", season: "Primavera/Verão", difficulty: "medium", waterNeeds: "medium" },
+    { id: "21", name: "Mandioca", category: "raiz", icon: "🥔", spacing: "1x1m", season: "Primavera", difficulty: "easy", waterNeeds: "low" },
+    { id: "22", name: "Batata-doce", category: "raiz", icon: "🍠", spacing: "40x30cm", season: "Primavera/Verão", difficulty: "easy", waterNeeds: "medium" },
+    { id: "23", name: "Inhame", category: "raiz", icon: "🟤", spacing: "50x50cm", season: "Primavera/Verão", difficulty: "medium", waterNeeds: "medium" },
   ];
 
   const categories = [
@@ -92,21 +95,26 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
     );
   };
 
+  const handleDragStart = (e: React.DragEvent, plant: Plant) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify(plant));
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'easy': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'hard': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+      case 'hard': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
   const getWaterColor = (waterNeeds: string) => {
     switch (waterNeeds) {
-      case 'low': return 'bg-blue-100 text-blue-800';
-      case 'medium': return 'bg-blue-200 text-blue-800';
-      case 'high': return 'bg-blue-300 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'low': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      case 'medium': return 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200';
+      case 'high': return 'bg-blue-300 text-blue-800 dark:bg-blue-700 dark:text-blue-200';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }
   };
 
@@ -124,6 +132,9 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
             className="pl-9"
           />
         </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          💡 Dica: Arraste e solte plantas no canvas ou clique para selecionar
+        </p>
       </div>
 
       {/* Plant Categories */}
@@ -149,9 +160,11 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
                   {getPlantsByCategory(category.id).map((plant) => (
                     <div
                       key={plant.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, plant)}
                       onClick={() => onPlantSelect(plant)}
                       className={cn(
-                        "p-3 rounded-lg border border-border cursor-pointer transition-all hover:shadow-md hover:border-accent",
+                        "p-3 rounded-lg border border-border cursor-pointer transition-all hover:shadow-md hover:border-accent hover:scale-[1.02] select-none",
                         selectedPlant?.id === plant.id && "border-accent bg-accent/10 shadow-md"
                       )}
                     >

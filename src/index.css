@@ -93,12 +93,29 @@
   background-size: 20px 20px;
 }
 
+.dark .grid-pattern {
+  background-image: 
+    linear-gradient(rgba(134, 239, 172, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(134, 239, 172, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
 .plant-icon {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
   transition: all 0.2s ease;
 }
 
 .plant-icon:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+.terrain-element {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.2s ease;
+}
+
+.terrain-element:hover {
   transform: scale(1.05);
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
@@ -116,4 +133,19 @@
     #8B664D 0%, 
     #A0785A 50%, 
     #6B4E3D 100%);
+}
+
+/* Keyboard shortcuts styles */
+kbd {
+  @apply inline-flex items-center px-1.5 py-0.5 border border-border rounded text-xs font-mono bg-muted text-muted-foreground;
+}
+
+/* Drag and drop feedback */
+.drag-over {
+  @apply ring-2 ring-accent ring-offset-2;
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }

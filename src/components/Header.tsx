@@ -1,10 +1,12 @@
-
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Download, Share2, Save, Sprout, Undo, Redo, FileText } from "lucide-react";
+import { Download, Share2, Save, Sprout, Undo, Redo, FileText, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
+import { useTheme } from "@/components/ThemeProvider";
 
 export const Header = () => {
+  const { theme, toggleTheme } = useTheme();
+
   const handleExport = () => {
     // Get canvas element and export as PNG
     const canvas = document.querySelector('[data-canvas="true"]') as HTMLElement;
@@ -75,7 +77,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50 dark:bg-gray-800/80 transition-colors">
       <div className="flex items-center justify-between h-full px-6">
         {/* Logo and Title */}
         <div className="flex items-center gap-3">
@@ -90,6 +92,19 @@ export const Header = () => {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2">
+          {/* Theme Toggle */}
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={toggleTheme}
+            className="gap-2"
+            title="Alternar tema"
+          >
+            {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </Button>
+
+          <Separator orientation="vertical" className="h-6" />
+
           {/* Undo/Redo */}
           <div className="hidden md:flex items-center gap-1">
             <Button 

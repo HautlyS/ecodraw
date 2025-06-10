@@ -11,7 +11,8 @@ import {
   Grid3X3,
   Ruler,
   Hand,
-  Copy
+  Copy,
+  Mountain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
     { id: "move", icon: Hand, label: "Navegar", description: "Navegue pelo canvas" },
     { id: "rectangle", icon: Square, label: "Retângulo", description: "Desenhe retângulos" },
     { id: "circle", icon: Circle, label: "Círculo", description: "Desenhe círculos" },
+    { id: "terrain", icon: Mountain, label: "Terreno", description: "Adicione elementos do terreno" },
     { id: "copy", icon: Copy, label: "Copiar", description: "Copie elementos selecionados" },
     { id: "delete", icon: Trash2, label: "Excluir", description: "Remova elementos" },
   ];
@@ -54,7 +56,7 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
   );
 
   return (
-    <div className="flex items-center justify-between gap-2 p-4 border-b border-border bg-card/50 backdrop-blur-sm">
+    <div className="flex items-center justify-between gap-2 p-4 border-b border-border bg-card/50 backdrop-blur-sm dark:bg-gray-800/50 transition-colors">
       <div className="flex items-center gap-4">
         {/* Main Tools */}
         <div className="flex items-center gap-1">
@@ -75,7 +77,7 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
           <span>Área: 0 m²</span>
           <span>Escala: 1:100</span>
         </div>
-        <div className="text-xs bg-muted px-2 py-1 rounded">
+        <div className="text-xs bg-muted px-2 py-1 rounded dark:bg-gray-700">
           <span className="hidden sm:inline">Atalhos: </span>
           Del = Excluir | Esc = Cancelar
         </div>
