@@ -1,8 +1,10 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
+import { CanvasControls } from "./canvas/CanvasControls";
+import { CanvasElement } from "./canvas/CanvasElement";
+import { CanvasWelcome } from "./canvas/CanvasWelcome";
+import { useCanvasEvents } from "@/hooks/useCanvasEvents";
 
 interface CanvasProps {
   selectedTool: string;
@@ -38,25 +40,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const [currentShape, setCurrentShape] = useState<DrawingElement | null>(null);
   const [showGrid, setShowGrid] = useState(true);
 
-  const getMousePosition = useCallback((e: React.MouseEvent | MouseEvent) => {
-    if (!canvasRef.current) return { x: 0, y: 0 };
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    const scale = zoom / 100;
-    return {
-      x: (e.clientX - rect.left) / scale,
-      y: (e.clientY - rect.top) / scale
-    };
-  }, [zoom]);
-
-  const snapToGrid = useCallback((pos: { x: number; y: number }) => {
-    if (!showGrid) return pos;
-    const gridSize = 20;
-    return {
-      x: Math.round(pos.x / gridSize) * gridSize,
-      y: Math.round(pos.y / gridSize) * gridSize
-    };
-  }, [showGrid]);
+  const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
 
   const selectElement = useCallback((elementId: number) => {
     setElements(prev => prev.map(el => ({
@@ -78,41 +62,19 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   }, [elements]);
 
   const deleteElementAtPosition = useCallback((pos: { x: number; y: number }) => {
-    const clickedElement = elements
-      .slice()
-      .reverse()
-      .find(element => {
-        if (element.type === 'plant' || element.type === 'terrain') {
-          const distance = Math.sqrt(
-            Math.pow(pos.x - element.x, 2) + Math.pow(pos.y - element.y, 2)
-          );
-          return distance <= 25;
-        } else if (element.type === 'rectangle') {
-          return pos.x >= element.x && pos.x <= element.x + (element.width || 0) &&
-                 pos.y >= element.y && pos.y <= element.y + (element.height || 0);
-        } else if (element.type === 'circle') {
-          const centerX = element.x + (element.radius || 0);
-          const centerY = element.y + (element.radius || 0);
-          const distance = Math.sqrt(
-            Math.pow(pos.x - centerX, 2) + Math.pow(pos.y - centerY, 2)
-          );
-          return distance <= (element.radius || 0);
-        }
-        return false;
-      });
-
+    const clickedElement = findElementAtPosition(pos, elements);
     if (clickedElement) {
       setElements(prev => prev.filter(el => el.id !== clickedElement.id));
       toast.success("Elemento removido");
       return true;
     }
     return false;
-  }, [elements]);
+  }, [elements, findElementAtPosition]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    const rawPos = getMousePosition(e);
-    const pos = snapToGrid(rawPos);
+    const rawPos = getMousePosition(e, canvasRef, zoom);
+    const pos = snapToGrid(rawPos, showGrid);
     
     // Handle delete tool
     if (selectedTool === 'delete') {
@@ -121,28 +83,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     }
 
     // Check if clicking on an existing element for selection/dragging
-    const clickedElement = elements
-      .slice()
-      .reverse()
-      .find(element => {
-        if (element.type === 'plant' || element.type === 'terrain') {
-          const distance = Math.sqrt(
-            Math.pow(pos.x - element.x, 2) + Math.pow(pos.y - element.y, 2)
-          );
-          return distance <= 30;
-        } else if (element.type === 'rectangle') {
-          return pos.x >= element.x && pos.x <= element.x + (element.width || 0) &&
-                 pos.y >= element.y && pos.y <= element.y + (element.height || 0);
-        } else if (element.type === 'circle') {
-          const centerX = element.x + (element.radius || 0);
-          const centerY = element.y + (element.radius || 0);
-          const distance = Math.sqrt(
-            Math.pow(pos.x - centerX, 2) + Math.pow(pos.y - centerY, 2)
-          );
-          return distance <= (element.radius || 0);
-        }
-        return false;
-      });
+    const clickedElement = findElementAtPosition(pos, elements);
 
     if (selectedTool === 'select' && clickedElement) {
       selectElement(clickedElement.id);
@@ -210,18 +151,18 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       
       setCurrentShape(newShape);
     }
-  }, [selectedTool, selectedPlant, selectedTerrain, elements, getMousePosition, snapToGrid, selectElement, clearSelection, onPlantUsed, onTerrainUsed, deleteElementAtPosition]);
+  }, [selectedTool, selectedPlant, selectedTerrain, elements, getMousePosition, snapToGrid, selectElement, clearSelection, onPlantUsed, onTerrainUsed, deleteElementAtPosition, findElementAtPosition, zoom, showGrid]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const rawPos = getMousePosition(e);
-    const pos = snapToGrid(rawPos);
+    const rawPos = getMousePosition(e, canvasRef, zoom);
+    const pos = snapToGrid(rawPos, showGrid);
 
     // Handle dragging existing elements
     if (isDragging && dragElement) {
       const newPos = snapToGrid({
         x: pos.x - dragOffset.x,
         y: pos.y - dragOffset.y
-      });
+      }, showGrid);
       
       setElements(prev => prev.map(el => 
         el.id === dragElement.id 
@@ -247,7 +188,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     };
     
     setCurrentShape(updatedShape);
-  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, getMousePosition, snapToGrid]);
+  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, getMousePosition, snapToGrid, zoom, showGrid]);
 
   const handleMouseUp = useCallback(() => {
     if (isDragging) {
@@ -276,8 +217,8 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
 
     try {
       const plantData = JSON.parse(data);
-      const rawPos = getMousePosition(e as any);
-      const pos = snapToGrid(rawPos);
+      const rawPos = getMousePosition(e, canvasRef, zoom);
+      const pos = snapToGrid(rawPos, showGrid);
       
       const newElement: DrawingElement = {
         id: Date.now(),
@@ -292,7 +233,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     } catch (error) {
       console.error('Error parsing dropped data:', error);
     }
-  }, [getMousePosition, snapToGrid]);
+  }, [getMousePosition, snapToGrid, zoom, showGrid]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -338,84 +279,6 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     toast.success("Canvas resetado");
   }, [clearSelection]);
 
-  const renderElement = useCallback((element: DrawingElement) => {
-    const isSelected = element.selected;
-    const selectionStyle = isSelected ? 'ring-2 ring-accent ring-offset-2 shadow-lg' : '';
-
-    if (element.type === 'plant') {
-      return (
-        <div
-          key={element.id}
-          className={`absolute plant-icon cursor-move transition-all ${selectionStyle}`}
-          style={{
-            left: element.x - 25,
-            top: element.y - 25,
-            transform: `rotate(${element.rotation || 0}deg)`,
-            zIndex: isSelected ? 10 : 1
-          }}
-        >
-          <div className="w-12 h-12 text-2xl flex items-center justify-center bg-green-100 dark:bg-green-900 rounded-full border-2 border-green-300 dark:border-green-600 shadow-md hover:shadow-lg transition-all">
-            {element.plant?.icon}
-          </div>
-        </div>
-      );
-    } else if (element.type === 'terrain') {
-      return (
-        <div
-          key={element.id}
-          className={`absolute terrain-element cursor-move transition-all ${selectionStyle}`}
-          style={{
-            left: element.x - 30,
-            top: element.y - 30,
-            transform: `rotate(${element.rotation || 0}deg)`,
-            zIndex: isSelected ? 10 : 1
-          }}
-        >
-          <div 
-            className="w-16 h-16 text-2xl flex items-center justify-center rounded-lg border-2 shadow-md hover:shadow-lg transition-all"
-            style={{ 
-              backgroundColor: element.terrain?.color + '30',
-              borderColor: element.terrain?.color,
-              color: element.terrain?.color
-            }}
-          >
-            {element.terrain?.icon}
-          </div>
-        </div>
-      );
-    } else if (element.type === 'rectangle') {
-      return (
-        <div
-          key={element.id}
-          className={`absolute border-2 border-primary bg-primary/20 dark:border-primary-dark dark:bg-primary-dark/20 cursor-move transition-all ${selectionStyle}`}
-          style={{
-            left: element.x,
-            top: element.y,
-            width: element.width,
-            height: element.height,
-            transform: `rotate(${element.rotation || 0}deg)`,
-            zIndex: isSelected ? 10 : 1
-          }}
-        />
-      );
-    } else if (element.type === 'circle') {
-      return (
-        <div
-          key={element.id}
-          className={`absolute border-2 border-primary bg-primary/20 dark:border-primary-dark dark:bg-primary-dark/20 rounded-full cursor-move transition-all ${selectionStyle}`}
-          style={{
-            left: element.x,
-            top: element.y,
-            width: element.radius ? element.radius * 2 : 0,
-            height: element.radius ? element.radius * 2 : 0,
-            transform: `rotate(${element.rotation || 0}deg)`,
-            zIndex: isSelected ? 10 : 1
-          }}
-        />
-      );
-    }
-  }, []);
-
   const getCursorStyle = () => {
     if (selectedTool === 'select') return 'cursor-default';
     if (selectedTool === 'delete') return 'cursor-pointer';
@@ -426,52 +289,16 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
 
   return (
     <div className="h-full relative bg-card dark:bg-gray-800 rounded-lg border border-border overflow-hidden transition-colors">
-      {/* Canvas Controls */}
-      <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleZoomOut}
-          className="shadow-lg"
-          disabled={zoom <= 25}
-        >
-          <ZoomOut className="w-4 h-4" />
-        </Button>
-        <span className="bg-card dark:bg-gray-700 px-3 py-1 rounded text-sm font-medium shadow-lg border min-w-[60px] text-center">
-          {zoom}%
-        </span>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleZoomIn}
-          className="shadow-lg"
-          disabled={zoom >= 300}
-        >
-          <ZoomIn className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={handleReset}
-          className="shadow-lg ml-2"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </Button>
-        <Button
-          variant={showGrid ? "default" : "secondary"}
-          size="sm"
-          onClick={() => setShowGrid(!showGrid)}
-          className="shadow-lg ml-2"
-          title="Alternar grade (G)"
-        >
-          Grade
-        </Button>
-      </div>
-
-      {/* Status Info */}
-      <div className="absolute top-4 right-4 z-10 bg-card dark:bg-gray-700 px-3 py-1 rounded text-sm font-medium shadow-lg border">
-        {elements.length} elemento(s) | {elements.filter(el => el.selected).length} selecionado(s)
-      </div>
+      <CanvasControls
+        zoom={zoom}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onReset={handleReset}
+        showGrid={showGrid}
+        onToggleGrid={() => setShowGrid(!showGrid)}
+        elementsCount={elements.length}
+        selectedCount={elements.filter(el => el.selected).length}
+      />
 
       {/* Canvas Area */}
       <div
@@ -491,29 +318,15 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         data-canvas="true"
       >
         {/* Render saved elements */}
-        {elements.map(renderElement)}
+        {elements.map(element => (
+          <CanvasElement key={element.id} element={element} />
+        ))}
         
         {/* Render current shape being drawn */}
-        {currentShape && renderElement(currentShape)}
+        {currentShape && <CanvasElement element={currentShape} />}
 
         {/* Welcome Text for Empty Canvas */}
-        {elements.length === 0 && !currentShape && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center text-muted-foreground">
-              <div className="w-16 h-16 mx-auto mb-4 nature-gradient rounded-full flex items-center justify-center">
-                <span className="text-2xl text-white">🌱</span>
-              </div>
-              <h3 className="text-lg font-medium mb-2">Comece seu projeto agroecológico</h3>
-              <p className="text-sm max-w-md">
-                Selecione plantas da biblioteca ao lado ou use as ferramentas para desenhar sua área.
-                <br />
-                <strong>Arraste e solte</strong> plantas diretamente no canvas!
-                <br />
-                Use <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Del</kbd> para excluir, <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Esc</kbd> para cancelar, <kbd className="px-1 py-0.5 bg-muted rounded text-xs">G</kbd> para grade.
-              </p>
-            </div>
-          </div>
-        )}
+        {elements.length === 0 && !currentShape && <CanvasWelcome />}
       </div>
     </div>
   );
