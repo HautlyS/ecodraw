@@ -22,17 +22,31 @@ interface DrawingElement {
 
 export const useCanvasEvents = () => {
   const getMousePosition = useCallback((
-    e: React.MouseEvent | MouseEvent | DragEvent,
+    e: React.MouseEvent | MouseEvent | DragEvent | React.TouchEvent,
     canvasRef: React.RefObject<HTMLDivElement>,
-    zoom: number
+    zoom: number,
+    panOffset: { x: number; y: number } = { x: 0, y: 0 }
   ): Position => {
     if (!canvasRef.current) return { x: 0, y: 0 };
     
     const rect = canvasRef.current.getBoundingClientRect();
     const scale = zoom / 100;
+    
+    let clientX: number, clientY: number;
+    
+    if ('touches' in e && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if ('clientX' in e) {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    } else {
+      return { x: 0, y: 0 };
+    }
+    
     return {
-      x: (e.clientX - rect.left) / scale,
-      y: (e.clientY - rect.top) / scale
+      x: (clientX - rect.left - panOffset.x) / scale,
+      y: (clientY - rect.top - panOffset.y) / scale
     };
   }, []);
 
@@ -50,7 +64,7 @@ export const useCanvasEvents = () => {
       const distance = Math.sqrt(
         Math.pow(pos.x - element.x, 2) + Math.pow(pos.y - element.y, 2)
       );
-      return distance <= (element.type === 'plant' ? 25 : 30);
+      return distance <= (element.type === 'plant' ? 20 : 25);
     } else if (element.type === 'rectangle') {
       return pos.x >= element.x && pos.x <= element.x + (element.width || 0) &&
              pos.y >= element.y && pos.y <= element.y + (element.height || 0);

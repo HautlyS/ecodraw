@@ -29,14 +29,14 @@ const Index = () => {
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800 transition-colors">
         <Header />
         
-        <div className="flex h-[calc(100vh-4rem)]">
+        <div className="flex h-[calc(100vh-4rem)] flex-col lg:flex-row">
           {/* Main Canvas Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col min-h-0">
             <Toolbar 
               selectedTool={selectedTool}
               onToolSelect={handleToolSelect}
             />
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-2 sm:p-4">
               <Canvas 
                 selectedTool={selectedTool}
                 selectedPlant={selectedPlant}
@@ -48,7 +48,7 @@ const Index = () => {
           </div>
 
           {/* Dynamic Sidebar */}
-          <div className="w-80 border-l border-border bg-card dark:bg-gray-800 transition-colors">
+          <div className="w-full lg:w-80 h-96 lg:h-auto border-t lg:border-t-0 lg:border-l border-border bg-card transition-colors">
             {activeLibrary === "plants" ? (
               <PlantLibrary 
                 selectedPlant={selectedPlant}
