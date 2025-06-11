@@ -112,5 +112,3 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
 
   return null;
 };
-</CanvasElement>
-
