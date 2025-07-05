@@ -130,9 +130,26 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
         
         <div className="flex items-center gap-2 text-xs bg-gradient-to-r from-muted/80 to-muted/60 px-3 py-1.5 rounded-full border border-border/40 dark:from-gray-700/80 dark:to-gray-600/60">
           <span className="hidden sm:inline font-medium">Atalhos:</span>
-          <code className="font-mono">G</code>=Grade 
-          <code className="font-mono">Del</code>=Excluir 
-          <code className="font-mono">Esc</code>=Cancelar
+          <div className="flex items-center gap-1">
+            <code className="font-mono bg-background/50 px-1 rounded">G</code>
+            <span className="text-xs">Grade</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <code className="font-mono bg-background/50 px-1 rounded">S</code>
+            <span className="text-xs">Selecionar</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <code className="font-mono bg-background/50 px-1 rounded">T</code>
+            <span className="text-xs">Terreno</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <code className="font-mono bg-background/50 px-1 rounded">Del</code>
+            <span className="text-xs">Excluir</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <code className="font-mono bg-background/50 px-1 rounded">Esc</code>
+            <span className="text-xs">Cancelar</span>
+          </div>
         </div>
       </div>
     </div>
