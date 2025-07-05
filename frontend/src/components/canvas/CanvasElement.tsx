@@ -58,36 +58,67 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
   }
 
   if (element.type === 'terrain') {
+    const terrainWidth = element.width || 40;
+    const terrainHeight = element.height || 40;
+    const realWidth = element.realWorldWidth || 1;
+    const realHeight = element.realWorldHeight || 1;
+    
     return (
       <div
         className={cn(
-          "absolute terrain-element cursor-move transition-all group",
+          "absolute terrain-area cursor-move transition-all group border-2",
           selectionStyle
         )}
         style={{
-          left: element.x - 30,
-          top: element.y - 30,
+          left: element.x,
+          top: element.y,
+          width: terrainWidth,
+          height: terrainHeight,
           transform: `rotate(${element.rotation || 0}deg)`,
+          backgroundColor: element.terrain?.color + '40', // More transparent fill
+          borderColor: element.terrain?.color,
           zIndex: isSelected ? 10 : 1
         }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
+        {/* Terrain pattern/texture */}
         <div 
-          className="w-16 h-16 text-3xl flex items-center justify-center rounded-lg shadow-lg hover:shadow-xl transition-all relative border-2"
-          style={{ 
-            backgroundColor: element.terrain?.color + '20', 
-            borderColor: element.terrain?.color,
-            backdropFilter: 'blur(4px)'
+          className="w-full h-full flex items-center justify-center relative opacity-80"
+          style={{
+            background: `repeating-linear-gradient(
+              45deg,
+              ${element.terrain?.color}20,
+              ${element.terrain?.color}20 2px,
+              transparent 2px,
+              transparent 8px
+            )`
           }}
         >
-          <span className="filter drop-shadow-sm">{element.terrain?.icon}</span>
+          {/* Icon in center */}
+          <div 
+            className="text-2xl drop-shadow-sm bg-white/80 rounded-full p-1 border"
+            style={{ borderColor: element.terrain?.color }}
+          >
+            {element.terrain?.icon}
+          </div>
+          
+          {/* Size indicator */}
+          <div 
+            className="absolute top-1 left-1 text-xs font-medium px-1 rounded text-white"
+            style={{ backgroundColor: element.terrain?.color }}
+          >
+            {realWidth}×{realHeight}m
+          </div>
         </div>
+        
         {showTooltip && (
           <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded shadow-lg border whitespace-nowrap z-20 min-w-max">
             <div className="font-medium">{element.terrain?.name}</div>
             <div className="text-muted-foreground text-xs">{element.terrain?.description}</div>
-            <div className="text-muted-foreground text-xs">Tamanho: {element.terrain?.size}</div>
+            <div className="text-muted-foreground text-xs">
+              Área: {realWidth}×{realHeight}m ({realWidth * realHeight}m²)
+            </div>
           </div>
         )}
       </div>
