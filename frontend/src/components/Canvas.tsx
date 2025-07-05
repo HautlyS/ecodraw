@@ -310,7 +310,6 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     setIsDrawing(false);
   }, [isDragging, isDrawing, currentShape, isPanning]);
 
-  // Handle drop from plant library
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     const data = e.dataTransfer.getData('text/plain');
