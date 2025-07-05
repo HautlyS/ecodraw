@@ -448,7 +448,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       {/* Canvas Area */}
       <div
         ref={canvasRef}
-        className={`w-full h-full relative overflow-hidden ${getCursorStyle()} ${showGrid ? 'grid-pattern' : ''}`}
+        className={`w-full h-full relative overflow-hidden ${getCursorStyle()} ${showGrid ? 'terrain-grid-pattern' : ''}`}
         style={{ 
           transform: `scale(${zoom / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`, 
           transformOrigin: 'center',
@@ -465,6 +465,40 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         onTouchEnd={handleTouchEnd}
         data-canvas="true"
       >
+        {/* Grid Labels for Scale Reference */}
+        {showGrid && (
+          <div className="absolute inset-0 pointer-events-none">
+            {/* Horizontal scale labels */}
+            {Array.from({ length: Math.floor(1000 / GRID_SIZE_PIXELS) }, (_, i) => (
+              <div
+                key={`h-${i}`}
+                className="absolute text-xs text-muted-foreground bg-background/80 px-1 rounded"
+                style={{
+                  left: i * GRID_SIZE_PIXELS + 5,
+                  top: 5,
+                  fontSize: '10px'
+                }}
+              >
+                {i * GRID_SIZE_METERS}m
+              </div>
+            ))}
+            {/* Vertical scale labels */}
+            {Array.from({ length: Math.floor(1000 / GRID_SIZE_PIXELS) }, (_, i) => (
+              <div
+                key={`v-${i}`}
+                className="absolute text-xs text-muted-foreground bg-background/80 px-1 rounded"
+                style={{
+                  left: 5,
+                  top: i * GRID_SIZE_PIXELS + 5,
+                  fontSize: '10px'
+                }}
+              >
+                {i * GRID_SIZE_METERS}m
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Render saved elements */}
         {elements.map(element => (
           <CanvasElement key={element.id} element={element} />
