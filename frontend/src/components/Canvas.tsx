@@ -47,6 +47,37 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const [currentShape, setCurrentShape] = useState<DrawingElement | null>(null);
   const [showGrid, setShowGrid] = useState(true);
 
+  // World-to-pixel conversion constants
+  const PIXELS_PER_METER = 10;
+  const GRID_SIZE_METERS = 2; // Each grid square = 2m x 2m
+  const GRID_SIZE_PIXELS = GRID_SIZE_METERS * PIXELS_PER_METER;
+
+  // Utility functions for world-to-pixel conversion
+  const metersToPixels = useCallback((meters: number) => meters * PIXELS_PER_METER, []);
+  const pixelsToMeters = useCallback((pixels: number) => pixels / PIXELS_PER_METER, []);
+  
+  // Parse terrain size string to get dimensions in meters
+  const parseTerrainSize = useCallback((sizeString: string) => {
+    if (sizeString === "Variável") {
+      return { width: 1, height: 1 }; // Default 1x1m for variable size
+    }
+    
+    const match = sizeString.match(/(\d+)x(\d+)m/);
+    if (match) {
+      return { width: parseInt(match[1]), height: parseInt(match[2]) };
+    }
+    
+    // Handle single dimension (like "2x2m")
+    const singleMatch = sizeString.match(/(\d+)m/);
+    if (singleMatch) {
+      const size = parseInt(singleMatch[1]);
+      return { width: size, height: size };
+    }
+    
+    // Default fallback
+    return { width: 1, height: 1 };
+  }, []);
+
   const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
 
   const selectElement = useCallback((elementId: number) => {
