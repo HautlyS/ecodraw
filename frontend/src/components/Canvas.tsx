@@ -827,20 +827,31 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       // Ctrl+A - select all
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault();
-        setElements(prev => prev.map(el => ({ ...el, selected: true })));
+        const selectedElements = elements.map(el => ({ ...el, selected: true }));
+        elementsActions.set(selectedElements);
         toast.success("Todos os elementos selecionados");
       }
       
-      // Ctrl+Z - undo (placeholder)
+      // Ctrl+Z - undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        toast.info("Desfazer - Em desenvolvimento");
+        if (elementsActions.canUndo) {
+          elementsActions.undo();
+          toast.success("Ação desfeita");
+        } else {
+          toast.info("Nada para desfazer");
+        }
       }
       
-      // Ctrl+Y or Ctrl+Shift+Z - redo (placeholder)
+      // Ctrl+Y or Ctrl+Shift+Z - redo
       if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault();
-        toast.info("Refazer - Em desenvolvimento");
+        if (elementsActions.canRedo) {
+          elementsActions.redo();
+          toast.success("Ação refeita");
+        } else {
+          toast.info("Nada para refazer");
+        }
       }
       
       // Number keys for zoom
