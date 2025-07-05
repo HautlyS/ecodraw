@@ -192,6 +192,10 @@ kbd {
   .grid-pattern {
     background-size: 15px 15px;
   }
+  
+  .terrain-grid-pattern {
+    background-size: 15px 15px, 15px 15px, 7.5px 7.5px, 7.5px 7.5px;
+  }
 }
 
 /* Text truncation utilities */
