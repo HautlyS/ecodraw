@@ -450,8 +450,76 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-    // Handle dragging existing elements
-    if (isDragging && dragElement) {
+    // Handle resizing elements
+    if (isResizing && resizeElement && resizeHandle) {
+      const deltaX = pos.x - resizeStartPos.x;
+      const deltaY = pos.y - resizeStartPos.y;
+      
+      let newBounds = { ...originalElementBounds };
+      
+      // Calculate new bounds based on resize handle
+      switch (resizeHandle) {
+        case 'nw':
+          newBounds.x = originalElementBounds.x + deltaX;
+          newBounds.y = originalElementBounds.y + deltaY;
+          newBounds.width = originalElementBounds.width - deltaX;
+          newBounds.height = originalElementBounds.height - deltaY;
+          break;
+        case 'ne':
+          newBounds.y = originalElementBounds.y + deltaY;
+          newBounds.width = originalElementBounds.width + deltaX;
+          newBounds.height = originalElementBounds.height - deltaY;
+          break;
+        case 'sw':
+          newBounds.x = originalElementBounds.x + deltaX;
+          newBounds.width = originalElementBounds.width - deltaX;
+          newBounds.height = originalElementBounds.height + deltaY;
+          break;
+        case 'se':
+          newBounds.width = originalElementBounds.width + deltaX;
+          newBounds.height = originalElementBounds.height + deltaY;
+          break;
+      }
+      
+      // Ensure minimum size
+      const minSize = 20;
+      newBounds.width = Math.max(newBounds.width, minSize);
+      newBounds.height = Math.max(newBounds.height, minSize);
+      
+      // Update the element
+      setElements(prev => prev.map(el => {
+        if (el.id === resizeElement.id) {
+          if (el.type === 'plant') {
+            // For plants, update the center position and scale the spacing
+            const newCenterX = newBounds.x + newBounds.width / 2;
+            const newCenterY = newBounds.y + newBounds.height / 2;
+            return { ...el, x: newCenterX, y: newCenterY };
+          } else if (el.type === 'circle' || (el.type === 'terrain' && el.brushType === 'circle')) {
+            // For circles, update radius
+            const newRadius = Math.min(newBounds.width, newBounds.height) / 2;
+            return {
+              ...el,
+              x: newBounds.x,
+              y: newBounds.y,
+              radius: newRadius,
+              width: newRadius * 2,
+              height: newRadius * 2
+            };
+          } else {
+            // For rectangles
+            return {
+              ...el,
+              x: newBounds.x,
+              y: newBounds.y,
+              width: newBounds.width,
+              height: newBounds.height
+            };
+          }
+        }
+        return el;
+      }));
+      return;
+    }
       const newPos = snapToGrid({
         x: pos.x - dragOffset.x,
         y: pos.y - dragOffset.y
