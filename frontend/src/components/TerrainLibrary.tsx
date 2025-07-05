@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Star } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Search, Plus, Star, Square, Circle, Paintbrush, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TerrainElement {
@@ -15,8 +17,10 @@ interface TerrainElement {
   size: string;
   description: string;
   color: string;
-  texture: string; // Add texture type for painting
-  brushType: 'rectangle' | 'circle' | 'path'; // How the terrain should be painted
+  texture: string;
+  brushType: 'rectangle' | 'circle' | 'path';
+  selectedBrushMode?: 'rectangle' | 'circle' | 'brush';
+  brushThickness?: number;
 }
 
 interface TerrainLibraryProps {
@@ -27,6 +31,9 @@ interface TerrainLibraryProps {
 export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibraryProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [brushMode, setBrushMode] = useState<'rectangle' | 'circle' | 'brush'>('rectangle');
+  const [brushThickness, setBrushThickness] = useState(20);
+  const [showSettings, setShowSettings] = useState(false);
   
   const terrainElements: TerrainElement[] = [
     // Solos - painted as large areas
