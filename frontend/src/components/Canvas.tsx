@@ -12,6 +12,7 @@ interface CanvasProps {
   selectedTerrain: any;
   onPlantUsed: () => void;
   onTerrainUsed: () => void;
+  onToolChange: (tool: string) => void; // Add this to enable tool switching
 }
 
 interface DrawingElement {
