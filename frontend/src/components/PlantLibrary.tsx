@@ -174,22 +174,46 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
   };
 
   return (
-    <div className="flex flex-col h-full max-h-screen overflow-hidden">
+    <div className="flex flex-col h-full max-h-screen-dynamic overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b border-border flex-shrink-0">
-        <h2 className="text-base font-semibold mb-2">Biblioteca de Plantas</h2>
+      <div className={cn(
+        "border-b border-border flex-shrink-0 transition-all",
+        isMobile ? "p-2" : "p-3"
+      )}>
+        <h2 className={cn(
+          "font-semibold mb-2 transition-all",
+          isMobile ? "text-sm" : "text-base"
+        )}>
+          Biblioteca de Plantas
+        </h2>
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+          <Search className={cn(
+            "absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground transition-all",
+            isMobile ? "w-3 h-3" : "w-4 h-4"
+          )} />
+          {searchResult.isSearching && (
+            <Loader2 className="absolute right-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground animate-spin" />
+          )}
           <Input
             placeholder="Buscar plantas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-7 text-xs h-8"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={cn(
+              "pl-7 transition-all",
+              isMobile ? "text-xs h-7 pr-8" : "text-xs h-8 pr-6"
+            )}
           />
         </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          💡 Arraste e solte plantas no canvas
-        </p>
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-xs text-muted-foreground">
+            💡 {isMobile ? "Toque para selecionar" : "Arraste e solte plantas no canvas"}
+          </p>
+          {searchResult.resultCount !== plants.length && (
+            <Badge variant="secondary" className="text-xs">
+              {searchResult.resultCount} de {plants.length}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Plant Categories */}
