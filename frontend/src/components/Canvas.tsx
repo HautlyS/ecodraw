@@ -223,28 +223,43 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-    // Add terrain element
+    // Add terrain element with brush system
     if (selectedTerrain && selectedTool === 'terrain') {
       const terrainSize = parseTerrainSize(selectedTerrain.size);
-      const terrainWidthPixels = metersToPixels(terrainSize.width);
-      const terrainHeightPixels = metersToPixels(terrainSize.height);
+      const brushType = selectedTerrain.brushType || 'rectangle';
       
-      const newElement: DrawingElement = {
-        id: Date.now(),
-        type: 'terrain',
-        x: pos.x,
-        y: pos.y,
-        width: terrainWidthPixels,
-        height: terrainHeightPixels,
-        realWorldWidth: terrainSize.width,
-        realWorldHeight: terrainSize.height,
-        terrain: selectedTerrain,
-      };
-      
-      setElements(prev => [...prev, newElement]);
-      onTerrainUsed();
-      toast.success(`${selectedTerrain.name} adicionado ao mapa! (${terrainSize.width}x${terrainSize.height}m)`);
-      return;
+      if (brushType === 'path') {
+        // Start drawing a path for trails, streams, etc.
+        setIsDrawingTerrain(true);
+        setCurrentTerrainPath([pos]);
+        setStartPos(pos);
+        return;
+      } else {
+        // Start drawing rectangle or circle terrain
+        setIsDrawing(true);
+        setStartPos(pos);
+        
+        const terrainWidthPixels = metersToPixels(terrainSize.width);
+        const terrainHeightPixels = metersToPixels(terrainSize.height);
+        
+        const newTerrain: DrawingElement = {
+          id: Date.now(),
+          type: 'terrain',
+          x: pos.x,
+          y: pos.y,
+          width: brushType === 'circle' ? 0 : terrainWidthPixels,
+          height: brushType === 'circle' ? 0 : terrainHeightPixels,
+          radius: brushType === 'circle' ? 0 : undefined,
+          realWorldWidth: terrainSize.width,
+          realWorldHeight: terrainSize.height,
+          terrain: selectedTerrain,
+          brushType: brushType,
+          texture: selectedTerrain.texture,
+        };
+        
+        setCurrentShape(newTerrain);
+        return;
+      }
     }
 
     // Start drawing shapes
