@@ -279,13 +279,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Backend API Health"
-    - "MongoDB Connection"
-    - "Status Check API"
-    - "Toolbar Functionality"
-    - "Plant Library Functionality"
-    - "Terrain Library Functionality"
-    - "Canvas Interaction"
+    - "Plant Sizing"
+    - "Auto-Selection with Resize Handles"
+    - "Terrain Brush Modes"
+    - "Modern UI"
   stuck_tasks: []
   test_all: true
   test_priority: "high_first"
