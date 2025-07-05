@@ -253,10 +253,10 @@ export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibr
                   {getElementsByCategory(category.id).map((element) => (
                     <div
                       key={element.id}
-                      onClick={() => onTerrainSelect(element)}
+                      onClick={() => handleTerrainSelect(element)}
                       className={cn(
-                        "p-2 rounded-lg border border-border cursor-pointer transition-all hover:shadow-md hover:border-accent",
-                        selectedTerrain?.id === element.id && "border-accent bg-accent/10 shadow-md"
+                        "p-2 rounded-lg border border-border cursor-pointer transition-all hover:shadow-md hover:border-accent hover:scale-[1.02]",
+                        selectedTerrain?.id === element.id && "border-accent bg-accent/10 shadow-md ring-1 ring-accent/20"
                       )}
                     >
                       <div className="flex items-start gap-2">
