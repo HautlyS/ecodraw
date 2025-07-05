@@ -226,9 +226,15 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     // Add terrain element with brush system
     if (selectedTerrain && selectedTool === 'terrain') {
       const terrainSize = parseTerrainSize(selectedTerrain.size);
-      const brushType = selectedTerrain.brushType || 'rectangle';
+      const brushMode = selectedTerrain.selectedBrushMode || 'rectangle';
+      const brushThickness = selectedTerrain.brushThickness || 20;
       
-      if (brushType === 'path') {
+      if (brushMode === 'brush') {
+        // For brush mode, start freehand drawing
+        setIsDrawingTerrain(true);
+        setCurrentTerrainPath([pos]);
+        return;
+      } else if (brushMode === 'path' || selectedTerrain.brushType === 'path') {
         // For path terrain, create immediately as single click creates a simple path
         const pathLength = terrainSize.width > 1 ? terrainSize.width : 5; // Default path length
         const pathPoints = [
@@ -245,7 +251,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
           terrain: selectedTerrain,
           brushType: 'path',
           texture: selectedTerrain.texture,
-          realWorldWidth: 1, // Path width
+          realWorldWidth: brushThickness / 10, // Convert to meters
           realWorldHeight: pathLength,
         };
         
@@ -266,13 +272,13 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
           type: 'terrain',
           x: pos.x,
           y: pos.y,
-          width: brushType === 'circle' ? 0 : terrainWidthPixels,
-          height: brushType === 'circle' ? 0 : terrainHeightPixels,
-          radius: brushType === 'circle' ? 0 : undefined,
+          width: brushMode === 'circle' ? 0 : terrainWidthPixels,
+          height: brushMode === 'circle' ? 0 : terrainHeightPixels,
+          radius: brushMode === 'circle' ? 0 : undefined,
           realWorldWidth: terrainSize.width,
           realWorldHeight: terrainSize.height,
           terrain: selectedTerrain,
-          brushType: brushType,
+          brushType: brushMode as 'rectangle' | 'circle',
           texture: selectedTerrain.texture,
         };
         
