@@ -666,7 +666,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
                          (currentShape.radius && currentShape.radius > minSize);
       
       if (isValidSize) {
-        setElements(prev => [...prev, currentShape]);
+        elementsActions.set([...elements, currentShape]);
         
         if (currentShape.type === 'terrain') {
           onTerrainUsed();
