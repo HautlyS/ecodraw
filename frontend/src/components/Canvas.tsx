@@ -62,9 +62,6 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const [resizeElement, setResizeElement] = useState<DrawingElement | null>(null);
   const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
   const [originalElementBounds, setOriginalElementBounds] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  const [resizeElement, setResizeElement] = useState<DrawingElement | null>(null);
-  const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
-  const [originalElementBounds, setOriginalElementBounds] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
   // World-to-pixel conversion constants
   const PIXELS_PER_METER = 10;
