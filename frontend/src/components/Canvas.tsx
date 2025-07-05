@@ -197,17 +197,25 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
 
     // Add terrain element
     if (selectedTerrain && selectedTool === 'terrain') {
+      const terrainSize = parseTerrainSize(selectedTerrain.size);
+      const terrainWidthPixels = metersToPixels(terrainSize.width);
+      const terrainHeightPixels = metersToPixels(terrainSize.height);
+      
       const newElement: DrawingElement = {
         id: Date.now(),
         type: 'terrain',
         x: pos.x,
         y: pos.y,
+        width: terrainWidthPixels,
+        height: terrainHeightPixels,
+        realWorldWidth: terrainSize.width,
+        realWorldHeight: terrainSize.height,
         terrain: selectedTerrain,
       };
       
       setElements(prev => [...prev, newElement]);
       onTerrainUsed();
-      toast.success(`${selectedTerrain.name} adicionado ao mapa!`);
+      toast.success(`${selectedTerrain.name} adicionado ao mapa! (${terrainSize.width}x${terrainSize.height}m)`);
       return;
     }
 
