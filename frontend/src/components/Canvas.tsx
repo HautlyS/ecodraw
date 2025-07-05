@@ -340,9 +340,16 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-    // Handle drawing terrain paths (trails, streams)
+    // Handle drawing terrain paths (trails, streams) and freehand brush
     if (isDrawingTerrain && selectedTerrain) {
-      setCurrentTerrainPath(prev => [...prev, pos]);
+      const brushThickness = selectedTerrain.brushThickness || 20;
+      
+      // Add point to current path with some distance threshold to avoid too many points
+      if (currentTerrainPath.length === 0 || 
+          Math.sqrt(Math.pow(pos.x - currentTerrainPath[currentTerrainPath.length - 1].x, 2) + 
+                   Math.pow(pos.y - currentTerrainPath[currentTerrainPath.length - 1].y, 2)) > 5) {
+        setCurrentTerrainPath(prev => [...prev, pos]);
+      }
       return;
     }
 
