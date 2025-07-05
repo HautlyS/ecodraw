@@ -382,7 +382,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         plant: selectedPlant,
       };
       
-      setElements(prev => [...prev, newElement]);
+      elementsActions.set([...elements, newElement]);
       onPlantUsed();
       toast.success(`${selectedPlant.name} adicionada ao mapa!`);
       return;
