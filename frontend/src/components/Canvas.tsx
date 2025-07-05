@@ -557,6 +557,9 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       }));
       return;
     }
+
+    // Handle dragging elements
+    if (isDragging && dragElement) {
       const newPos = snapToGrid({
         x: pos.x - dragOffset.x,
         y: pos.y - dragOffset.y
