@@ -214,11 +214,14 @@ frontend:
 metadata:
   created_by: "testing_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: true
 
 test_plan:
   current_focus:
+    - "Backend API Health"
+    - "MongoDB Connection"
+    - "Status Check API"
     - "Toolbar Functionality"
     - "Plant Library Functionality"
     - "Terrain Library Functionality"
@@ -232,3 +235,5 @@ agent_communication:
     message: "Starting comprehensive testing of the Garden/Farm Planning Canvas Application to identify any issues with tools and terrain elements."
   - agent: "testing"
     message: "Completed comprehensive testing of the Garden/Farm Planning Canvas Application. All core functionality is working correctly. The application allows users to select tools, browse plant and terrain libraries, place elements on the canvas, draw shapes, and manipulate elements. Minor issues include: search functionality may be case-sensitive, and zoom buttons could not be found in the UI, but zoom functionality might be available through other means (like keyboard shortcuts or mouse wheel)."
+  - agent: "testing"
+    message: "Completed backend API testing. All backend endpoints are working correctly. The API provides a root endpoint that returns 'Hello World', and status check endpoints for creating and retrieving status checks. MongoDB connection is working properly, allowing data to be stored and retrieved. Created a backend_test.py script that can be used for future testing."
