@@ -580,6 +580,14 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       setIsPanning(false);
     }
 
+    if (isResizing) {
+      setIsResizing(false);
+      setResizeHandle(null);
+      setResizeElement(null);
+      setResizeStartPos({ x: 0, y: 0 });
+      setOriginalElementBounds({ x: 0, y: 0, width: 0, height: 0 });
+    }
+
     if (isDragging) {
       setIsDragging(false);
       setDragElement(null);
