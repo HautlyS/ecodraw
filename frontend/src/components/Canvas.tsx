@@ -57,6 +57,38 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     setElements(prev => prev.map(el => ({ ...el, selected: false })));
   }, []);
 
+  const copySelectedElements = useCallback(() => {
+    const selectedElements = elements.filter(el => el.selected);
+    if (selectedElements.length > 0) {
+      const copiedElements = selectedElements.map(el => ({
+        ...el,
+        id: Date.now() + Math.random(),
+        x: el.x + 50, // Offset copies slightly
+        y: el.y + 50,
+        selected: false
+      }));
+      setElements(prev => [...prev, ...copiedElements]);
+      clearSelection();
+      toast.success(`${selectedElements.length} elemento(s) copiado(s)`);
+    } else {
+      toast.error("Selecione elementos para copiar");
+    }
+  }, [elements, clearSelection]);
+
+  const rotateSelectedElements = useCallback(() => {
+    const selectedElements = elements.filter(el => el.selected);
+    if (selectedElements.length > 0) {
+      setElements(prev => prev.map(el => 
+        el.selected 
+          ? { ...el, rotation: (el.rotation || 0) + 90 }
+          : el
+      ));
+      toast.success(`${selectedElements.length} elemento(s) rotacionado(s)`);
+    } else {
+      toast.error("Selecione elementos para rotacionar");
+    }
+  }, [elements]);
+
   const deleteSelectedElements = useCallback(() => {
     const selectedCount = elements.filter(el => el.selected).length;
     if (selectedCount > 0) {
