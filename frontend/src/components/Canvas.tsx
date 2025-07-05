@@ -650,7 +650,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         brushThickness: brushThickness,
       };
       
-      setElements(prev => [...prev, newTerrain]);
+      elementsActions.set([...elements, newTerrain]);
       onTerrainUsed();
       setIsDrawingTerrain(false);
       setCurrentTerrainPath([]);
