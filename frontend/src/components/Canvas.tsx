@@ -908,10 +908,12 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
 
   return (
     <div className="h-full relative bg-card rounded-lg border border-border overflow-hidden transition-colors">
-      <CanvasControls
+      {/* Enhanced Canvas Controls */}
+      <EnhancedCanvasControls
         zoom={zoom}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
+        onZoomIn={zoomIn}
+        onZoomOut={zoomOut}
+        onZoomToFit={zoomToFit}
         onReset={handleReset}
         showGrid={showGrid}
         onToggleGrid={() => {
@@ -921,12 +923,47 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         }}
         elementsCount={elements.length}
         selectedCount={elements.filter(el => el.selected).length}
+        canZoomIn={canZoomIn}
+        canZoomOut={canZoomOut}
+        zoomLevel={zoomLevel}
+        className={cn(isCompact && "scale-90 origin-top-right")}
       />
+
+      {/* Undo/Redo Controls for Desktop */}
+      {!isCompact && (
+        <div className="absolute top-4 left-4 z-10 flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={elementsActions.undo}
+            disabled={!elementsActions.canUndo}
+            className="bg-background/95 backdrop-blur-sm shadow-lg"
+            title="Desfazer (Ctrl+Z)"
+          >
+            <span className="text-xs">↶ Desfazer</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={elementsActions.redo}
+            disabled={!elementsActions.canRedo}
+            className="bg-background/95 backdrop-blur-sm shadow-lg"
+            title="Refazer (Ctrl+Y)"
+          >
+            <span className="text-xs">↷ Refazer</span>
+          </Button>
+        </div>
+      )}
 
       {/* Canvas Area */}
       <div
         ref={canvasRef}
-        className={`w-full h-full relative overflow-hidden ${getCursorStyle()} ${showGrid ? 'terrain-grid-pattern' : ''}`}
+        className={cn(
+          "w-full h-full relative overflow-hidden transition-transform duration-200",
+          getCursorStyle(),
+          showGrid ? 'terrain-grid-pattern' : '',
+          isCompact && "touch-pan-y touch-pinch-zoom"
+        )}
         style={{ 
           transform: `scale(${zoom / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`, 
           transformOrigin: 'center',
