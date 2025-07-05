@@ -253,10 +253,61 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-    // Check if clicking on an existing element for auto-selection
+    // Check if clicking on an existing element for auto-selection or resize
     const clickedElement = findElementAtPosition(pos, elements);
     
     if (clickedElement && selectedTool !== 'delete') {
+      // Check if clicking on a resize handle
+      const handle = detectResizeHandle(pos, clickedElement);
+      
+      if (handle && clickedElement.selected) {
+        // Start resizing
+        setIsResizing(true);
+        setResizeHandle(handle);
+        setResizeElement(clickedElement);
+        setResizeStartPos(pos);
+        
+        // Store original bounds for calculation
+        if (clickedElement.type === 'plant') {
+          const parsePlantSpacing = (spacing: string) => {
+            const PIXELS_PER_METER = 10;
+            if (spacing.includes('x')) {
+              const match = spacing.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
+              if (match) {
+                const width = parseFloat(match[1]);
+                const height = parseFloat(match[2]);
+                return { width: width * PIXELS_PER_METER, height: height * PIXELS_PER_METER };
+              }
+            }
+            const singleMatch = spacing.match(/(\d+(?:\.\d+)?)(cm|m)/);
+            if (singleMatch) {
+              const value = parseFloat(singleMatch[1]);
+              const unit = singleMatch[2];
+              const meters = unit === 'cm' ? value / 100 : value;
+              const pixels = meters * PIXELS_PER_METER;
+              return { width: pixels, height: pixels };
+            }
+            return { width: 40, height: 40 };
+          };
+          const plantSize = parsePlantSpacing(clickedElement.plant?.spacing || '1x1m');
+          setOriginalElementBounds({
+            x: clickedElement.x - plantSize.width / 2,
+            y: clickedElement.y - plantSize.height / 2,
+            width: plantSize.width,
+            height: plantSize.height
+          });
+        } else {
+          setOriginalElementBounds({
+            x: clickedElement.x,
+            y: clickedElement.y,
+            width: clickedElement.width || 0,
+            height: clickedElement.height || 0
+          });
+        }
+        return;
+      }
+      
+      // Regular element selection and dragging
       handleElementClick(clickedElement.id);
       setIsDragging(true);
       setDragElement(clickedElement);
