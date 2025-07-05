@@ -562,11 +562,12 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         y: pos.y - dragOffset.y
       }, showGrid);
       
-      setElements(prev => prev.map(el => 
+      const updatedElements = elements.map(el => 
         el.id === dragElement.id 
           ? { ...el, x: newPos.x, y: newPos.y }
           : el
-      ));
+      );
+      elementsActions.set(updatedElements);
       return;
     }
 
