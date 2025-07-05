@@ -577,37 +577,46 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         onTouchEnd={handleTouchEnd}
         data-canvas="true"
       >
-        {/* Grid Labels for Scale Reference */}
+        {/* Grid Labels for Scale Reference - Fixed positioning */}
         {showGrid && (
-          <div className="absolute inset-0 pointer-events-none">
-            {/* Horizontal scale labels */}
-            {Array.from({ length: Math.floor(1000 / GRID_SIZE_PIXELS) }, (_, i) => (
-              <div
-                key={`h-${i}`}
-                className="absolute text-xs text-muted-foreground bg-background/80 px-1 rounded"
-                style={{
-                  left: i * GRID_SIZE_PIXELS + 5,
-                  top: 5,
-                  fontSize: '10px'
-                }}
-              >
-                {i * GRID_SIZE_METERS}m
-              </div>
-            ))}
-            {/* Vertical scale labels */}
-            {Array.from({ length: Math.floor(1000 / GRID_SIZE_PIXELS) }, (_, i) => (
-              <div
-                key={`v-${i}`}
-                className="absolute text-xs text-muted-foreground bg-background/80 px-1 rounded"
-                style={{
-                  left: 5,
-                  top: i * GRID_SIZE_PIXELS + 5,
-                  fontSize: '10px'
-                }}
-              >
-                {i * GRID_SIZE_METERS}m
-              </div>
-            ))}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {/* Horizontal scale labels - only on top */}
+            <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-background/90 to-transparent">
+              {Array.from({ length: Math.floor(1000 / GRID_SIZE_PIXELS) }, (_, i) => (
+                <div
+                  key={`h-${i}`}
+                  className="absolute text-xs text-muted-foreground/80 bg-background/90 px-1 rounded-sm border border-border/30"
+                  style={{
+                    left: i * GRID_SIZE_PIXELS + 2,
+                    top: 2,
+                    fontSize: '9px',
+                    fontWeight: '500'
+                  }}
+                >
+                  {i * GRID_SIZE_METERS}m
+                </div>
+              ))}
+            </div>
+            
+            {/* Vertical scale labels - only on left */}
+            <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-background/90 to-transparent">
+              {Array.from({ length: Math.floor(800 / GRID_SIZE_PIXELS) }, (_, i) => (
+                <div
+                  key={`v-${i}`}
+                  className="absolute text-xs text-muted-foreground/80 bg-background/90 px-1 rounded-sm border border-border/30"
+                  style={{
+                    left: 2,
+                    top: i * GRID_SIZE_PIXELS + 2,
+                    fontSize: '9px',
+                    fontWeight: '500',
+                    writingMode: 'vertical-rl',
+                    textOrientation: 'mixed'
+                  }}
+                >
+                  {i * GRID_SIZE_METERS}m
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
