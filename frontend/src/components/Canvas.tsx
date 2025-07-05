@@ -50,6 +50,8 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+  const [currentShape, setCurrentShape] = useState<DrawingElement | null>(null);
+  const [showGrid, setShowGrid] = useState(true);
   const [isDrawingTerrain, setIsDrawingTerrain] = useState(false);
   const [currentTerrainPath, setCurrentTerrainPath] = useState<{ x: number; y: number }[]>([]);
 
