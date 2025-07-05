@@ -312,23 +312,40 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-    // Handle drawing new shapes
+    // Handle drawing terrain paths (trails, streams)
+    if (isDrawingTerrain && selectedTerrain) {
+      setCurrentTerrainPath(prev => [...prev, pos]);
+      return;
+    }
+
+    // Handle drawing new shapes (rectangles, circles, terrain areas)
     if (!isDrawing || !currentShape) return;
 
     const width = Math.abs(pos.x - startPos.x);
     const height = Math.abs(pos.y - startPos.y);
     
-    const updatedShape: DrawingElement = {
-      ...currentShape,
-      x: Math.min(startPos.x, pos.x),
-      y: Math.min(startPos.y, pos.y),
-      width: width,
-      height: height,
-      radius: currentShape.type === 'circle' ? Math.min(width, height) / 2 : 0,
-    };
-    
-    setCurrentShape(updatedShape);
-  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, getMousePosition, snapToGrid, zoom, showGrid, isPanning, lastPanPoint, panOffset]);
+    if (currentShape.brushType === 'circle' || currentShape.type === 'circle') {
+      const radius = Math.min(width, height) / 2;
+      const updatedShape: DrawingElement = {
+        ...currentShape,
+        x: Math.min(startPos.x, pos.x),
+        y: Math.min(startPos.y, pos.y),
+        radius: radius,
+        width: radius * 2,
+        height: radius * 2,
+      };
+      setCurrentShape(updatedShape);
+    } else {
+      const updatedShape: DrawingElement = {
+        ...currentShape,
+        x: Math.min(startPos.x, pos.x),
+        y: Math.min(startPos.y, pos.y),
+        width: width,
+        height: height,
+      };
+      setCurrentShape(updatedShape);
+    }
+  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, getMousePosition, snapToGrid, zoom, showGrid, isPanning, lastPanPoint, panOffset, isDrawingTerrain, selectedTerrain]);
 
   const handleMouseUp = useCallback(() => {
     if (isPanning) {
