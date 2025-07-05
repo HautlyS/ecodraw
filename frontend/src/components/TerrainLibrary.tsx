@@ -15,6 +15,8 @@ interface TerrainElement {
   size: string;
   description: string;
   color: string;
+  texture: string; // Add texture type for painting
+  brushType: 'rectangle' | 'circle' | 'path'; // How the terrain should be painted
 }
 
 interface TerrainLibraryProps {
