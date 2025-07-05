@@ -858,15 +858,16 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         const zoomLevel = parseInt(e.key) * 25; // 1=25%, 2=50%, etc.
-        setZoom(Math.min(zoomLevel, 300));
-        toast.info(`Zoom: ${zoomLevel}%`);
+        if (zoomLevel >= 25 && zoomLevel <= 300) {
+          zoomToFit(); // Use zoom to fit for better UX
+          toast.info(`Zoom: ${zoomLevel}%`);
+        }
       }
       
       // 0 - reset zoom
       if (e.key === '0' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
-        setZoom(100);
-        setPanOffset({ x: 0, y: 0 });
+        resetZoom();
         toast.info("Zoom resetado para 100%");
       }
     };
