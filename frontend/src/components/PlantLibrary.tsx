@@ -219,15 +219,25 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
       {/* Plant Categories */}
       <div className="flex-1 overflow-hidden">
         <Tabs defaultValue="all" className="h-full flex flex-col">
-          <TabsList className="grid grid-cols-4 gap-1 p-2 m-2 h-auto flex-shrink-0">
-            {categories.map((category) => (
+          <TabsList className={cn(
+            "gap-1 p-2 m-2 h-auto flex-shrink-0 transition-all",
+            isMobile ? "grid-cols-3" : "grid-cols-4"
+          )}>
+            {categories.slice(0, isMobile ? 6 : 7).map((category) => (
               <TabsTrigger
                 key={category.id}
                 value={category.id}
-                className="text-xs p-1 data-[state=active]:nature-gradient data-[state=active]:text-white flex flex-col gap-0.5 min-h-[44px]"
+                className={cn(
+                  "text-xs p-1 data-[state=active]:nature-gradient data-[state=active]:text-white flex flex-col gap-0.5 transition-all",
+                  isMobile ? "min-h-[40px]" : "min-h-[44px]"
+                )}
               >
-                <span className="text-sm">{category.icon}</span>
-                <span className="text-xs leading-tight">{category.name}</span>
+                <span className={cn("transition-all", isMobile ? "text-sm" : "text-sm")}>
+                  {category.icon}
+                </span>
+                <span className={cn("leading-tight transition-all", isMobile ? "text-xs" : "text-xs")}>
+                  {category.name}
+                </span>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -235,34 +245,49 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
           <div className="flex-1 overflow-y-auto px-2">
             {categories.map((category) => (
               <TabsContent key={category.id} value={category.id} className="mt-0">
-                <div className="grid gap-2">
+                <div className={cn("grid gap-2 transition-all", isMobile ? "gap-1" : "gap-2")}>
                   {getPlantsByCategory(category.id).map((plant) => (
                     <div
                       key={plant.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, plant)}
+                      draggable={!isMobile}
+                      onDragStart={(e) => !isMobile && handleDragStart(e, plant)}
                       onClick={() => onPlantSelect(plant)}
                       className={cn(
-                        "p-2 rounded-lg border border-border cursor-pointer transition-all hover:shadow-md hover:border-accent hover:scale-[1.02] select-none",
+                        "rounded-lg border border-border cursor-pointer transition-all hover:shadow-md hover:border-accent select-none",
+                        isMobile 
+                          ? "p-2 active:scale-95 hover:scale-100" 
+                          : "p-2 hover:scale-[1.02]",
                         selectedPlant?.id === plant.id && "border-accent bg-accent/10 shadow-md"
                       )}
                     >
                       <div className="flex items-start gap-2">
-                        <div className="text-lg flex-shrink-0 w-8 h-8 rounded flex items-center justify-center">
+                        <div className={cn(
+                          "flex-shrink-0 rounded flex items-center justify-center transition-all",
+                          isMobile ? "text-base w-7 h-7" : "text-lg w-8 h-8"
+                        )}>
                           {plant.icon}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-xs truncate">{plant.name}</h4>
+                            <h4 className={cn(
+                              "font-medium truncate transition-all",
+                              isMobile ? "text-xs" : "text-xs"
+                            )}>
+                              {plant.name}
+                            </h4>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-0.5 h-auto w-auto"
+                              className={cn(
+                                "p-0.5 h-auto w-auto transition-all hover:scale-110",
+                                isMobile ? "touch-target" : ""
+                              )}
                               onClick={(e) => toggleFavorite(plant.id, e)}
                             >
                               <Star 
                                 className={cn(
-                                  "w-3 h-3",
+                                  "transition-colors",
+                                  isMobile ? "w-3.5 h-3.5" : "w-3 h-3",
                                   favorites.includes(plant.id) 
                                     ? "fill-yellow-400 text-yellow-400" 
                                     : "text-gray-400"
@@ -270,16 +295,32 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
                               />
                             </Button>
                           </div>
-                          <p className="text-xs text-muted-foreground mb-1">{plant.spacing}</p>
+                          <p className={cn(
+                            "text-muted-foreground mb-1 transition-all",
+                            isMobile ? "text-xs" : "text-xs"
+                          )}>
+                            {plant.spacing}
+                          </p>
                           <div className="flex flex-wrap gap-1">
-                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                            <Badge variant="secondary" className={cn(
+                              "px-1 py-0 transition-all",
+                              isMobile ? "text-xs" : "text-xs"
+                            )}>
                               {plant.season}
                             </Badge>
-                            <Badge className={cn("text-xs px-1 py-0", getDifficultyColor(plant.difficulty))}>
+                            <Badge className={cn(
+                              "px-1 py-0 transition-all",
+                              isMobile ? "text-xs" : "text-xs",
+                              getDifficultyColor(plant.difficulty)
+                            )}>
                               {plant.difficulty === 'easy' ? 'Fácil' : 
                                plant.difficulty === 'medium' ? 'Médio' : 'Difícil'}
                             </Badge>
-                            <Badge className={cn("text-xs px-1 py-0", getWaterColor(plant.waterNeeds))}>
+                            <Badge className={cn(
+                              "px-1 py-0 transition-all",
+                              isMobile ? "text-xs" : "text-xs",
+                              getWaterColor(plant.waterNeeds)
+                            )}>
                               💧{plant.waterNeeds === 'low' ? 'Baixa' : 
                                   plant.waterNeeds === 'medium' ? 'Média' : 'Alta'}
                             </Badge>
@@ -294,9 +335,21 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
                       <p className="text-xs">
                         {category.id === 'favorites' 
                           ? 'Nenhuma planta favoritada ainda'
+                          : searchResult.query
+                          ? `Nenhuma planta encontrada para "${searchResult.query}"`
                           : 'Nenhuma planta encontrada'
                         }
                       </p>
+                      {searchResult.query && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSearchQuery("")}
+                          className="mt-2 text-xs"
+                        >
+                          Limpar busca
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
