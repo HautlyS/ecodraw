@@ -106,53 +106,58 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
   );
 
   return (
-    <div className="flex items-center justify-between gap-2 p-3 border-b border-border/60 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-md dark:from-gray-800/80 dark:to-gray-900/60 transition-all shadow-sm">
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between gap-2 p-4 border-b border-border/60 bg-gradient-to-r from-card/95 to-card/90 backdrop-blur-md shadow-sm">
+      <div className="flex items-center gap-4">
         {/* Main Tools */}
-        <div className="flex items-center gap-1 p-1 bg-background/50 rounded-lg border border-border/30 shadow-inner">
+        <div className="flex items-center gap-1 p-1.5 bg-background/70 rounded-xl border border-border/40 shadow-inner backdrop-blur-sm">
           {tools.map(tool => renderToolButton(tool))}
         </div>
 
-        <Separator orientation="vertical" className="h-6 opacity-60" />
+        <Separator orientation="vertical" className="h-8 opacity-60" />
 
         {/* Utility Tools */}
-        <div className="flex items-center gap-1 p-1 bg-background/30 rounded-lg border border-border/20">
+        <div className="flex items-center gap-1 p-1.5 bg-background/50 rounded-xl border border-border/30 backdrop-blur-sm">
           {utilityTools.map(tool => renderToolButton(tool, true))}
         </div>
       </div>
 
       {/* Enhanced Info Panel */}
-      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-        <div className="hidden lg:flex items-center gap-4 bg-background/40 px-3 py-1.5 rounded-lg border border-border/30">
-          <div className="flex items-center gap-1">
-            <Layers className="w-3 h-3" />
-            <span>Escala: 1m = 10px</span>
+      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        <div className="hidden lg:flex items-center gap-4 bg-background/60 px-4 py-2 rounded-xl border border-border/40 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-primary" />
+            <span className="font-medium">Escala: 1m = 10px</span>
           </div>
-          <Separator orientation="vertical" className="h-4 opacity-40" />
-          <span>Grade: 1m</span>
+          <Separator orientation="vertical" className="h-5 opacity-40" />
+          <div className="flex items-center gap-2">
+            <Grid3X3 className="w-4 h-4 text-primary" />
+            <span className="font-medium">Grade: 2m</span>
+          </div>
         </div>
         
-        <div className="flex items-center gap-2 text-xs bg-gradient-to-r from-muted/80 to-muted/60 px-3 py-1.5 rounded-full border border-border/40 dark:from-gray-700/80 dark:to-gray-600/60">
-          <span className="hidden sm:inline font-medium">Atalhos:</span>
-          <div className="flex items-center gap-1">
-            <code className="font-mono bg-background/50 px-1 rounded">G</code>
-            <span className="text-xs">Grade</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <code className="font-mono bg-background/50 px-1 rounded">S</code>
-            <span className="text-xs">Selecionar</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <code className="font-mono bg-background/50 px-1 rounded">T</code>
-            <span className="text-xs">Terreno</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <code className="font-mono bg-background/50 px-1 rounded">Del</code>
-            <span className="text-xs">Excluir</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <code className="font-mono bg-background/50 px-1 rounded">Esc</code>
-            <span className="text-xs">Cancelar</span>
+        <div className="flex items-center gap-3 text-xs bg-gradient-to-r from-muted/90 to-muted/70 px-4 py-2 rounded-full border border-border/50 dark:from-gray-700/90 dark:to-gray-600/70 backdrop-blur-sm">
+          <span className="hidden sm:inline font-semibold text-primary">Atalhos:</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <code className="font-mono bg-background/70 px-1.5 py-0.5 rounded text-xs font-medium border">G</code>
+              <span className="text-xs font-medium">Grade</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <code className="font-mono bg-background/70 px-1.5 py-0.5 rounded text-xs font-medium border">S</code>
+              <span className="text-xs font-medium">Selecionar</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <code className="font-mono bg-background/70 px-1.5 py-0.5 rounded text-xs font-medium border">T</code>
+              <span className="text-xs font-medium">Terreno</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <code className="font-mono bg-background/70 px-1.5 py-0.5 rounded text-xs font-medium border">Del</code>
+              <span className="text-xs font-medium">Excluir</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <code className="font-mono bg-background/70 px-1.5 py-0.5 rounded text-xs font-medium border">Esc</code>
+              <span className="text-xs font-medium">Cancelar</span>
+            </div>
           </div>
         </div>
       </div>
