@@ -78,25 +78,29 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
       size="sm"
       onClick={() => onToolSelect(tool.id)}
       className={cn(
-        "gap-2 relative transition-all duration-200 hover:scale-105",
-        selectedTool === tool.id && tool.highlight && "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-0 shadow-lg",
-        selectedTool === tool.id && !tool.highlight && "nature-gradient text-white border-0 shadow-md",
-        !selectedTool === tool.id && "hover:bg-accent/80"
+        "gap-2 relative transition-all duration-200 hover:scale-105 border",
+        selectedTool === tool.id && tool.highlight && "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-400 shadow-lg shadow-emerald-500/25",
+        selectedTool === tool.id && !tool.highlight && "nature-gradient text-white border-primary shadow-md shadow-primary/25",
+        selectedTool !== tool.id && "hover:bg-accent/80 hover:border-accent border-transparent",
+        selectedTool === tool.id && "ring-2 ring-offset-2 ring-primary/50"
       )}
       title={tool.description}
     >
       <tool.icon className={cn(
         "w-4 h-4 transition-all",
-        selectedTool === tool.id && "drop-shadow-sm"
+        selectedTool === tool.id && "drop-shadow-sm scale-110"
       )} />
       <span className="hidden md:inline font-medium">{tool.label}</span>
       {tool.highlight && (
         <Badge 
           variant="secondary" 
-          className="absolute -top-1 -right-1 text-xs px-1 bg-orange-500 text-white border-0"
+          className="absolute -top-1 -right-1 text-xs px-1 bg-orange-500 text-white border-0 animate-pulse"
         >
           New
         </Badge>
+      )}
+      {selectedTool === tool.id && (
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-md pointer-events-none" />
       )}
     </Button>
   );
