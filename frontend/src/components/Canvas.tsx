@@ -198,11 +198,12 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   }, []);
 
   const selectElement = useCallback((elementId: number) => {
-    setElements(prev => prev.map(el => ({
+    const updatedElements = elements.map(el => ({
       ...el,
       selected: el.id === elementId
-    })));
-  }, []);
+    }));
+    elementsActions.set(updatedElements);
+  }, [elements, elementsActions]);
 
   // Auto-select when clicking on any element
   const handleElementClick = useCallback((elementId: number) => {
@@ -214,8 +215,9 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   }, [selectedTool, onToolChange, selectElement]);
 
   const clearSelection = useCallback(() => {
-    setElements(prev => prev.map(el => ({ ...el, selected: false })));
-  }, []);
+    const updatedElements = elements.map(el => ({ ...el, selected: false }));
+    elementsActions.set(updatedElements);
+  }, [elements, elementsActions]);
 
   const copySelectedElements = useCallback(() => {
     const selectedElements = elements.filter(el => el.selected);
@@ -227,35 +229,37 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         y: el.y + 50,
         selected: false
       }));
-      setElements(prev => [...prev, ...copiedElements]);
+      elementsActions.set([...elements, ...copiedElements]);
       clearSelection();
       toast.success(`${selectedElements.length} elemento(s) copiado(s)`);
     } else {
       toast.error("Selecione elementos para copiar");
     }
-  }, [elements, clearSelection]);
+  }, [elements, elementsActions, clearSelection]);
 
   const rotateSelectedElements = useCallback(() => {
     const selectedElements = elements.filter(el => el.selected);
     if (selectedElements.length > 0) {
-      setElements(prev => prev.map(el => 
+      const updatedElements = elements.map(el => 
         el.selected 
           ? { ...el, rotation: (el.rotation || 0) + 90 }
           : el
-      ));
+      );
+      elementsActions.set(updatedElements);
       toast.success(`${selectedElements.length} elemento(s) rotacionado(s)`);
     } else {
       toast.error("Selecione elementos para rotacionar");
     }
-  }, [elements]);
+  }, [elements, elementsActions]);
 
   const deleteSelectedElements = useCallback(() => {
     const selectedCount = elements.filter(el => el.selected).length;
     if (selectedCount > 0) {
-      setElements(prev => prev.filter(el => !el.selected));
+      const filteredElements = elements.filter(el => !el.selected);
+      elementsActions.set(filteredElements);
       toast.success(`${selectedCount} elemento(s) removido(s)`);
     }
-  }, [elements]);
+  }, [elements, elementsActions]);
 
   const deleteElementAtPosition = useCallback((pos: { x: number; y: number }) => {
     const clickedElement = findElementAtPosition(pos, elements);
