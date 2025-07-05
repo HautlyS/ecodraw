@@ -176,8 +176,19 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-    // Check if clicking on an existing element for selection/dragging
+    // Check if clicking on an existing element for auto-selection
     const clickedElement = findElementAtPosition(pos, elements);
+    
+    if (clickedElement && selectedTool !== 'delete') {
+      handleElementClick(clickedElement.id);
+      setIsDragging(true);
+      setDragElement(clickedElement);
+      setDragOffset({
+        x: pos.x - clickedElement.x,
+        y: pos.y - clickedElement.y
+      });
+      return;
+    }
 
     if (selectedTool === 'select' && clickedElement) {
       selectElement(clickedElement.id);
