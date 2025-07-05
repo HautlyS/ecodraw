@@ -63,11 +63,17 @@ export const useCanvasEvents = () => {
   }, []);
 
   const isPointInElement = useCallback((pos: Position, element: DrawingElement): boolean => {
-    if (element.type === 'plant' || element.type === 'terrain') {
+    if (element.type === 'plant') {
       const distance = Math.sqrt(
         Math.pow(pos.x - element.x, 2) + Math.pow(pos.y - element.y, 2)
       );
-      return distance <= (element.type === 'plant' ? 20 : 25);
+      return distance <= 20;
+    } else if (element.type === 'terrain') {
+      // For terrain elements, check if point is within the rectangular area
+      const width = element.width || 40;
+      const height = element.height || 40;
+      return pos.x >= element.x && pos.x <= element.x + width &&
+             pos.y >= element.y && pos.y <= element.y + height;
     } else if (element.type === 'rectangle') {
       return pos.x >= element.x && pos.x <= element.x + (element.width || 0) &&
              pos.y >= element.y && pos.y <= element.y + (element.height || 0);
