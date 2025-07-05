@@ -264,12 +264,13 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const deleteElementAtPosition = useCallback((pos: { x: number; y: number }) => {
     const clickedElement = findElementAtPosition(pos, elements);
     if (clickedElement) {
-      setElements(prev => prev.filter(el => el.id !== clickedElement.id));
+      const filteredElements = elements.filter(el => el.id !== clickedElement.id);
+      elementsActions.set(filteredElements);
       toast.success("Elemento removido");
       return true;
     }
     return false;
-  }, [elements, findElementAtPosition]);
+  }, [elements, elementsActions, findElementAtPosition]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
