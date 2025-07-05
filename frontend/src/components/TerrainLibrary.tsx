@@ -29,59 +29,59 @@ export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibr
   const [favorites, setFavorites] = useState<string[]>([]);
   
   const terrainElements: TerrainElement[] = [
-    // Solos
-    { id: "1", name: "Terra Argilosa", category: "solo", icon: "🟤", size: "Variável", description: "Solo rico em argila, retém água", color: "#8B4513" },
-    { id: "2", name: "Terra Arenosa", category: "solo", icon: "🟡", size: "Variável", description: "Solo bem drenado", color: "#F4A460" },
-    { id: "3", name: "Terra Humífera", category: "solo", icon: "🟫", size: "Variável", description: "Solo rico em matéria orgânica", color: "#654321" },
-    { id: "4", name: "Solo Calcário", category: "solo", icon: "⚪", size: "Variável", description: "Solo alcalino", color: "#E5E5DC" },
-    { id: "30", name: "Terra Preta", category: "solo", icon: "⚫", size: "Variável", description: "Solo muito fértil", color: "#2F2F2F" },
-    { id: "31", name: "Solo Pedregoso", category: "solo", icon: "🔘", size: "Variável", description: "Solo com muitas pedras", color: "#808080" },
+    // Solos - painted as large areas
+    { id: "1", name: "Terra Argilosa", category: "solo", icon: "🟤", size: "Variável", description: "Solo rico em argila, retém água", color: "#8B4513", texture: "clay", brushType: "rectangle" },
+    { id: "2", name: "Terra Arenosa", category: "solo", icon: "🟡", size: "Variável", description: "Solo bem drenado", color: "#F4A460", texture: "sand", brushType: "rectangle" },
+    { id: "3", name: "Terra Humífera", category: "solo", icon: "🟫", size: "Variável", description: "Solo rico em matéria orgânica", color: "#654321", texture: "humus", brushType: "rectangle" },
+    { id: "4", name: "Solo Calcário", category: "solo", icon: "⚪", size: "Variável", description: "Solo alcalino", color: "#E5E5DC", texture: "limestone", brushType: "rectangle" },
+    { id: "30", name: "Terra Preta", category: "solo", icon: "⚫", size: "Variável", description: "Solo muito fértil", color: "#2F2F2F", texture: "fertile", brushType: "rectangle" },
+    { id: "31", name: "Solo Pedregoso", category: "solo", icon: "🔘", size: "Variável", description: "Solo com muitas pedras", color: "#808080", texture: "rocky", brushType: "rectangle" },
     
-    // Água
-    { id: "5", name: "Nascente", category: "agua", icon: "💧", size: "2x2m", description: "Fonte natural de água", color: "#87CEEB" },
-    { id: "6", name: "Poço Artesiano", category: "agua", icon: "🕳️", size: "1x1m", description: "Poço perfurado", color: "#4682B4" },
-    { id: "7", name: "Açude", category: "agua", icon: "🏞️", size: "10x10m", description: "Reservatório de água", color: "#0000CD" },
-    { id: "8", name: "Riacho", category: "agua", icon: "〰️", size: "Variável", description: "Curso d'água natural", color: "#20B2AA" },
-    { id: "9", name: "Cisterna", category: "agua", icon: "⭕", size: "3x3m", description: "Reservatório de água da chuva", color: "#1E90FF" },
-    { id: "32", name: "Lagoa", category: "agua", icon: "🔵", size: "8x8m", description: "Corpo d'água natural", color: "#006994" },
-    { id: "33", name: "Tanque", category: "agua", icon: "🔷", size: "4x4m", description: "Reservatório artificial", color: "#4169E1" },
+    // Água - painted as irregular shapes
+    { id: "5", name: "Nascente", category: "agua", icon: "💧", size: "2x2m", description: "Fonte natural de água", color: "#87CEEB", texture: "spring", brushType: "circle" },
+    { id: "6", name: "Poço Artesiano", category: "agua", icon: "🕳️", size: "1x1m", description: "Poço perfurado", color: "#4682B4", texture: "well", brushType: "circle" },
+    { id: "7", name: "Açude", category: "agua", icon: "🏞️", size: "10x10m", description: "Reservatório de água", color: "#0000CD", texture: "water", brushType: "rectangle" },
+    { id: "8", name: "Riacho", category: "agua", icon: "〰️", size: "Variável", description: "Curso d'água natural", color: "#20B2AA", texture: "stream", brushType: "path" },
+    { id: "9", name: "Cisterna", category: "agua", icon: "⭕", size: "3x3m", description: "Reservatório de água da chuva", color: "#1E90FF", texture: "water", brushType: "circle" },
+    { id: "32", name: "Lagoa", category: "agua", icon: "🔵", size: "8x8m", description: "Corpo d'água natural", color: "#006994", texture: "water", brushType: "circle" },
+    { id: "33", name: "Tanque", category: "agua", icon: "🔷", size: "4x4m", description: "Reservatório artificial", color: "#4169E1", texture: "water", brushType: "rectangle" },
     
-    // Estruturas
-    { id: "10", name: "Viveiro de Mudas", category: "estrutura", icon: "🏠", size: "5x3m", description: "Estufa para mudas", color: "#90EE90" },
-    { id: "11", name: "Composteira", category: "estrutura", icon: "♻️", size: "2x2m", description: "Local para compostagem", color: "#8FBC8F" },
-    { id: "12", name: "Galinheiro", category: "estrutura", icon: "🏘️", size: "4x4m", description: "Abrigo para aves", color: "#D2B48C" },
-    { id: "13", name: "Cerca Viva", category: "estrutura", icon: "🌿", size: "Variável", description: "Cerca natural", color: "#228B22" },
-    { id: "14", name: "Porteira", category: "estrutura", icon: "🚪", size: "3x1m", description: "Entrada da propriedade", color: "#8B4513" },
-    { id: "34", name: "Galpão", category: "estrutura", icon: "🏢", size: "10x8m", description: "Edificação para armazenamento", color: "#A0522D" },
-    { id: "35", name: "Casa", category: "estrutura", icon: "🏡", size: "8x8m", description: "Residência", color: "#CD853F" },
-    { id: "36", name: "Curral", category: "estrutura", icon: "🏗️", size: "6x6m", description: "Área para gado", color: "#BC8F8F" },
+    // Estruturas - painted as defined shapes
+    { id: "10", name: "Viveiro de Mudas", category: "estrutura", icon: "🏠", size: "5x3m", description: "Estufa para mudas", color: "#90EE90", texture: "building", brushType: "rectangle" },
+    { id: "11", name: "Composteira", category: "estrutura", icon: "♻️", size: "2x2m", description: "Local para compostagem", color: "#8FBC8F", texture: "compost", brushType: "rectangle" },
+    { id: "12", name: "Galinheiro", category: "estrutura", icon: "🏘️", size: "4x4m", description: "Abrigo para aves", color: "#D2B48C", texture: "building", brushType: "rectangle" },
+    { id: "13", name: "Cerca Viva", category: "estrutura", icon: "🌿", size: "Variável", description: "Cerca natural", color: "#228B22", texture: "hedge", brushType: "path" },
+    { id: "14", name: "Porteira", category: "estrutura", icon: "🚪", size: "3x1m", description: "Entrada da propriedade", color: "#8B4513", texture: "gate", brushType: "rectangle" },
+    { id: "34", name: "Galpão", category: "estrutura", icon: "🏢", size: "10x8m", description: "Edificação para armazenamento", color: "#A0522D", texture: "building", brushType: "rectangle" },
+    { id: "35", name: "Casa", category: "estrutura", icon: "🏡", size: "8x8m", description: "Residência", color: "#CD853F", texture: "house", brushType: "rectangle" },
+    { id: "36", name: "Curral", category: "estrutura", icon: "🏗️", size: "6x6m", description: "Área para gado", color: "#BC8F8F", texture: "corral", brushType: "rectangle" },
     
     // Área Cercada
-    { id: "15", name: "Área Cercada", category: "cerca", icon: "⬜", size: "Variável", description: "Delimitação com cerca", color: "#696969" },
-    { id: "16", name: "Pasto", category: "cerca", icon: "🟩", size: "Variável", description: "Área para pastagem", color: "#32CD32" },
-    { id: "17", name: "Horta Suspensa", category: "cerca", icon: "📦", size: "2x1m", description: "Canteiro elevado", color: "#8FBC8F" },
-    { id: "37", name: "Quintal", category: "cerca", icon: "🏠", size: "Variável", description: "Área residencial cercada", color: "#9ACD32" },
+    { id: "15", name: "Área Cercada", category: "cerca", icon: "⬜", size: "Variável", description: "Delimitação com cerca", color: "#696969", texture: "fence", brushType: "rectangle" },
+    { id: "16", name: "Pasto", category: "cerca", icon: "🟩", size: "Variável", description: "Área para pastagem", color: "#32CD32", texture: "grass", brushType: "rectangle" },
+    { id: "17", name: "Horta Suspensa", category: "cerca", icon: "📦", size: "2x1m", description: "Canteiro elevado", color: "#8FBC8F", texture: "garden", brushType: "rectangle" },
+    { id: "37", name: "Quintal", category: "cerca", icon: "🏠", size: "Variável", description: "Área residencial cercada", color: "#9ACD32", texture: "yard", brushType: "rectangle" },
     
     // Pedras e Rochas
-    { id: "18", name: "Rocha Grande", category: "rocha", icon: "🪨", size: "2x2m", description: "Formação rochosa", color: "#708090" },
-    { id: "19", name: "Pedregulho", category: "rocha", icon: "🗿", size: "1x1m", description: "Pedra média", color: "#2F4F4F" },
-    { id: "20", name: "Cascalho", category: "rocha", icon: "⚫", size: "Variável", description: "Área com pedras pequenas", color: "#A9A9A9" },
-    { id: "38", name: "Paredão", category: "rocha", icon: "🧱", size: "Variável", description: "Formação rochosa vertical", color: "#696969" },
+    { id: "18", name: "Rocha Grande", category: "rocha", icon: "🪨", size: "2x2m", description: "Formação rochosa", color: "#708090", texture: "rock", brushType: "circle" },
+    { id: "19", name: "Pedregulho", category: "rocha", icon: "🗿", size: "1x1m", description: "Pedra média", color: "#2F4F4F", texture: "stone", brushType: "circle" },
+    { id: "20", name: "Cascalho", category: "rocha", icon: "⚫", size: "Variável", description: "Área com pedras pequenas", color: "#A9A9A9", texture: "gravel", brushType: "rectangle" },
+    { id: "38", name: "Paredão", category: "rocha", icon: "🧱", size: "Variável", description: "Formação rochosa vertical", color: "#696969", texture: "wall", brushType: "rectangle" },
     
-    // Caminhos
-    { id: "21", name: "Estrada de Terra", category: "caminho", icon: "🛤️", size: "Variável", description: "Via não pavimentada", color: "#DEB887" },
-    { id: "22", name: "Trilha", category: "caminho", icon: "👣", size: "Variável", description: "Caminho estreito", color: "#D2B48C" },
-    { id: "23", name: "Ponte", category: "caminho", icon: "🌉", size: "4x1m", description: "Passagem sobre água", color: "#8B4513" },
+    // Caminhos - painted as paths
+    { id: "21", name: "Estrada de Terra", category: "caminho", icon: "🛤️", size: "Variável", description: "Via não pavimentada", color: "#DEB887", texture: "dirt_road", brushType: "path" },
+    { id: "22", name: "Trilha", category: "caminho", icon: "👣", size: "Variável", description: "Caminho estreito", color: "#D2B48C", texture: "trail", brushType: "path" },
+    { id: "23", name: "Ponte", category: "caminho", icon: "🌉", size: "4x1m", description: "Passagem sobre água", color: "#8B4513", texture: "bridge", brushType: "rectangle" },
     
     // Energia
-    { id: "24", name: "Painel Solar", category: "energia", icon: "☀️", size: "2x2m", description: "Energia solar", color: "#FFD700" },
-    { id: "25", name: "Poste de Luz", category: "energia", icon: "💡", size: "1x1m", description: "Iluminação", color: "#FFFF00" },
-    { id: "26", name: "Gerador Eólico", category: "energia", icon: "💨", size: "3x3m", description: "Energia eólica", color: "#87CEEB" },
+    { id: "24", name: "Painel Solar", category: "energia", icon: "☀️", size: "2x2m", description: "Energia solar", color: "#FFD700", texture: "solar", brushType: "rectangle" },
+    { id: "25", name: "Poste de Luz", category: "energia", icon: "💡", size: "1x1m", description: "Iluminação", color: "#FFFF00", texture: "pole", brushType: "circle" },
+    { id: "26", name: "Gerador Eólico", category: "energia", icon: "💨", size: "3x3m", description: "Energia eólica", color: "#87CEEB", texture: "wind", brushType: "circle" },
     
     // Áreas Especiais
-    { id: "27", name: "Área de Descanso", category: "especial", icon: "🪑", size: "3x3m", description: "Local para relaxar", color: "#DDA0DD" },
-    { id: "28", name: "Fogueira", category: "especial", icon: "🔥", size: "2x2m", description: "Local para fogo", color: "#FF4500" },
-    { id: "29", name: "Mirante", category: "especial", icon: "👁️", size: "2x2m", description: "Ponto de observação", color: "#20B2AA" },
+    { id: "27", name: "Área de Descanso", category: "especial", icon: "🪑", size: "3x3m", description: "Local para relaxar", color: "#DDA0DD", texture: "leisure", brushType: "circle" },
+    { id: "28", name: "Fogueira", category: "especial", icon: "🔥", size: "2x2m", description: "Local para fogo", color: "#FF4500", texture: "fire", brushType: "circle" },
+    { id: "29", name: "Mirante", category: "especial", icon: "👁️", size: "2x2m", description: "Ponto de observação", color: "#20B2AA", texture: "viewpoint", brushType: "circle" },
   ];
 
   const categories = [
