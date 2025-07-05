@@ -31,7 +31,6 @@ interface PlantLibraryProps {
 }
 
 export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [customPlants, setCustomPlants] = useState<Plant[]>([]);
   const [newPlant, setNewPlant] = useState({
@@ -45,7 +44,10 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
   });
   const [showAddDialog, setShowAddDialog] = useState(false);
   
+  const { isMobile } = useResponsive();
+
   const basePlants: Plant[] = [
+    // ... (keeping the existing plants data)
     // Frutíferas
     { id: "1", name: "Laranjeira", category: "frutifera", icon: "🍊", spacing: "4x4m", season: "Ano todo", difficulty: "medium", waterNeeds: "medium" },
     { id: "2", name: "Mangueira", category: "frutifera", icon: "🥭", spacing: "8x8m", season: "Verão", difficulty: "easy", waterNeeds: "low" },
@@ -89,6 +91,14 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
 
   const plants = [...basePlants, ...customPlants];
 
+  // Enhanced search with case-insensitive functionality
+  const [searchQuery, setSearchQuery, searchResult] = useEnhancedSearch(plants, {
+    searchFields: ['name', 'category', 'season'],
+    caseSensitive: false,
+    debounceMs: 300,
+    minLength: 0,
+  });
+
   const categories = [
     { id: "all", name: "Todas", icon: "🌱" },
     { id: "favorites", name: "Favoritas", icon: "⭐" },
@@ -99,14 +109,8 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
     { id: "raiz", name: "Raízes", icon: "🥕" },
   ];
 
-  const filteredPlants = useMemo(() => {
-    return plants.filter(plant => 
-      plant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      plant.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm, plants]);
-
   const getPlantsByCategory = (categoryId: string) => {
+    const filteredPlants = searchResult.items;
     if (categoryId === "all") return filteredPlants;
     if (categoryId === "favorites") return filteredPlants.filter(plant => favorites.includes(plant.id));
     return filteredPlants.filter(plant => plant.category === categoryId);
