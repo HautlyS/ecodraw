@@ -55,8 +55,8 @@ const Index = () => {
         
         <div 
           className={cn(
-            "flex flex-col transition-all duration-300",
-            isCompact ? "lg:flex-col" : "lg:flex-row"
+            "flex transition-all duration-300",
+            isCompact ? "flex-col h-full" : "flex-col lg:flex-row"
           )}
           style={{ 
             height: availableHeight,
@@ -72,15 +72,18 @@ const Index = () => {
           )}
 
           {/* Main Content Area */}
-          <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+          <div className={cn(
+            "flex flex-1 min-h-0 transition-all duration-300",
+            isCompact ? "flex-col" : "flex-col lg:flex-row"
+          )}>
             {/* Canvas Area */}
             <div className={cn(
               "flex-1 flex flex-col min-h-0 transition-all duration-300",
-              isCompact ? "order-1" : "order-1"
+              isCompact ? "h-full" : ""
             )}>
               <div className={cn(
                 "flex-1 transition-all duration-300",
-                isCompact ? "p-1" : "p-2 sm:p-4"
+                isCompact ? "p-1 h-full" : "p-2 sm:p-4"
               )}>
                 <Canvas 
                   selectedTool={selectedTool}
@@ -93,18 +96,15 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Sidebar - Adaptive Layout */}
-            <div className={cn(
-              "border-border bg-card transition-all duration-300",
-              isCompact 
-                ? "order-2 h-64 border-t" // Mobile: bottom panel
-                : sidebarCollapsed 
-                ? "w-0 overflow-hidden border-l-0" // Desktop: collapsed
-                : "w-80 border-l", // Desktop: expanded
-              "lg:border-t-0"
-            )}>
-              {/* Collapse button for desktop */}
-              {!isCompact && (
+            {/* Sidebar - Hidden on mobile, shown on desktop */}
+            {!isCompact && (
+              <div className={cn(
+                "border-border bg-card transition-all duration-300",
+                sidebarCollapsed 
+                  ? "w-0 overflow-hidden border-l-0" // Desktop: collapsed
+                  : "w-80 border-l" // Desktop: expanded
+              )}>
+                {/* Collapse button for desktop */}
                 <button
                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
                   className={cn(
@@ -122,13 +122,11 @@ const Index = () => {
                     &#8250;
                   </div>
                 </button>
-              )}
 
-              {/* Library Content */}
-              {!sidebarCollapsed && (
-                <>
-                  {/* Desktop Library Switcher */}
-                  {!isCompact && (
+                {/* Library Content */}
+                {!sidebarCollapsed && (
+                  <>
+                    {/* Desktop Library Switcher */}
                     <div className="p-3 border-b border-border">
                       <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
                         <button
@@ -155,25 +153,25 @@ const Index = () => {
                         </button>
                       </div>
                     </div>
-                  )}
 
-                  {/* Library Component */}
-                  <div className="flex-1 overflow-hidden">
-                    {activeLibrary === "plants" ? (
-                      <PlantLibrary 
-                        selectedPlant={selectedPlant}
-                        onPlantSelect={setSelectedPlant}
-                      />
-                    ) : (
-                      <TerrainLibrary 
-                        selectedTerrain={selectedTerrain}
-                        onTerrainSelect={setSelectedTerrain}
-                      />
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+                    {/* Library Component */}
+                    <div className="flex-1 overflow-hidden">
+                      {activeLibrary === "plants" ? (
+                        <PlantLibrary 
+                          selectedPlant={selectedPlant}
+                          onPlantSelect={setSelectedPlant}
+                        />
+                      ) : (
+                        <TerrainLibrary 
+                          selectedTerrain={selectedTerrain}
+                          onTerrainSelect={setSelectedTerrain}
+                        />
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
