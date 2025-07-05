@@ -74,11 +74,33 @@ export const useCanvasEvents = () => {
       );
       return distance <= 20;
     } else if (element.type === 'terrain') {
-      // For terrain elements, check if point is within the rectangular area
-      const width = element.width || 40;
-      const height = element.height || 40;
-      return pos.x >= element.x && pos.x <= element.x + width &&
-             pos.y >= element.y && pos.y <= element.y + height;
+      // Handle path-based terrain (trails, streams)
+      if (element.brushType === 'path' && element.pathPoints) {
+        for (let i = 0; i < element.pathPoints.length - 1; i++) {
+          const p1 = element.pathPoints[i];
+          const p2 = element.pathPoints[i + 1];
+          const distance = distanceFromPointToLine(pos, p1, p2);
+          if (distance <= 6) return true; // 6px tolerance for path selection
+        }
+        return false;
+      }
+      
+      // Handle area-based terrain (rectangle/circle)
+      if (element.brushType === 'circle') {
+        const centerX = element.x + (element.width || 0) / 2;
+        const centerY = element.y + (element.height || 0) / 2;
+        const radius = (element.width || 0) / 2;
+        const distance = Math.sqrt(
+          Math.pow(pos.x - centerX, 2) + Math.pow(pos.y - centerY, 2)
+        );
+        return distance <= radius;
+      } else {
+        // Rectangle terrain
+        const width = element.width || 40;
+        const height = element.height || 40;
+        return pos.x >= element.x && pos.x <= element.x + width &&
+               pos.y >= element.y && pos.y <= element.y + height;
+      }
     } else if (element.type === 'rectangle') {
       return pos.x >= element.x && pos.x <= element.x + (element.width || 0) &&
              pos.y >= element.y && pos.y <= element.y + (element.height || 0);
@@ -92,6 +114,30 @@ export const useCanvasEvents = () => {
     }
     return false;
   }, []);
+
+  // Helper function to calculate distance from point to line segment
+  const distanceFromPointToLine = (point: Position, lineStart: Position, lineEnd: Position): number => {
+    const A = point.x - lineStart.x;
+    const B = point.y - lineStart.y;
+    const C = lineEnd.x - lineStart.x;
+    const D = lineEnd.y - lineStart.y;
+
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    
+    if (lenSq === 0) return Math.sqrt(A * A + B * B);
+    
+    let param = dot / lenSq;
+    param = Math.max(0, Math.min(1, param));
+    
+    const xx = lineStart.x + param * C;
+    const yy = lineStart.y + param * D;
+    
+    const dx = point.x - xx;
+    const dy = point.y - yy;
+    
+    return Math.sqrt(dx * dx + dy * dy);
+  };
 
   const findElementAtPosition = useCallback((
     pos: Position, 
