@@ -35,6 +35,9 @@ interface DrawingElement {
   texture?: string;
   // Path points for trail-like terrains
   pathPoints?: { x: number; y: number }[];
+  // Brush properties
+  selectedBrushMode?: 'rectangle' | 'circle' | 'brush';
+  brushThickness?: number;
 }
 
 export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange }: CanvasProps) => {
