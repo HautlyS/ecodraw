@@ -93,11 +93,36 @@
   background-size: 20px 20px;
 }
 
+/* New terrain grid pattern with meter-based scaling */
+.terrain-grid-pattern {
+  /* Major grid lines every 2 meters (20px) */
+  background-image: 
+    linear-gradient(rgba(74, 126, 74, 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 126, 74, 0.25) 1px, transparent 1px),
+    /* Minor grid lines every 1 meter (10px) */
+    linear-gradient(rgba(74, 126, 74, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 126, 74, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 10px 10px, 10px 10px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+}
+
 .dark .grid-pattern {
   background-image: 
     linear-gradient(rgba(134, 239, 172, 0.2) 1px, transparent 1px),
     linear-gradient(90deg, rgba(134, 239, 172, 0.2) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+.dark .terrain-grid-pattern {
+  /* Major grid lines every 2 meters (20px) */
+  background-image: 
+    linear-gradient(rgba(134, 239, 172, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(134, 239, 172, 0.3) 1px, transparent 1px),
+    /* Minor grid lines every 1 meter (10px) */
+    linear-gradient(rgba(134, 239, 172, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(134, 239, 172, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px, 20px 20px, 10px 10px, 10px 10px;
+  background-position: 0 0, 0 0, 0 0, 0 0;
 }
 
 .plant-icon {
