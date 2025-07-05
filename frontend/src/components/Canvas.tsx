@@ -358,17 +358,50 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       setDragOffset({ x: 0, y: 0 });
     }
 
+    // Finish drawing terrain path
+    if (isDrawingTerrain && currentTerrainPath.length > 1 && selectedTerrain) {
+      const newTerrain: DrawingElement = {
+        id: Date.now(),
+        type: 'terrain',
+        x: currentTerrainPath[0].x,
+        y: currentTerrainPath[0].y,
+        pathPoints: currentTerrainPath,
+        terrain: selectedTerrain,
+        brushType: 'path',
+        texture: selectedTerrain.texture,
+        realWorldWidth: 1, // Path width
+        realWorldHeight: currentTerrainPath.length / 10, // Approximate length
+      };
+      
+      setElements(prev => [...prev, newTerrain]);
+      onTerrainUsed();
+      setIsDrawingTerrain(false);
+      setCurrentTerrainPath([]);
+      toast.success(`${selectedTerrain.name} (trilha) adicionado ao mapa!`);
+    }
+
+    // Finish drawing terrain area
     if (isDrawing && currentShape) {
       const minSize = 10;
-      if ((currentShape.width && currentShape.width > minSize) || 
-          (currentShape.radius && currentShape.radius > minSize)) {
+      const isValidSize = (currentShape.width && currentShape.width > minSize) || 
+                         (currentShape.radius && currentShape.radius > minSize);
+      
+      if (isValidSize) {
         setElements(prev => [...prev, currentShape]);
-        toast.success(`${currentShape.type === 'rectangle' ? 'Retângulo' : 'Círculo'} criado!`);
+        
+        if (currentShape.type === 'terrain') {
+          onTerrainUsed();
+          const realArea = (currentShape.realWorldWidth || 1) * (currentShape.realWorldHeight || 1);
+          toast.success(`${currentShape.terrain?.name} adicionado! (${realArea}m²)`);
+        } else {
+          toast.success(`${currentShape.type === 'rectangle' ? 'Retângulo' : 'Círculo'} criado!`);
+        }
       }
       setCurrentShape(null);
     }
+    
     setIsDrawing(false);
-  }, [isDragging, isDrawing, currentShape, isPanning]);
+  }, [isDragging, isDrawing, currentShape, isPanning, isDrawingTerrain, currentTerrainPath, selectedTerrain, onTerrainUsed]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
