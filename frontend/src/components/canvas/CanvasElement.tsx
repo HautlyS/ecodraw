@@ -166,7 +166,7 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
     const realHeight = element.realWorldHeight || 1;
     const brushType = element.brushType || 'rectangle';
     
-    // Handle path-based terrain (trails, streams)
+    // Handle path-based terrain (trails, streams, freehand brush)
     if (brushType === 'path' && element.pathPoints && element.pathPoints.length > 1) {
       const minX = Math.min(...element.pathPoints.map(p => p.x));
       const minY = Math.min(...element.pathPoints.map(p => p.y));
@@ -178,6 +178,8 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
         const relY = point.y - minY + 5;
         return index === 0 ? `M ${relX} ${relY}` : `${path} L ${relX} ${relY}`;
       }, '');
+      
+      const strokeWidth = element.brushThickness || 8;
       
       return (
         <div
@@ -205,7 +207,7 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
             <path
               d={pathD}
               stroke="rgba(0,0,0,0.2)"
-              strokeWidth="10"
+              strokeWidth={strokeWidth + 2}
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -215,41 +217,57 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
             <path
               d={pathD}
               stroke={element.terrain?.color}
-              strokeWidth="8"
+              strokeWidth={strokeWidth}
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            {/* Path texture pattern */}
-            <path
-              d={pathD}
-              stroke={element.terrain?.color + '60'}
-              strokeWidth="4"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray="2 3"
-            />
+            {/* Path texture pattern - only for thinner paths */}
+            {strokeWidth <= 12 && (
+              <path
+                d={pathD}
+                stroke={element.terrain?.color + '60'}
+                strokeWidth={Math.max(2, strokeWidth / 2)}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeDasharray="2 3"
+              />
+            )}
           </svg>
           
           {/* Trail icon */}
           <div 
-            className="absolute text-sm"
+            className="absolute text-sm pointer-events-none"
             style={{ 
               left: (maxX - minX) / 2,
               top: (maxY - minY) / 2,
               transform: 'translate(-50%, -50%)',
               color: element.terrain?.color,
-              textShadow: '0 0 3px rgba(255,255,255,0.8)'
+              textShadow: '0 0 3px rgba(255,255,255,0.8)',
+              fontSize: Math.min(strokeWidth, 16)
             }}
           >
             {element.terrain?.icon}
           </div>
           
+          {/* Selection handles for paths */}
+          {isSelected && (
+            <>
+              <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
+              <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
+              <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
+            </>
+          )}
+          
           {showTooltip && (
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded shadow-lg border whitespace-nowrap z-20 min-w-max">
               <div className="font-medium">{element.terrain?.name}</div>
               <div className="text-muted-foreground text-xs">{element.terrain?.description}</div>
+              <div className="text-muted-foreground text-xs">
+                Espessura: {strokeWidth}px ({(strokeWidth / 10).toFixed(1)}m)
+              </div>
               <div className="text-muted-foreground text-xs">
                 Comprimento: ~{Math.round(Math.sqrt(Math.pow(maxX - minX, 2) + Math.pow(maxY - minY, 2)) / 10)}m
               </div>
