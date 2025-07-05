@@ -209,7 +209,8 @@ kbd {
 /* Touch-friendly improvements */
 @media (hover: none) and (pointer: coarse) {
   .plant-icon:hover,
-  .terrain-element:hover {
+  .terrain-element:hover,
+  .terrain-area:hover {
     transform: none;
   }
 }
