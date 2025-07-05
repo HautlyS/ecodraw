@@ -393,8 +393,10 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       setDragOffset({ x: 0, y: 0 });
     }
 
-    // Finish drawing terrain path
+    // Finish drawing terrain path or freehand brush
     if (isDrawingTerrain && currentTerrainPath.length > 1 && selectedTerrain) {
+      const brushThickness = selectedTerrain.brushThickness || 20;
+      
       const newTerrain: DrawingElement = {
         id: Date.now(),
         type: 'terrain',
@@ -404,15 +406,18 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         terrain: selectedTerrain,
         brushType: 'path',
         texture: selectedTerrain.texture,
-        realWorldWidth: 1, // Path width
+        realWorldWidth: brushThickness / 10, // Convert to meters
         realWorldHeight: currentTerrainPath.length / 10, // Approximate length
+        brushThickness: brushThickness,
       };
       
       setElements(prev => [...prev, newTerrain]);
       onTerrainUsed();
       setIsDrawingTerrain(false);
       setCurrentTerrainPath([]);
-      toast.success(`${selectedTerrain.name} (trilha) adicionado ao mapa!`);
+      
+      const brushMode = selectedTerrain.selectedBrushMode || 'brush';
+      toast.success(`${selectedTerrain.name} (${brushMode === 'brush' ? 'pincel' : 'trilha'}) adicionado ao mapa!`);
     }
 
     // Finish drawing terrain area
