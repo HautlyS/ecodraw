@@ -478,26 +478,122 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     setIsPanning(false);
   }, []);
 
-  // Keyboard shortcuts
+  // Enhanced keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent shortcuts when typing in input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       if (e.key === ' ') {
         e.preventDefault();
         setIsSpacePressed(true);
       }
+      
+      // Delete/Backspace - delete selected elements
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         deleteSelectedElements();
       }
+      
+      // Escape - clear selection and cancel operations
       if (e.key === 'Escape') {
+        e.preventDefault();
         clearSelection();
         setCurrentShape(null);
         setIsDrawing(false);
         setIsDragging(false);
         setIsPanning(false);
+        setIsDrawingTerrain(false);
+        setCurrentTerrainPath([]);
+        onToolChange('select'); // Switch to select tool
       }
+      
+      // G - toggle grid
       if (e.key === 'g' || e.key === 'G') {
-        setShowGrid(prev => !prev);
+        e.preventDefault();
+        setShowGrid(prev => {
+          const newState = !prev;
+          toast.success(newState ? "Grade ativada" : "Grade desativada");
+          return newState;
+        });
+      }
+      
+      // S - select tool
+      if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        onToolChange('select');
+        toast.info("Ferramenta Selecionar ativada");
+      }
+      
+      // R - rectangle tool
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        onToolChange('rectangle');
+        toast.info("Ferramenta Retângulo ativada");
+      }
+      
+      // C - circle tool or copy
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        if (e.ctrlKey || e.metaKey) {
+          // Ctrl+C - copy
+          copySelectedElements();
+        } else {
+          // C - circle tool
+          onToolChange('circle');
+          toast.info("Ferramenta Círculo ativada");
+        }
+      }
+      
+      // T - terrain tool
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        onToolChange('terrain');
+        toast.info("Ferramenta Terreno ativada");
+      }
+      
+      // D - delete tool
+      if (e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
+        onToolChange('delete');
+        toast.info("Ferramenta Excluir ativada");
+      }
+      
+      // Ctrl+A - select all
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+        setElements(prev => prev.map(el => ({ ...el, selected: true })));
+        toast.success("Todos os elementos selecionados");
+      }
+      
+      // Ctrl+Z - undo (placeholder)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        toast.info("Desfazer - Em desenvolvimento");
+      }
+      
+      // Ctrl+Y or Ctrl+Shift+Z - redo (placeholder)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        toast.info("Refazer - Em desenvolvimento");
+      }
+      
+      // Number keys for zoom
+      if (e.key >= '1' && e.key <= '9' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        const zoomLevel = parseInt(e.key) * 25; // 1=25%, 2=50%, etc.
+        setZoom(Math.min(zoomLevel, 300));
+        toast.info(`Zoom: ${zoomLevel}%`);
+      }
+      
+      // 0 - reset zoom
+      if (e.key === '0' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setZoom(100);
+        setPanOffset({ x: 0, y: 0 });
+        toast.info("Zoom resetado para 100%");
       }
     };
 
@@ -514,7 +610,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [deleteSelectedElements, clearSelection]);
+  }, [deleteSelectedElements, clearSelection, copySelectedElements, onToolChange]);
 
   const handleZoomIn = useCallback(() => {
     setZoom(prev => Math.min(prev + 25, 300));
