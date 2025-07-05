@@ -700,7 +700,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         plant: plantData,
       };
       
-      setElements(prev => [...prev, newElement]);
+      elementsActions.set([...elements, newElement]);
       toast.success(`${plantData.name} adicionada via drag & drop!`);
     } catch (error) {
       console.error('Error parsing dropped data:', error);
