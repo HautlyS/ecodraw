@@ -94,7 +94,74 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     return { width: 1, height: 1 };
   }, []);
 
-  const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
+  const detectResizeHandle = useCallback((pos: { x: number; y: number }, element: DrawingElement): string | null => {
+    if (!element.selected) return null;
+
+    const handleSize = 8; // Size of resize handles
+    
+    // For plants
+    if (element.type === 'plant') {
+      const parsePlantSpacing = (spacing: string) => {
+        const PIXELS_PER_METER = 10;
+        if (spacing.includes('x')) {
+          const match = spacing.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
+          if (match) {
+            const width = parseFloat(match[1]);
+            const height = parseFloat(match[2]);
+            return { width: width * PIXELS_PER_METER, height: height * PIXELS_PER_METER };
+          }
+        }
+        const singleMatch = spacing.match(/(\d+(?:\.\d+)?)(cm|m)/);
+        if (singleMatch) {
+          const value = parseFloat(singleMatch[1]);
+          const unit = singleMatch[2];
+          const meters = unit === 'cm' ? value / 100 : value;
+          const pixels = meters * PIXELS_PER_METER;
+          return { width: pixels, height: pixels };
+        }
+        return { width: 40, height: 40 };
+      };
+      
+      const plantSize = parsePlantSpacing(element.plant?.spacing || '1x1m');
+      const left = element.x - plantSize.width / 2;
+      const top = element.y - plantSize.height / 2;
+      const right = left + plantSize.width;
+      const bottom = top + plantSize.height;
+      
+      // Check each handle
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'nw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'ne';
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'sw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'se';
+    } 
+    // For rectangles and terrain rectangles
+    else if (element.type === 'rectangle' || (element.type === 'terrain' && element.brushType !== 'circle')) {
+      const left = element.x;
+      const top = element.y;
+      const right = left + (element.width || 0);
+      const bottom = top + (element.height || 0);
+      
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'nw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'ne';
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'sw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'se';
+    }
+    // For circles
+    else if (element.type === 'circle' || (element.type === 'terrain' && element.brushType === 'circle')) {
+      const radius = element.radius || 0;
+      const left = element.x;
+      const top = element.y;
+      const right = left + radius * 2;
+      const bottom = top + radius * 2;
+      
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'nw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'ne';
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'sw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'se';
+    }
+    
+    return null;
+  }, []);
 
   const selectElement = useCallback((elementId: number) => {
     setElements(prev => prev.map(el => ({
