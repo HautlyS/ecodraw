@@ -71,6 +71,8 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   // Utility functions for world-to-pixel conversion
   const metersToPixels = useCallback((meters: number) => meters * PIXELS_PER_METER, []);
   const pixelsToMeters = useCallback((pixels: number) => pixels / PIXELS_PER_METER, []);
+
+  const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
   
   // Parse terrain size string to get dimensions in meters
   const parseTerrainSize = useCallback((sizeString: string) => {
