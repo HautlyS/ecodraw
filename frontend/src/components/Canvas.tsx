@@ -2,9 +2,14 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { CanvasControls } from "./canvas/CanvasControls";
+import { EnhancedCanvasControls } from "./canvas/EnhancedCanvasControls";
 import { CanvasElement } from "./canvas/CanvasElement";
 import { CanvasWelcome } from "./canvas/CanvasWelcome";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
+import { useCanvasZoom } from "@/hooks/useCanvasZoom";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
+import { useResponsive } from "@/hooks/useResponsive";
+import { cn } from "@/lib/utils";
 
 interface CanvasProps {
   selectedTool: string;
