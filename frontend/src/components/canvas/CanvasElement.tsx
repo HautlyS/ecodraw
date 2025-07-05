@@ -13,6 +13,9 @@ interface DrawingElement {
   terrain?: any;
   selected?: boolean;
   rotation?: number;
+  // Real-world size in meters (for terrain elements)
+  realWorldWidth?: number;
+  realWorldHeight?: number;
 }
 
 interface CanvasElementProps {
