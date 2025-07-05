@@ -16,6 +16,11 @@ interface DrawingElement {
   // Real-world size in meters (for terrain elements)
   realWorldWidth?: number;
   realWorldHeight?: number;
+  // Terrain brush properties
+  brushType?: 'rectangle' | 'circle' | 'path';
+  texture?: string;
+  // Path points for trail-like terrains
+  pathPoints?: { x: number; y: number }[];
 }
 
 interface CanvasElementProps {
