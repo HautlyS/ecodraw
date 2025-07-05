@@ -524,7 +524,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       newBounds.height = Math.max(newBounds.height, minSize);
       
       // Update the element
-      setElements(prev => prev.map(el => {
+      const updatedElements = elements.map(el => {
         if (el.id === resizeElement.id) {
           if (el.type === 'plant') {
             // For plants, update the center position and scale the spacing
@@ -554,7 +554,8 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
           }
         }
         return el;
-      }));
+      });
+      elementsActions.set(updatedElements);
       return;
     }
 
