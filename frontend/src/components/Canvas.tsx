@@ -47,8 +47,36 @@ interface DrawingElement {
 
 export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [zoom, setZoom] = useState(100);
-  const [elements, setElements] = useState<DrawingElement[]>([]);
+  const [elements, elementsActions] = useUndoRedo<DrawingElement[]>([], {
+    maxHistorySize: 50,
+    debounceMs: 300,
+  });
+  
+  const { isMobile, isTablet } = useResponsive();
+  const isCompact = isMobile || isTablet;
+
+  // Enhanced zoom controls
+  const {
+    zoom,
+    panOffset,
+    zoomIn,
+    zoomOut,
+    zoomToFit,
+    resetZoom,
+    setPanOffset,
+    zoomLevel,
+    canZoomIn,
+    canZoomOut,
+  } = useCanvasZoom({
+    minZoom: 25,
+    maxZoom: 400,
+    zoomStep: 25,
+    canvasRef,
+    onZoomChange: (newZoom) => {
+      toast.info(`Zoom: ${newZoom}%`, { duration: 1000 });
+    },
+  });
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
@@ -56,7 +84,6 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const [dragElement, setDragElement] = useState<DrawingElement | null>(null);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const [currentShape, setCurrentShape] = useState<DrawingElement | null>(null);
   const [showGrid, setShowGrid] = useState(true);
