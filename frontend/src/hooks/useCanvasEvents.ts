@@ -55,7 +55,7 @@ export const useCanvasEvents = () => {
 
   const snapToGrid = useCallback((pos: Position, showGrid: boolean): Position => {
     if (!showGrid) return pos;
-    const gridSize = 20;
+    const gridSize = 10; // 1 meter grid for precise placement
     return {
       x: Math.round(pos.x / gridSize) * gridSize,
       y: Math.round(pos.y / gridSize) * gridSize
