@@ -88,12 +88,14 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
 
   const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
 
-  const selectElement = useCallback((elementId: number) => {
-    setElements(prev => prev.map(el => ({
-      ...el,
-      selected: el.id === elementId
-    })));
-  }, []);
+  // Auto-select when clicking on any element
+  const handleElementClick = useCallback((elementId: number) => {
+    // Switch to select tool automatically
+    if (selectedTool !== 'select') {
+      onToolChange('select');
+    }
+    selectElement(elementId);
+  }, [selectedTool, onToolChange, selectElement]);
 
   const clearSelection = useCallback(() => {
     setElements(prev => prev.map(el => ({ ...el, selected: false })));
