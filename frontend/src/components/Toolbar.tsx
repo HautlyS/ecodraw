@@ -78,29 +78,30 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
       size="sm"
       onClick={() => onToolSelect(tool.id)}
       className={cn(
-        "gap-2 relative transition-all duration-200 hover:scale-105 border",
-        selectedTool === tool.id && tool.highlight && "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-400 shadow-lg shadow-emerald-500/25",
-        selectedTool === tool.id && !tool.highlight && "nature-gradient text-white border-primary shadow-md shadow-primary/25",
-        selectedTool !== tool.id && "hover:bg-accent/80 hover:border-accent border-transparent",
-        selectedTool === tool.id && "ring-2 ring-offset-2 ring-primary/50"
+        "gap-2 relative transition-all duration-300 hover:scale-105 border-2 font-medium",
+        selectedTool === tool.id && tool.highlight && "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-400 shadow-lg shadow-emerald-500/30",
+        selectedTool === tool.id && !tool.highlight && "nature-gradient text-white border-primary shadow-lg shadow-primary/30",
+        selectedTool !== tool.id && "hover:bg-accent/80 hover:border-accent/60 border-transparent hover:shadow-md",
+        selectedTool === tool.id && "ring-2 ring-offset-2 ring-primary/60",
+        isUtility && "text-xs"
       )}
       title={tool.description}
     >
       <tool.icon className={cn(
-        "w-4 h-4 transition-all",
-        selectedTool === tool.id && "drop-shadow-sm scale-110"
+        "w-4 h-4 transition-all duration-300",
+        selectedTool === tool.id && "drop-shadow-sm scale-110 animate-pulse"
       )} />
-      <span className="hidden md:inline font-medium">{tool.label}</span>
+      <span className="hidden md:inline font-semibold tracking-wide">{tool.label}</span>
       {tool.highlight && (
         <Badge 
           variant="secondary" 
-          className="absolute -top-1 -right-1 text-xs px-1 bg-orange-500 text-white border-0 animate-pulse"
+          className="absolute -top-1 -right-1 text-xs px-1.5 py-0.5 bg-orange-500 text-white border-0 animate-bounce shadow-md"
         >
           New
         </Badge>
       )}
       {selectedTool === tool.id && (
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 rounded-md pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/15 to-primary/5 rounded-md pointer-events-none animate-pulse" />
       )}
     </Button>
   );
