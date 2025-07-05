@@ -43,6 +43,7 @@ const Index = () => {
                 selectedTerrain={selectedTerrain}
                 onPlantUsed={() => setSelectedPlant(null)}
                 onTerrainUsed={() => setSelectedTerrain(null)}
+                onToolChange={handleToolSelect}
               />
             </div>
           </div>
