@@ -62,16 +62,114 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
     );
   }
 
+  // Terrain texture patterns
+  const getTerrainPattern = (texture: string, color: string) => {
+    switch (texture) {
+      case 'water':
+        return `radial-gradient(circle at 20% 20%, ${color}40 2px, transparent 2px),
+                radial-gradient(circle at 80% 80%, ${color}60 1px, transparent 1px),
+                linear-gradient(45deg, ${color}20 25%, transparent 25%)`;
+      case 'grass':
+        return `repeating-linear-gradient(
+                  0deg, ${color}30, ${color}30 2px, transparent 2px, transparent 4px),
+                repeating-linear-gradient(
+                  90deg, ${color}20, ${color}20 1px, transparent 1px, transparent 3px)`;
+      case 'sand':
+        return `radial-gradient(circle at 25% 25%, ${color}40 1px, transparent 1px),
+                radial-gradient(circle at 75% 75%, ${color}30 1px, transparent 1px)`;
+      case 'rock':
+        return `radial-gradient(ellipse at 30% 40%, ${color}60 3px, transparent 3px),
+                radial-gradient(ellipse at 70% 20%, ${color}50 2px, transparent 2px)`;
+      case 'trail':
+      case 'dirt_road':
+        return `repeating-linear-gradient(
+                  45deg, ${color}40, ${color}40 3px, transparent 3px, transparent 6px)`;
+      case 'building':
+        return `repeating-linear-gradient(
+                  0deg, ${color}50, ${color}50 5px, transparent 5px, transparent 10px),
+                repeating-linear-gradient(
+                  90deg, ${color}40, ${color}40 5px, transparent 5px, transparent 10px)`;
+      default:
+        return `repeating-linear-gradient(
+                  45deg, ${color}30, ${color}30 2px, transparent 2px, transparent 8px)`;
+    }
+  };
+
   if (element.type === 'terrain') {
     const terrainWidth = element.width || 40;
     const terrainHeight = element.height || 40;
     const realWidth = element.realWorldWidth || 1;
     const realHeight = element.realWorldHeight || 1;
+    const brushType = element.brushType || 'rectangle';
+    
+    // Handle path-based terrain (trails, streams)
+    if (brushType === 'path' && element.pathPoints && element.pathPoints.length > 1) {
+      const pathD = element.pathPoints.reduce((path, point, index) => {
+        return index === 0 ? `M ${point.x} ${point.y}` : `${path} L ${point.x} ${point.y}`;
+      }, '');
+      
+      return (
+        <div
+          className={cn(
+            "absolute terrain-path cursor-move transition-all",
+            selectionStyle
+          )}
+          style={{
+            left: Math.min(...element.pathPoints.map(p => p.x)) - 5,
+            top: Math.min(...element.pathPoints.map(p => p.y)) - 5,
+            transform: `rotate(${element.rotation || 0}deg)`,
+            zIndex: isSelected ? 10 : 1,
+            pointerEvents: 'none'
+          }}
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+        >
+          <svg
+            width={Math.max(...element.pathPoints.map(p => p.x)) - Math.min(...element.pathPoints.map(p => p.x)) + 10}
+            height={Math.max(...element.pathPoints.map(p => p.y)) - Math.min(...element.pathPoints.map(p => p.y)) + 10}
+            style={{ pointerEvents: 'auto' }}
+          >
+            <path
+              d={pathD}
+              stroke={element.terrain?.color}
+              strokeWidth="8"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
+            />
+            <path
+              d={pathD}
+              stroke={element.terrain?.color + '80'}
+              strokeWidth="12"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.5"
+            />
+          </svg>
+          
+          {showTooltip && (
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded shadow-lg border whitespace-nowrap z-20 min-w-max">
+              <div className="font-medium">{element.terrain?.name}</div>
+              <div className="text-muted-foreground text-xs">{element.terrain?.description}</div>
+              <div className="text-muted-foreground text-xs">
+                Caminho: ~{Math.round((element.pathPoints?.length || 0) / 10)}m
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    // Handle area-based terrain (rectangle/circle)
+    const isCircle = brushType === 'circle';
+    const borderRadius = isCircle ? '50%' : '4px';
     
     return (
       <div
         className={cn(
-          "absolute terrain-area cursor-move transition-all group border-2",
+          "absolute terrain-brush cursor-move transition-all group border-2",
           selectionStyle
         )}
         style={{
@@ -79,43 +177,47 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
           top: element.y,
           width: terrainWidth,
           height: terrainHeight,
+          borderRadius: borderRadius,
           transform: `rotate(${element.rotation || 0}deg)`,
-          backgroundColor: element.terrain?.color + '40', // More transparent fill
+          backgroundColor: element.terrain?.color + '40',
           borderColor: element.terrain?.color,
-          zIndex: isSelected ? 10 : 1
+          backgroundImage: getTerrainPattern(element.texture || 'default', element.terrain?.color || '#666'),
+          backgroundSize: '8px 8px',
+          zIndex: isSelected ? 10 : 1,
+          boxShadow: `inset 0 0 0 1px ${element.terrain?.color}60`,
         }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        {/* Terrain pattern/texture */}
+        {/* Central icon for identification */}
         <div 
-          className="w-full h-full flex items-center justify-center relative opacity-80"
-          style={{
-            background: `repeating-linear-gradient(
-              45deg,
-              ${element.terrain?.color}20,
-              ${element.terrain?.color}20 2px,
-              transparent 2px,
-              transparent 8px
-            )`
+          className="absolute inset-0 flex items-center justify-center text-lg font-bold pointer-events-none"
+          style={{ 
+            color: element.terrain?.color,
+            textShadow: '0 0 4px rgba(255,255,255,0.8), 0 0 8px rgba(255,255,255,0.6)',
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
           }}
         >
-          {/* Icon in center */}
-          <div 
-            className="text-2xl drop-shadow-sm bg-white/80 rounded-full p-1 border"
-            style={{ borderColor: element.terrain?.color }}
-          >
-            {element.terrain?.icon}
-          </div>
-          
-          {/* Size indicator */}
-          <div 
-            className="absolute top-1 left-1 text-xs font-medium px-1 rounded text-white"
-            style={{ backgroundColor: element.terrain?.color }}
-          >
-            {realWidth}×{realHeight}m
-          </div>
+          {element.terrain?.icon}
         </div>
+        
+        {/* Size indicator */}
+        <div 
+          className="absolute top-1 left-1 text-xs font-medium px-1 rounded text-white shadow-sm"
+          style={{ backgroundColor: element.terrain?.color + 'CC' }}
+        >
+          {realWidth}×{realHeight}m
+        </div>
+        
+        {/* Selection handles */}
+        {isSelected && (
+          <>
+            <div className="absolute -top-1 -left-1 w-2 h-2 bg-accent rounded-full"></div>
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full"></div>
+            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-accent rounded-full"></div>
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-accent rounded-full"></div>
+          </>
+        )}
         
         {showTooltip && (
           <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded shadow-lg border whitespace-nowrap z-20 min-w-max">
@@ -123,6 +225,9 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
             <div className="text-muted-foreground text-xs">{element.terrain?.description}</div>
             <div className="text-muted-foreground text-xs">
               Área: {realWidth}×{realHeight}m ({realWidth * realHeight}m²)
+            </div>
+            <div className="text-muted-foreground text-xs">
+              Textura: {element.texture}
             </div>
           </div>
         )}
