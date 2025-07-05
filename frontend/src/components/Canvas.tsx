@@ -729,6 +729,9 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         setIsPanning(false);
         setIsDrawingTerrain(false);
         setCurrentTerrainPath([]);
+        setIsResizing(false);
+        setResizeHandle(null);
+        setResizeElement(null);
         onToolChange('select'); // Switch to select tool
       }
       
