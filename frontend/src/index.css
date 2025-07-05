@@ -3,6 +3,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Enhanced responsive base styles */
+html {
+  /* Custom property for viewport height (mobile-friendly) */
+  --vh: 1vh;
+  /* Custom properties for responsive breakpoints */
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+body {
+  /* Use dynamic viewport height for mobile */
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+  /* Improve touch scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
 @layer base {
   :root {
     --background: 46 46% 97%;
