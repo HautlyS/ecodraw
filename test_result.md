@@ -104,6 +104,52 @@
 
 user_problem_statement: "I need to test the functionality of the Garden/Farm Planning Canvas Application to identify issues with tools and terrain elements."
 
+backend:
+  - task: "Backend API Health"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial testing of backend API health needed."
+      - working: true
+        agent: "testing"
+        comment: "Backend API root endpoint (/api/) is working correctly, returning 'Hello World' with status code 200."
+
+  - task: "MongoDB Connection"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial testing of MongoDB connection needed."
+      - working: true
+        agent: "testing"
+        comment: "MongoDB connection is working correctly. Successfully tested data persistence by creating and retrieving status checks."
+
+  - task: "Status Check API"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Initial testing of status check API needed."
+      - working: true
+        agent: "testing"
+        comment: "Status check API endpoints (/api/status) are working correctly. Successfully tested POST to create a new status check and GET to retrieve all status checks."
+
 frontend:
   - task: "Toolbar Functionality"
     implemented: true
