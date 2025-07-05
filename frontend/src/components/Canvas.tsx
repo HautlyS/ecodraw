@@ -37,7 +37,7 @@ interface DrawingElement {
   pathPoints?: { x: number; y: number }[];
 }
 
-export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed }: CanvasProps) => {
+export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(100);
   const [elements, setElements] = useState<DrawingElement[]>([]);
