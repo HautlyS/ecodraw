@@ -420,7 +420,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
           realWorldHeight: pathLength,
         };
         
-        setElements(prev => [...prev, newTerrain]);
+        elementsActions.set([...elements, newTerrain]);
         onTerrainUsed();
         toast.success(`${selectedTerrain.name} (caminho) adicionado ao mapa!`);
         return;
