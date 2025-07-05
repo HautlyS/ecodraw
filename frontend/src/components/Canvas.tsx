@@ -885,27 +885,18 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [deleteSelectedElements, clearSelection, copySelectedElements, onToolChange]);
-
-  const handleZoomIn = useCallback(() => {
-    setZoom(prev => Math.min(prev + 25, 300));
-  }, []);
-
-  const handleZoomOut = useCallback(() => {
-    setZoom(prev => Math.max(prev - 25, 25));
-  }, []);
+  }, [deleteSelectedElements, clearSelection, copySelectedElements, onToolChange, elementsActions, resetZoom, zoomToFit]);
 
   const handleReset = useCallback(() => {
-    setZoom(100);
-    setPanOffset({ x: 0, y: 0 });
-    setElements([]);
+    resetZoom();
+    elementsActions.reset([]);
     setCurrentShape(null);
     setIsDrawing(false);
     setIsDragging(false);
     setIsPanning(false);
     clearSelection();
     toast.success("Canvas resetado");
-  }, [clearSelection]);
+  }, [resetZoom, elementsActions, clearSelection]);
 
   const getCursorStyle = () => {
     if (isSpacePressed || isPanning) return 'cursor-grab';
