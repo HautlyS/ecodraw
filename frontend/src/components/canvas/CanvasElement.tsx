@@ -104,8 +104,15 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
     
     // Handle path-based terrain (trails, streams)
     if (brushType === 'path' && element.pathPoints && element.pathPoints.length > 1) {
+      const minX = Math.min(...element.pathPoints.map(p => p.x));
+      const minY = Math.min(...element.pathPoints.map(p => p.y));
+      const maxX = Math.max(...element.pathPoints.map(p => p.x));
+      const maxY = Math.max(...element.pathPoints.map(p => p.y));
+      
       const pathD = element.pathPoints.reduce((path, point, index) => {
-        return index === 0 ? `M ${point.x} ${point.y}` : `${path} L ${point.x} ${point.y}`;
+        const relX = point.x - minX + 5;
+        const relY = point.y - minY + 5;
+        return index === 0 ? `M ${relX} ${relY}` : `${path} L ${relX} ${relY}`;
       }, '');
       
       return (
@@ -115,20 +122,32 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
             selectionStyle
           )}
           style={{
-            left: Math.min(...element.pathPoints.map(p => p.x)) - 5,
-            top: Math.min(...element.pathPoints.map(p => p.y)) - 5,
+            left: minX - 5,
+            top: minY - 5,
+            width: maxX - minX + 10,
+            height: maxY - minY + 10,
             transform: `rotate(${element.rotation || 0}deg)`,
             zIndex: isSelected ? 10 : 1,
-            pointerEvents: 'none'
           }}
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
         >
           <svg
-            width={Math.max(...element.pathPoints.map(p => p.x)) - Math.min(...element.pathPoints.map(p => p.x)) + 10}
-            height={Math.max(...element.pathPoints.map(p => p.y)) - Math.min(...element.pathPoints.map(p => p.y)) + 10}
-            style={{ pointerEvents: 'auto' }}
+            width={maxX - minX + 10}
+            height={maxY - minY + 10}
+            className="absolute inset-0"
           >
+            {/* Path shadow */}
+            <path
+              d={pathD}
+              stroke="rgba(0,0,0,0.2)"
+              strokeWidth="10"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              transform="translate(1,1)"
+            />
+            {/* Main path */}
             <path
               d={pathD}
               stroke={element.terrain?.color}
@@ -136,25 +155,39 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}
             />
+            {/* Path texture pattern */}
             <path
               d={pathD}
-              stroke={element.terrain?.color + '80'}
-              strokeWidth="12"
+              stroke={element.terrain?.color + '60'}
+              strokeWidth="4"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
-              opacity="0.5"
+              strokeDasharray="2 3"
             />
           </svg>
+          
+          {/* Trail icon */}
+          <div 
+            className="absolute text-sm"
+            style={{ 
+              left: (maxX - minX) / 2,
+              top: (maxY - minY) / 2,
+              transform: 'translate(-50%, -50%)',
+              color: element.terrain?.color,
+              textShadow: '0 0 3px rgba(255,255,255,0.8)'
+            }}
+          >
+            {element.terrain?.icon}
+          </div>
           
           {showTooltip && (
             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded shadow-lg border whitespace-nowrap z-20 min-w-max">
               <div className="font-medium">{element.terrain?.name}</div>
               <div className="text-muted-foreground text-xs">{element.terrain?.description}</div>
               <div className="text-muted-foreground text-xs">
-                Caminho: ~{Math.round((element.pathPoints?.length || 0) / 10)}m
+                Comprimento: ~{Math.round(Math.sqrt(Math.pow(maxX - minX, 2) + Math.pow(maxY - minY, 2)) / 10)}m
               </div>
             </div>
           )}
