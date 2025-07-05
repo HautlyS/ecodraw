@@ -26,6 +26,9 @@ interface DrawingElement {
   terrain?: any;
   selected?: boolean;
   rotation?: number;
+  // Real-world size in meters (for terrain elements)
+  realWorldWidth?: number;
+  realWorldHeight?: number;
 }
 
 export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed }: CanvasProps) => {
