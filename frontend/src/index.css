@@ -261,7 +261,9 @@ kbd {
 @media (hover: none) and (pointer: coarse) {
   .plant-icon:hover,
   .terrain-element:hover,
-  .terrain-area:hover {
+  .terrain-area:hover,
+  .terrain-brush:hover,
+  .terrain-path:hover {
     transform: none;
   }
 }
