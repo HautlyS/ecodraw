@@ -167,8 +167,12 @@ export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibr
                     >
                       <div className="flex items-start gap-2">
                         <div 
-                          className="text-lg flex-shrink-0 w-8 h-8 rounded flex items-center justify-center border"
-                          style={{ backgroundColor: element.color + '20', borderColor: element.color }}
+                          className="text-lg flex-shrink-0 w-8 h-8 rounded flex items-center justify-center border-2 transition-all hover:scale-110"
+                          style={{ 
+                            backgroundColor: element.color + '30', 
+                            borderColor: element.color,
+                            boxShadow: `0 0 8px ${element.color}40`
+                          }}
                         >
                           {element.icon}
                         </div>
@@ -178,27 +182,34 @@ export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibr
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="p-0.5 h-auto w-auto"
+                              className="p-0.5 h-auto w-auto hover:scale-110 transition-transform"
                               onClick={(e) => toggleFavorite(element.id, e)}
                             >
                               <Star 
                                 className={cn(
-                                  "w-3 h-3",
+                                  "w-3 h-3 transition-colors",
                                   favorites.includes(element.id) 
                                     ? "fill-yellow-400 text-yellow-400" 
-                                    : "text-gray-400"
+                                    : "text-gray-400 hover:text-yellow-300"
                                 )}
                               />
                             </Button>
                           </div>
                           <p className="text-xs text-muted-foreground mb-1 line-clamp-2">{element.description}</p>
                           <div className="flex flex-wrap gap-1">
-                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                            <Badge variant="secondary" className="text-xs px-1 py-0 font-medium">
                               {element.size}
                             </Badge>
                             <Badge 
-                              className="text-xs text-white px-1 py-0"
+                              className="text-xs text-white px-1 py-0 font-medium shadow-sm"
                               style={{ backgroundColor: element.color }}
+                            >
+                              {element.brushType}
+                            </Badge>
+                            <Badge 
+                              variant="outline"
+                              className="text-xs px-1 py-0"
+                              style={{ borderColor: element.color, color: element.color }}
                             >
                               {element.category}
                             </Badge>
