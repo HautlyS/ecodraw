@@ -648,7 +648,11 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         onZoomOut={handleZoomOut}
         onReset={handleReset}
         showGrid={showGrid}
-        onToggleGrid={() => setShowGrid(!showGrid)}
+        onToggleGrid={() => {
+          const newState = !showGrid;
+          setShowGrid(newState);
+          toast.success(newState ? "Grade ativada (G)" : "Grade desativada (G)");
+        }}
         elementsCount={elements.length}
         selectedCount={elements.filter(el => el.selected).length}
       />
