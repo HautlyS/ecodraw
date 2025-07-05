@@ -69,10 +69,37 @@ export const useCanvasEvents = () => {
 
   const isPointInElement = useCallback((pos: Position, element: DrawingElement): boolean => {
     if (element.type === 'plant') {
-      const distance = Math.sqrt(
-        Math.pow(pos.x - element.x, 2) + Math.pow(pos.y - element.y, 2)
-      );
-      return distance <= 20;
+      // Parse plant spacing to get actual dimensions
+      const parsePlantSpacing = (spacing: string) => {
+        const PIXELS_PER_METER = 10;
+        
+        if (spacing.includes('x')) {
+          const match = spacing.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
+          if (match) {
+            const width = parseFloat(match[1]);
+            const height = parseFloat(match[2]);
+            return { width: width * PIXELS_PER_METER, height: height * PIXELS_PER_METER };
+          }
+        }
+        
+        const singleMatch = spacing.match(/(\d+(?:\.\d+)?)(cm|m)/);
+        if (singleMatch) {
+          const value = parseFloat(singleMatch[1]);
+          const unit = singleMatch[2];
+          const meters = unit === 'cm' ? value / 100 : value;
+          const pixels = meters * PIXELS_PER_METER;
+          return { width: pixels, height: pixels };
+        }
+        
+        return { width: 40, height: 40 };
+      };
+      
+      const plantSize = parsePlantSpacing(element.plant?.spacing || '1x1m');
+      const plantLeft = element.x - plantSize.width / 2;
+      const plantTop = element.y - plantSize.height / 2;
+      
+      return pos.x >= plantLeft && pos.x <= plantLeft + plantSize.width &&
+             pos.y >= plantTop && pos.y <= plantTop + plantSize.height;
     } else if (element.type === 'terrain') {
       // Handle path-based terrain (trails, streams)
       if (element.brushType === 'path' && element.pathPoints) {
