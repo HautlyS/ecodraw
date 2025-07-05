@@ -306,10 +306,10 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-1 -left-1 w-2 h-2 bg-accent rounded-full"></div>
-            <div className="absolute -top-1 -right-1 w-2 h-2 bg-accent rounded-full"></div>
-            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-accent rounded-full"></div>
-            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-accent rounded-full"></div>
+            <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
+            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
+            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
           </>
         )}
         
