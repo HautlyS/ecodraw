@@ -127,6 +127,15 @@ export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibr
     );
   };
 
+  const handleTerrainSelect = (element: TerrainElement) => {
+    const enhancedElement = {
+      ...element,
+      selectedBrushMode: brushMode,
+      brushThickness: brushThickness
+    };
+    onTerrainSelect(enhancedElement);
+  };
+
   return (
     <div className="flex flex-col h-full max-h-screen overflow-hidden">
       {/* Header */}
@@ -141,6 +150,84 @@ export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibr
             className="pl-7 text-xs h-8"
           />
         </div>
+      </div>
+
+      {/* Brush Mode Selector */}
+      <div className="p-3 border-b border-border flex-shrink-0 bg-muted/30">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium">Modo de Pintura</h3>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowSettings(!showSettings)}
+            className="h-6 w-6 p-0"
+          >
+            <Settings className="w-3 h-3" />
+          </Button>
+        </div>
+        
+        <div className="grid grid-cols-3 gap-1 p-1 bg-background rounded-lg border">
+          <Button
+            variant={brushMode === 'rectangle' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setBrushMode('rectangle')}
+            className="flex items-center gap-1 text-xs h-8"
+          >
+            <Square className="w-3 h-3" />
+            <span className="hidden sm:inline">Retângulo</span>
+          </Button>
+          <Button
+            variant={brushMode === 'circle' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setBrushMode('circle')}
+            className="flex items-center gap-1 text-xs h-8"
+          >
+            <Circle className="w-3 h-3" />
+            <span className="hidden sm:inline">Círculo</span>
+          </Button>
+          <Button
+            variant={brushMode === 'brush' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setBrushMode('brush')}
+            className="flex items-center gap-1 text-xs h-8"
+          >
+            <Paintbrush className="w-3 h-3" />
+            <span className="hidden sm:inline">Pincel</span>
+          </Button>
+        </div>
+        
+        {/* Brush Settings */}
+        {showSettings && (
+          <Card className="mt-2">
+            <CardHeader className="p-2">
+              <CardTitle className="text-xs">Configurações do Pincel</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2 pt-0">
+              <div className="space-y-2">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">
+                    Espessura: {brushThickness}px
+                  </label>
+                  <Slider
+                    value={[brushThickness]}
+                    onValueChange={(value) => setBrushThickness(value[0])}
+                    min={5}
+                    max={100}
+                    step={5}
+                    className="w-full"
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Modo atual:</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {brushMode === 'rectangle' ? 'Retângulo' : 
+                     brushMode === 'circle' ? 'Círculo' : 'Pincel Livre'}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Categories */}
