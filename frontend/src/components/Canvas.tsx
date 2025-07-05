@@ -229,10 +229,29 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       const brushType = selectedTerrain.brushType || 'rectangle';
       
       if (brushType === 'path') {
-        // Start drawing a path for trails, streams, etc.
-        setIsDrawingTerrain(true);
-        setCurrentTerrainPath([pos]);
-        setStartPos(pos);
+        // For path terrain, create immediately as single click creates a simple path
+        const pathLength = terrainSize.width > 1 ? terrainSize.width : 5; // Default path length
+        const pathPoints = [
+          pos,
+          { x: pos.x + metersToPixels(pathLength), y: pos.y }
+        ];
+        
+        const newTerrain: DrawingElement = {
+          id: Date.now(),
+          type: 'terrain',
+          x: pos.x,
+          y: pos.y,
+          pathPoints: pathPoints,
+          terrain: selectedTerrain,
+          brushType: 'path',
+          texture: selectedTerrain.texture,
+          realWorldWidth: 1, // Path width
+          realWorldHeight: pathLength,
+        };
+        
+        setElements(prev => [...prev, newTerrain]);
+        onTerrainUsed();
+        toast.success(`${selectedTerrain.name} (caminho) adicionado ao mapa!`);
         return;
       } else {
         // Start drawing rectangle or circle terrain
