@@ -24,18 +24,18 @@ interface ToolbarProps {
 export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
   const tools = [
     { id: "select", icon: MousePointer, label: "Selecionar", description: "Selecione e mova elementos" },
-    { id: "move", icon: Hand, label: "Navegar", description: "Navegue pelo canvas" },
-    { id: "rectangle", icon: Square, label: "Retângulo", description: "Desenhe retângulos" },
-    { id: "circle", icon: Circle, label: "Círculo", description: "Desenhe círculos" },
+    { id: "move", icon: Hand, label: "Navegar", description: "Navegue pelo canvas (Espaço + arrastar)" },
+    { id: "rectangle", icon: Square, label: "Retângulo", description: "Desenhe retângulos de área" },
+    { id: "circle", icon: Circle, label: "Círculo", description: "Desenhe círculos de área" },
     { id: "terrain", icon: Mountain, label: "Terreno", description: "Adicione elementos do terreno" },
-    { id: "copy", icon: Copy, label: "Copiar", description: "Copie elementos selecionados" },
-    { id: "delete", icon: Trash2, label: "Excluir", description: "Remova elementos" },
+    { id: "delete", icon: Trash2, label: "Excluir", description: "Remova elementos (clique nos elementos)" },
   ];
 
   const utilityTools = [
-    { id: "grid", icon: Grid3X3, label: "Grid", description: "Alternar grade" },
-    { id: "measure", icon: Ruler, label: "Medir", description: "Medir distâncias" },
-    { id: "rotate", icon: RotateCw, label: "Rotacionar", description: "Rotacione elementos" },
+    { id: "grid", icon: Grid3X3, label: "Grid", description: "Alternar grade de alinhamento" },
+    { id: "copy", icon: Copy, label: "Copiar", description: "Copie elementos selecionados" },
+    { id: "rotate", icon: RotateCw, label: "Rotacionar", description: "Rotacione elementos selecionados" },
+    { id: "measure", icon: Ruler, label: "Medir", description: "Medir distâncias entre pontos" },
   ];
 
   const renderToolButton = (tool: any) => (
