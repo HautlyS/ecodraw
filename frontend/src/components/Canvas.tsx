@@ -130,9 +130,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     }
 
     // Add terrain element
-    console.log('Terrain check:', { selectedTerrain, selectedTool, match: selectedTerrain && selectedTool === 'terrain' });
     if (selectedTerrain && selectedTool === 'terrain') {
-      console.log('Adding terrain element:', selectedTerrain);
       const newElement: DrawingElement = {
         id: Date.now(),
         type: 'terrain',
