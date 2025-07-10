@@ -271,6 +271,72 @@ export const UnifiedToolbar = ({
           {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
         </Button>
       </div>
+
+      {/* Custom Canvas Size Dialog */}
+      <Dialog open={showCustomSizeDialog} onOpenChange={setShowCustomSizeDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base flex items-center gap-2">
+              <Maximize2 className="w-4 h-4" />
+              Tamanho Personalizado do Canvas
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="custom-width" className="text-xs font-medium">Largura (metros)</Label>
+                <Input
+                  id="custom-width"
+                  type="number"
+                  value={customWidth}
+                  onChange={(e) => setCustomWidth(Number(e.target.value))}
+                  min={1}
+                  max={1000}
+                  className="text-xs h-8 mt-1"
+                  placeholder="50"
+                />
+              </div>
+              <div>
+                <Label htmlFor="custom-height" className="text-xs font-medium">Altura (metros)</Label>
+                <Input
+                  id="custom-height"
+                  type="number"
+                  value={customHeight}
+                  onChange={(e) => setCustomHeight(Number(e.target.value))}
+                  min={1}
+                  max={1000}
+                  className="text-xs h-8 mt-1"
+                  placeholder="30"
+                />
+              </div>
+            </div>
+            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <div className="text-xs text-emerald-700 dark:text-emerald-300 space-y-1">
+                <div className="font-medium">Tamanho resultante:</div>
+                <div>{customWidth}m × {customHeight}m ({customWidth * customHeight}m²)</div>
+                <div className="text-emerald-600 dark:text-emerald-400 text-xs">
+                  💡 Recomendado: entre 10m × 10m e 200m × 100m
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowCustomSizeDialog(false)}
+                className="text-xs h-8"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCustomSizeSubmit}
+                className="text-xs h-8 bg-emerald-500 hover:bg-emerald-600"
+              >
+                Aplicar Tamanho
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
