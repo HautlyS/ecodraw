@@ -52,6 +52,9 @@ export const UnifiedToolbar = ({
   onCanvasSizeChange
 }: UnifiedToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
+  const [showCustomSizeDialog, setShowCustomSizeDialog] = useState(false);
+  const [customWidth, setCustomWidth] = useState(canvasSize.width);
+  const [customHeight, setCustomHeight] = useState(canvasSize.height);
 
   const tools = [
     { id: "select", icon: MousePointer, label: "Select", shortcut: "V" },
