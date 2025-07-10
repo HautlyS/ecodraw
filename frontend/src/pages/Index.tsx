@@ -1,15 +1,17 @@
 
-import { useState } from "react";
-import { Header } from "@/components/Header";
+import { useState, useCallback, useMemo } from "react";
+import { UnifiedToolbar } from "@/components/UnifiedToolbar";
 import { PlantLibrary } from "@/components/PlantLibrary";
 import { Canvas } from "@/components/Canvas";
-import { Toolbar } from "@/components/Toolbar";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { TerrainLibrary } from "@/components/TerrainLibrary";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChevronLeft, ChevronRight, Leaf, Mountain } from "lucide-react";
 
 const Index = () => {
   const [selectedTool, setSelectedTool] = useState<string>("select");
@@ -18,20 +20,23 @@ const Index = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeLibrary, setActiveLibrary] = useState<"plants" | "terrain">("plants");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 50, height: 30 });
 
-  const { isMobile, isTablet, screenHeight } = useResponsive();
+  const { isMobile, isTablet, isDesktop, isLargeDesktop, isUltraWide, screenHeight, screenWidth, aspectRatio } = useResponsive();
   const isCompact = isMobile || isTablet;
+  const isWideScreen = isLargeDesktop || isUltraWide;
+  const hasWideAspectRatio = aspectRatio > 1.5;
 
-  const handleToolSelect = (tool: string) => {
+  const handleToolSelect = useCallback((tool: string) => {
     setSelectedTool(tool);
     if (tool === "terrain") {
       setActiveLibrary("terrain");
     } else if (tool === "select" || tool === "rectangle" || tool === "circle") {
       setActiveLibrary("plants");
     }
-  };
+  }, []);
 
-  const handleLibraryChange = (library: "plants" | "terrain") => {
+  const handleLibraryChange = useCallback((library: "plants" | "terrain") => {
     setActiveLibrary(library);
     // Auto-switch to appropriate tool when changing libraries
     if (library === "terrain" && selectedTool !== "terrain") {
@@ -39,143 +44,127 @@ const Index = () => {
     } else if (library === "plants" && selectedTool === "terrain") {
       setSelectedTool("select");
     }
-  };
+  }, [selectedTool]);
 
-  // Calculate dynamic heights based on screen size and mobile considerations
-  const headerHeight = isCompact ? "3.5rem" : "4rem";
-  const toolbarHeight = isCompact ? "0" : "auto"; // Hide toolbar on mobile
-  const mobileNavHeight = isCompact ? "4rem" : "0";
-  const availableHeight = `calc(100vh - ${headerHeight} - ${toolbarHeight} - ${mobileNavHeight} - env(safe-area-inset-top) - env(safe-area-inset-bottom))`;
-  const dynamicHeight = `calc(var(--vh, 1vh) * 100 - ${headerHeight} - ${toolbarHeight} - ${mobileNavHeight} - env(safe-area-inset-top) - env(safe-area-inset-bottom))`;
+  const handlePlantUsed = useCallback(() => {}, []); // Don't clear selection after use
+  const handleTerrainUsed = useCallback(() => {}, []); // Don't clear selection after use
+  const handleWelcomeClose = useCallback(() => setShowWelcome(false), []);
+  const handleCanvasSizeChange = useCallback((size: { width: number; height: number }) => {
+    setCanvasSize(size);
+  }, []);
+
+  // Enhanced height calculations based on screen size and device type (memoized)
+  const layoutConfig = useMemo(() => {
+    const headerHeight = isCompact ? "3.5rem" : isWideScreen ? "4.5rem" : "4rem";
+    const toolbarHeight = isCompact ? "0" : isWideScreen ? "4.5rem" : "4rem";
+    const mobileNavHeight = isCompact ? "4rem" : "0";
+    const safeAreaTop = isCompact ? "env(safe-area-inset-top)" : "0px";
+    const safeAreaBottom = isCompact ? "env(safe-area-inset-bottom)" : "0px";
+    
+    return {
+      headerHeight,
+      toolbarHeight,
+      mobileNavHeight,
+      safeAreaTop,
+      safeAreaBottom,
+      availableHeight: `calc(100vh - ${headerHeight} - ${toolbarHeight} - ${mobileNavHeight} - ${safeAreaTop} - ${safeAreaBottom})`,
+      dynamicHeight: `calc(var(--vh, 1vh) * 100 - ${headerHeight} - ${toolbarHeight} - ${mobileNavHeight} - ${safeAreaTop} - ${safeAreaBottom})`,
+      sidebarWidth: isUltraWide ? "24rem" : isLargeDesktop ? "22rem" : "20rem",
+      sidebarCollapsedWidth: isWideScreen ? "3rem" : "0"
+    };
+  }, [isCompact, isWideScreen, isLargeDesktop, isUltraWide]);
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen-dynamic bg-gradient-to-br from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800 transition-colors overflow-hidden">
-        <Header />
-        
-        <div 
-          className={cn(
-            "flex transition-all duration-300",
-            isCompact ? "flex-col h-full" : "flex-col lg:flex-row"
-          )}
-          style={{ 
-            height: availableHeight,
-            minHeight: dynamicHeight 
-          }}
-        >
-          {/* Desktop Toolbar - Hidden on mobile */}
-          {!isCompact && (
-            <Toolbar 
+      <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950 overflow-hidden">
+        {/* Unified Toolbar */}
+        <UnifiedToolbar 
+          selectedTool={selectedTool}
+          onToolSelect={handleToolSelect}
+          onUndo={() => console.log('undo')}
+          onRedo={() => console.log('redo')}
+          canUndo={false}
+          canRedo={false}
+          canvasSize={canvasSize}
+          onCanvasSizeChange={handleCanvasSizeChange}
+        />
+
+        {/* Main Content: Canvas + Sidebar */}
+        <div className="flex-1 flex min-h-0">
+          {/* Canvas - Full Screen */}
+          <div className="flex-1 relative">
+            <Canvas 
               selectedTool={selectedTool}
-              onToolSelect={handleToolSelect}
+              selectedPlant={selectedPlant}
+              selectedTerrain={selectedTerrain}
+              onPlantUsed={handlePlantUsed}
+              onTerrainUsed={handleTerrainUsed}
+              onToolChange={handleToolSelect}
+              canvasSize={canvasSize}
+              onCanvasSizeChange={handleCanvasSizeChange}
             />
-          )}
-
-          {/* Main Content Area */}
-          <div className={cn(
-            "flex flex-1 min-h-0 transition-all duration-300",
-            isCompact ? "flex-col" : "flex-col lg:flex-row"
-          )}>
-            {/* Canvas Area */}
-            <div className={cn(
-              "flex-1 flex flex-col min-h-0 transition-all duration-300",
-              isCompact ? "h-full" : ""
-            )}>
-              <div className={cn(
-                "flex-1 transition-all duration-300",
-                isCompact ? "p-1 h-full" : "p-2 sm:p-4"
-              )}>
-                <Canvas 
-                  selectedTool={selectedTool}
-                  selectedPlant={selectedPlant}
-                  selectedTerrain={selectedTerrain}
-                  onPlantUsed={() => setSelectedPlant(null)}
-                  onTerrainUsed={() => setSelectedTerrain(null)}
-                  onToolChange={handleToolSelect}
-                />
-              </div>
-            </div>
-
-            {/* Sidebar - Hidden on mobile, shown on desktop */}
-            {!isCompact && (
-              <div className={cn(
-                "border-border bg-card transition-all duration-300",
-                sidebarCollapsed 
-                  ? "w-0 overflow-hidden border-l-0" // Desktop: collapsed
-                  : "w-80 border-l" // Desktop: expanded
-              )}>
-                {/* Collapse button for desktop */}
-                <button
-                  onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className={cn(
-                    "absolute top-1/2 -translate-y-1/2 z-20 w-6 h-12 bg-card border border-l-0 rounded-r-md",
-                    "flex items-center justify-center text-muted-foreground hover:text-foreground",
-                    "transition-all duration-300",
-                    sidebarCollapsed ? "-right-6" : "-left-6"
-                  )}
-                  aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                >
-                  <div className={cn(
-                    "w-3 h-3 transition-transform duration-300",
-                    sidebarCollapsed ? "rotate-0" : "rotate-180"
-                  )}>
-                    &#8250;
-                  </div>
-                </button>
-
-                {/* Library Content */}
-                {!sidebarCollapsed && (
-                  <>
-                    {/* Desktop Library Switcher */}
-                    <div className="p-3 border-b border-border">
-                      <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-                        <button
-                          onClick={() => handleLibraryChange("plants")}
-                          className={cn(
-                            "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                            activeLibrary === "plants"
-                              ? "bg-background text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                        >
-                          🌱 Plantas
-                        </button>
-                        <button
-                          onClick={() => handleLibraryChange("terrain")}
-                          className={cn(
-                            "flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all",
-                            activeLibrary === "terrain"
-                              ? "bg-background text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          )}
-                        >
-                          🏔️ Terreno
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Library Component */}
-                    <div className="flex-1 overflow-hidden">
-                      {activeLibrary === "plants" ? (
-                        <PlantLibrary 
-                          selectedPlant={selectedPlant}
-                          onPlantSelect={setSelectedPlant}
-                        />
-                      ) : (
-                        <TerrainLibrary 
-                          selectedTerrain={selectedTerrain}
-                          onTerrainSelect={setSelectedTerrain}
-                        />
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
           </div>
+
+          {/* Modern Sidebar */}
+          {!isCompact && (
+            <div className={cn(
+              "bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 transition-all duration-300 relative",
+              sidebarCollapsed ? "w-0" : "w-80"
+            )}>
+              {/* Sidebar Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className={cn(
+                  "absolute top-4 z-10 h-8 w-8 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md",
+                  sidebarCollapsed ? "-left-4" : "left-4"
+                )}
+              >
+                {sidebarCollapsed ? (
+                  <ChevronLeft className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+
+              {/* Sidebar Content */}
+              {!sidebarCollapsed && (
+                <div className="h-full flex flex-col p-4">
+                  {/* Library Tabs */}
+                  <Tabs value={activeLibrary} onValueChange={(value) => handleLibraryChange(value as "plants" | "terrain")} className="flex-1 flex flex-col">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="plants" className="flex items-center gap-2">
+                        <Leaf className="h-4 w-4" />
+                        Plants
+                      </TabsTrigger>
+                      <TabsTrigger value="terrain" className="flex items-center gap-2">
+                        <Mountain className="h-4 w-4" />
+                        Terrain
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="plants" className="flex-1 mt-0">
+                      <PlantLibrary 
+                        selectedPlant={selectedPlant}
+                        onPlantSelect={setSelectedPlant}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="terrain" className="flex-1 mt-0">
+                      <TerrainLibrary 
+                        selectedTerrain={selectedTerrain}
+                        onTerrainSelect={setSelectedTerrain}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Mobile Navigation - Only shown on mobile */}
+        {/* Mobile Navigation */}
         {isCompact && (
           <MobileNavigation
             selectedTool={selectedTool}
@@ -187,7 +176,7 @@ const Index = () => {
 
         <WelcomeModal 
           open={showWelcome}
-          onClose={() => setShowWelcome(false)}
+          onClose={handleWelcomeClose}
         />
       </div>
     </ThemeProvider>

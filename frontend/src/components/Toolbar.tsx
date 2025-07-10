@@ -79,19 +79,20 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
       onClick={() => onToolSelect(tool.id)}
       className={cn(
         "gap-2 relative transition-all duration-300 hover:scale-105 border-2 font-medium",
+        "xl:gap-3 xl:px-4 xl:py-2 3xl:px-5 3xl:py-3",
         selectedTool === tool.id && tool.highlight && "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-400 shadow-lg shadow-emerald-500/30",
         selectedTool === tool.id && !tool.highlight && "nature-gradient text-white border-primary shadow-lg shadow-primary/30",
         selectedTool !== tool.id && "hover:bg-accent/80 hover:border-accent/60 border-transparent hover:shadow-md",
         selectedTool === tool.id && "ring-2 ring-offset-2 ring-primary/60",
-        isUtility && "text-xs"
+        isUtility && "text-xs xl:text-sm"
       )}
       title={tool.description}
     >
       <tool.icon className={cn(
-        "w-4 h-4 transition-all duration-300",
+        "w-4 h-4 xl:w-5 xl:h-5 3xl:w-6 3xl:h-6 transition-all duration-300",
         selectedTool === tool.id && "drop-shadow-sm scale-110 animate-pulse"
       )} />
-      <span className="hidden md:inline font-semibold tracking-wide">{tool.label}</span>
+      <span className="hidden md:inline font-semibold tracking-wide xl:text-base 3xl:text-lg">{tool.label}</span>
       {tool.highlight && (
         <Badge 
           variant="secondary" 
@@ -107,7 +108,7 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
   );
 
   return (
-    <div className="flex items-center justify-between gap-2 p-4 border-b border-border/60 bg-gradient-to-r from-card/95 to-card/90 backdrop-blur-md shadow-sm">
+    <div className="flex items-center justify-between gap-2 p-3 border-b border-border/60 bg-gradient-to-r from-card/95 to-card/90 backdrop-blur-md shadow-sm flex-shrink-0">
       <div className="flex items-center gap-4">
         {/* Main Tools */}
         <div className="flex items-center gap-1 p-1.5 bg-background/70 rounded-xl border border-border/40 shadow-inner backdrop-blur-sm">

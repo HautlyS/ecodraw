@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { parseSpacingToMeters, realWorldSizeToPixels, calculateIconSize, formatRealWorldSize } from "@/utils/plantSizes";
 
 interface DrawingElement {
   id: number;
@@ -28,47 +29,18 @@ interface DrawingElement {
 
 interface CanvasElementProps {
   element: DrawingElement;
+  pixelsPerMeter?: number;
 }
 
-export const CanvasElement = ({ element }: CanvasElementProps) => {
+export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const isSelected = element.selected;
   const selectionStyle = isSelected ? 'ring-2 ring-primary ring-offset-2 shadow-lg' : '';
 
-  // Parse plant spacing to get actual dimensions
-  const parsePlantSpacing = (spacing: string) => {
-    const PIXELS_PER_METER = 10;
-    
-    // Handle different spacing formats
-    if (spacing.includes('x')) {
-      const match = spacing.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
-      if (match) {
-        const width = parseFloat(match[1]);
-        const height = parseFloat(match[2]);
-        return {
-          width: width * PIXELS_PER_METER,
-          height: height * PIXELS_PER_METER
-        };
-      }
-    }
-    
-    // Handle single dimension like "50cm" or "1m"
-    const singleMatch = spacing.match(/(\d+(?:\.\d+)?)(cm|m)/);
-    if (singleMatch) {
-      const value = parseFloat(singleMatch[1]);
-      const unit = singleMatch[2];
-      const meters = unit === 'cm' ? value / 100 : value;
-      const pixels = meters * PIXELS_PER_METER;
-      return { width: pixels, height: pixels };
-    }
-    
-    // Default size for unknown formats
-    return { width: 40, height: 40 };
-  };
-
   if (element.type === 'plant') {
-    const plantSize = parsePlantSpacing(element.plant?.spacing || '1x1m');
-    const iconSize = Math.max(24, Math.min(plantSize.width * 0.6, 48)); // Dynamic icon size
+    const realWorldSize = parseSpacingToMeters(element.plant?.spacing || '1x1m');
+    const pixelSize = realWorldSizeToPixels(realWorldSize, pixelsPerMeter);
+    const iconSize = calculateIconSize(pixelSize);
     
     return (
       <div
@@ -78,10 +50,10 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
           isSelected && "border-solid border-primary bg-primary/10"
         )}
         style={{
-          left: element.x - plantSize.width / 2,
-          top: element.y - plantSize.height / 2,
-          width: plantSize.width,
-          height: plantSize.height,
+          left: element.x - pixelSize.width / 2,
+          top: element.y - pixelSize.height / 2,
+          width: pixelSize.width,
+          height: pixelSize.height,
           transform: `rotate(${element.rotation || 0}deg)`,
           zIndex: isSelected ? 10 : 1
         }}
@@ -102,7 +74,7 @@ export const CanvasElement = ({ element }: CanvasElementProps) => {
         
         {/* Size indicator */}
         <div className="absolute top-1 left-1 text-xs bg-green-600 text-white px-1 rounded font-medium shadow-sm">
-          {element.plant?.spacing}
+{formatRealWorldSize(realWorldSize)}
         </div>
         
         {/* Selection handles */}

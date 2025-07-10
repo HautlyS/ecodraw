@@ -1,8 +1,8 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { CanvasControls } from "./canvas/CanvasControls";
-import { EnhancedCanvasControls } from "./canvas/EnhancedCanvasControls";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { CanvasElement } from "./canvas/CanvasElement";
 import { CanvasWelcome } from "./canvas/CanvasWelcome";
 import { useCanvasEvents } from "@/hooks/useCanvasEvents";
@@ -10,6 +10,7 @@ import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
+import { Grid3X3 } from "lucide-react";
 
 interface CanvasProps {
   selectedTool: string;
@@ -17,7 +18,9 @@ interface CanvasProps {
   selectedTerrain: any;
   onPlantUsed: () => void;
   onTerrainUsed: () => void;
-  onToolChange: (tool: string) => void; // Add this to enable tool switching
+  onToolChange: (tool: string) => void;
+  canvasSize?: { width: number; height: number };
+  onCanvasSizeChange?: (size: { width: number; height: number }) => void;
 }
 
 interface DrawingElement {
@@ -45,15 +48,22 @@ interface DrawingElement {
   brushThickness?: number;
 }
 
-export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange }: CanvasProps) => {
+export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange, canvasSize, onCanvasSizeChange }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [elements, elementsActions] = useUndoRedo<DrawingElement[]>([], {
     maxHistorySize: 50,
     debounceMs: 300,
   });
   
-  const { isMobile, isTablet } = useResponsive();
+  // Canvas dimensions state for dynamic measurements
+  const [canvasDimensions, setCanvasDimensions] = useState({ width: 1000, height: 800 });
+  
+  // Canvas real-world size in meters
+  const [canvasRealSize, setCanvasRealSize] = useState({ width: 50, height: 30 });
+  
+  const { isMobile, isTablet, isDesktop, isLargeDesktop, isUltraWide, screenWidth, screenHeight } = useResponsive();
   const isCompact = isMobile || isTablet;
+  const isWideScreen = isLargeDesktop || isUltraWide;
 
   // Enhanced zoom controls
   const {
@@ -68,9 +78,9 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     canZoomIn,
     canZoomOut,
   } = useCanvasZoom({
-    minZoom: 25,
-    maxZoom: 400,
-    zoomStep: 25,
+    minZoom: isCompact ? 25 : 10,
+    maxZoom: isWideScreen ? 400 : isCompact ? 200 : 300,
+    zoomStep: isWideScreen ? 10 : 15, // Reduced zoom step for smoother zooming
     canvasRef,
     onZoomChange: (newZoom) => {
       toast.info(`Zoom: ${newZoom}%`, { duration: 1000 });
@@ -95,14 +105,22 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
   const [originalElementBounds, setOriginalElementBounds] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
-  // World-to-pixel conversion constants
-  const PIXELS_PER_METER = 10;
+  // World-to-pixel conversion constants (responsive and based on canvas real size)
+  // Use the smaller dimension to ensure consistent scaling
+  const PIXELS_PER_METER = Math.min(
+    canvasDimensions.width / (canvasSize?.width || canvasRealSize.width),
+    canvasDimensions.height / (canvasSize?.height || canvasRealSize.height)
+  );
   const GRID_SIZE_METERS = 2; // Each grid square = 2m x 2m
   const GRID_SIZE_PIXELS = GRID_SIZE_METERS * PIXELS_PER_METER;
+  
+  // Dynamic grid calculations based on actual canvas size
+  const MAX_HORIZONTAL_GRIDS = Math.floor((canvasSize?.width || canvasRealSize.width) / GRID_SIZE_METERS);
+  const MAX_VERTICAL_GRIDS = Math.floor((canvasSize?.height || canvasRealSize.height) / GRID_SIZE_METERS);
 
   // Utility functions for world-to-pixel conversion
-  const metersToPixels = useCallback((meters: number) => meters * PIXELS_PER_METER, []);
-  const pixelsToMeters = useCallback((pixels: number) => pixels / PIXELS_PER_METER, []);
+  const metersToPixels = useCallback((meters: number) => meters * PIXELS_PER_METER, [PIXELS_PER_METER]);
+  const pixelsToMeters = useCallback((pixels: number) => pixels / PIXELS_PER_METER, [PIXELS_PER_METER]);
 
   const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
   
@@ -277,6 +295,8 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     const rawPos = getMousePosition(e, canvasRef, zoom, panOffset);
     const pos = snapToGrid(rawPos, showGrid);
     
+    console.log('Mouse down at:', pos, 'Elements count:', elements.length);
+    
     // Handle panning with space key
     if (isSpacePressed) {
       setIsPanning(true);
@@ -307,7 +327,6 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         // Store original bounds for calculation
         if (clickedElement.type === 'plant') {
           const parsePlantSpacing = (spacing: string) => {
-            const PIXELS_PER_METER = 10;
             if (spacing.includes('x')) {
               const match = spacing.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
               if (match) {
@@ -324,7 +343,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
               const pixels = meters * PIXELS_PER_METER;
               return { width: pixels, height: pixels };
             }
-            return { width: 40, height: 40 };
+            return { width: PIXELS_PER_METER, height: PIXELS_PER_METER }; // Default 1x1m
           };
           const plantSize = parsePlantSpacing(clickedElement.plant?.spacing || '1x1m');
           setOriginalElementBounds({
@@ -375,15 +394,15 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     // Add plant
     if (selectedPlant && (selectedTool === 'select' || !selectedTool)) {
       const newElement: DrawingElement = {
-        id: Date.now(),
+        id: Date.now() + Math.random(), // Better unique ID generation
         type: 'plant',
         x: pos.x,
         y: pos.y,
         plant: selectedPlant,
       };
       
+      // Add to existing elements instead of replacing
       elementsActions.set([...elements, newElement]);
-      onPlantUsed();
       toast.success(`${selectedPlant.name} adicionada ao mapa!`);
       return;
     }
@@ -433,13 +452,13 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         const terrainHeightPixels = metersToPixels(terrainSize.height);
         
         const newTerrain: DrawingElement = {
-          id: Date.now(),
+          id: Date.now() + Math.random(),
           type: 'terrain',
           x: pos.x,
           y: pos.y,
-          width: brushMode === 'circle' ? 0 : terrainWidthPixels,
-          height: brushMode === 'circle' ? 0 : terrainHeightPixels,
-          radius: brushMode === 'circle' ? 0 : undefined,
+          width: brushMode === 'circle' ? terrainWidthPixels : terrainWidthPixels,
+          height: brushMode === 'circle' ? terrainHeightPixels : terrainHeightPixels,
+          radius: brushMode === 'circle' ? Math.min(terrainWidthPixels, terrainHeightPixels) / 2 : undefined,
           realWorldWidth: terrainSize.width,
           realWorldHeight: terrainSize.height,
           terrain: selectedTerrain,
@@ -469,7 +488,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       
       setCurrentShape(newShape);
     }
-  }, [selectedTool, selectedPlant, selectedTerrain, elements, getMousePosition, snapToGrid, selectElement, clearSelection, onPlantUsed, onTerrainUsed, deleteElementAtPosition, findElementAtPosition, zoom, showGrid, isSpacePressed, panOffset]);
+  }, [selectedTool, selectedPlant, selectedTerrain, elements, getMousePosition, snapToGrid, selectElement, clearSelection, onPlantUsed, onTerrainUsed, deleteElementAtPosition, findElementAtPosition, zoom, showGrid, isSpacePressed, panOffset, metersToPixels, parseTerrainSize, elementsActions, PIXELS_PER_METER]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rawPos = getMousePosition(e, canvasRef, zoom, panOffset);
@@ -588,7 +607,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-    // Handle drawing new shapes (rectangles, circles, terrain areas)
+      // Handle drawing new shapes (rectangles, circles, terrain areas)
     if (!isDrawing || !currentShape) return;
 
     const width = Math.abs(pos.x - startPos.x);
@@ -596,10 +615,12 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     
     if (currentShape.brushType === 'circle' || currentShape.type === 'circle') {
       const radius = Math.min(width, height) / 2;
+      const centerX = (startPos.x + pos.x) / 2;
+      const centerY = (startPos.y + pos.y) / 2;
       const updatedShape: DrawingElement = {
         ...currentShape,
-        x: Math.min(startPos.x, pos.x),
-        y: Math.min(startPos.y, pos.y),
+        x: centerX - radius,
+        y: centerY - radius,
         radius: radius,
         width: radius * 2,
         height: radius * 2,
@@ -684,7 +705,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     }
     
     setIsDrawing(false);
-  }, [isDragging, isDrawing, currentShape, isPanning, isDrawingTerrain, currentTerrainPath, selectedTerrain, onTerrainUsed]);
+  }, [isDragging, isDrawing, currentShape, isPanning, isDrawingTerrain, currentTerrainPath, selectedTerrain, onTerrainUsed, elements, elementsActions]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -697,7 +718,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       const pos = snapToGrid(rawPos, showGrid);
       
       const newElement: DrawingElement = {
-        id: Date.now(),
+        id: Date.now() + Math.random(),
         type: 'plant',
         x: pos.x,
         y: pos.y,
@@ -709,7 +730,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     } catch (error) {
       console.error('Error parsing dropped data:', error);
     }
-  }, [getMousePosition, snapToGrid, zoom, showGrid, panOffset]);
+  }, [getMousePosition, snapToGrid, zoom, showGrid, panOffset, elements, elementsActions]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -742,6 +763,34 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     setIsPanning(false);
   }, []);
 
+  // Update canvas dimensions when the container resizes
+  useEffect(() => {
+    const updateCanvasDimensions = () => {
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        setCanvasDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+    
+    updateCanvasDimensions();
+    
+    const resizeObserver = new ResizeObserver(updateCanvasDimensions);
+    if (canvasRef.current) {
+      resizeObserver.observe(canvasRef.current);
+    }
+    
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+  
+  // Update canvas real size when canvasSize prop changes
+  useEffect(() => {
+    if (canvasSize) {
+      setCanvasRealSize(canvasSize);
+    }
+  }, [canvasSize]);
+  
   // Enhanced keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -911,53 +960,70 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   };
 
   return (
-    <div className="h-full relative bg-card rounded-lg border border-border overflow-hidden transition-colors">
-      {/* Enhanced Canvas Controls */}
-      <EnhancedCanvasControls
-        zoom={zoom}
-        onZoomIn={zoomIn}
-        onZoomOut={zoomOut}
-        onZoomToFit={zoomToFit}
-        onReset={handleReset}
-        showGrid={showGrid}
-        onToggleGrid={() => {
-          const newState = !showGrid;
-          setShowGrid(newState);
-          toast.success(newState ? "Grade ativada (G)" : "Grade desativada (G)");
-        }}
-        elementsCount={elements.length}
-        selectedCount={elements.filter(el => el.selected).length}
-        canZoomIn={canZoomIn}
-        canZoomOut={canZoomOut}
-        zoomLevel={zoomLevel}
-        className={cn(isCompact && "scale-90 origin-top-right")}
-      />
-
-      {/* Undo/Redo Controls for Desktop */}
-      {!isCompact && (
-        <div className="absolute top-4 left-4 z-10 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={elementsActions.undo}
-            disabled={!elementsActions.canUndo}
-            className="bg-background/95 backdrop-blur-sm shadow-lg"
-            title="Desfazer (Ctrl+Z)"
-          >
-            <span className="text-xs">↶ Desfazer</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={elementsActions.redo}
-            disabled={!elementsActions.canRedo}
-            className="bg-background/95 backdrop-blur-sm shadow-lg"
-            title="Refazer (Ctrl+Y)"
-          >
-            <span className="text-xs">↷ Refazer</span>
-          </Button>
+    <div className="w-full h-full relative bg-white dark:bg-gray-900 overflow-hidden">
+        {/* Canvas Info & Controls */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
+        <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          {(canvasSize?.width || canvasRealSize.width)}m × {(canvasSize?.height || canvasRealSize.height)}m
         </div>
-      )}
+        <div className="text-xs text-gray-500 dark:text-gray-500">
+          {Math.round(PIXELS_PER_METER * 10) / 10} px/m
+        </div>
+      </div>
+      
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={zoomOut}
+          disabled={!canZoomOut}
+          className="h-8 w-8 p-0"
+          title="Zoom Out"
+        >
+          <span className="text-lg font-bold">-</span>
+        </Button>
+        
+        <span className="text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[3rem] text-center">
+          {Math.round(zoom)}%
+        </span>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={zoomIn}
+          disabled={!canZoomIn}
+          className="h-8 w-8 p-0"
+          title="Zoom In"
+        >
+          <span className="text-lg font-bold">+</span>
+        </Button>
+        
+        <Separator orientation="vertical" className="h-6" />
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            const newState = !showGrid;
+            setShowGrid(newState);
+            toast.success(newState ? "Grid enabled" : "Grid disabled");
+          }}
+          className={cn("h-8 w-8 p-0", showGrid && "bg-emerald-100 dark:bg-emerald-900")}
+          title="Toggle Grid (G)"
+        >
+          <Grid3X3 className="h-4 w-4" />
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={resetZoom}
+          className="h-8 w-8 p-0"
+          title="Reset View"
+        >
+          <span className="text-xs font-bold">1:1</span>
+        </Button>
+      </div>
 
       {/* Canvas Area */}
       <div
@@ -971,8 +1037,10 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         style={{ 
           transform: `scale(${zoom / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`, 
           transformOrigin: 'center',
-          transition: isPanning ? 'none' : 'transform 0.2s ease'
-        }}
+          transition: isPanning ? 'none' : 'transform 0.2s ease',
+          '--grid-major': `${GRID_SIZE_PIXELS}px`,
+          '--grid-minor': `${GRID_SIZE_PIXELS / 2}px`
+        } as React.CSSProperties}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -984,20 +1052,30 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         onTouchEnd={handleTouchEnd}
         data-canvas="true"
       >
-        {/* Grid Labels for Scale Reference - Fixed positioning */}
+        {/* Canvas Boundary Visualization */}
+        <div 
+          className="absolute border-2 border-dashed border-emerald-500/60 bg-emerald-50/10 dark:bg-emerald-900/10 pointer-events-none"
+          style={{
+            width: `${(canvasSize?.width || canvasRealSize.width) * PIXELS_PER_METER}px`,
+            height: `${(canvasSize?.height || canvasRealSize.height) * PIXELS_PER_METER}px`,
+            top: 0,
+            left: 0,
+          }}
+        />
+        
+        {/* Grid Labels for Scale Reference */}
         {showGrid && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {/* Horizontal scale labels - only on top */}
-            <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-background/90 to-transparent">
-              {Array.from({ length: Math.floor(1000 / GRID_SIZE_PIXELS) }, (_, i) => (
+            {/* Horizontal scale labels */}
+            <div className="absolute top-0 left-0 right-0 h-6">
+              {Array.from({ length: MAX_HORIZONTAL_GRIDS }, (_, i) => (
                 <div
                   key={`h-${i}`}
-                  className="absolute text-xs text-muted-foreground/80 bg-background/90 px-1 rounded-sm border border-border/30"
+                  className="absolute text-xs text-gray-600 dark:text-gray-300 bg-white/90 dark:bg-gray-800/90 px-1.5 py-0.5 rounded-md border shadow-sm font-medium"
                   style={{
-                    left: i * GRID_SIZE_PIXELS + 2,
-                    top: 2,
-                    fontSize: '9px',
-                    fontWeight: '500'
+                    left: i * GRID_SIZE_PIXELS + 4,
+                    top: 4,
+                    fontSize: '10px',
                   }}
                 >
                   {i * GRID_SIZE_METERS}m
@@ -1005,19 +1083,17 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
               ))}
             </div>
             
-            {/* Vertical scale labels - only on left */}
-            <div className="absolute top-0 left-0 bottom-0 w-8 bg-gradient-to-r from-background/90 to-transparent">
-              {Array.from({ length: Math.floor(800 / GRID_SIZE_PIXELS) }, (_, i) => (
+            {/* Vertical scale labels */}
+            <div className="absolute top-0 left-0 bottom-0 w-10">
+              {Array.from({ length: MAX_VERTICAL_GRIDS }, (_, i) => (
                 <div
                   key={`v-${i}`}
-                  className="absolute text-xs text-muted-foreground/80 bg-background/90 px-1 rounded-sm border border-border/30"
+                  className="absolute text-xs text-gray-600 dark:text-gray-300 bg-white/90 dark:bg-gray-800/90 px-1 py-0.5 rounded-md border shadow-sm font-medium"
                   style={{
-                    left: 2,
-                    top: i * GRID_SIZE_PIXELS + 2,
-                    fontSize: '9px',
-                    fontWeight: '500',
+                    left: 4,
+                    top: i * GRID_SIZE_PIXELS + 4,
+                    fontSize: '10px',
                     writingMode: 'vertical-rl',
-                    textOrientation: 'mixed'
                   }}
                 >
                   {i * GRID_SIZE_METERS}m
@@ -1027,15 +1103,15 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
           </div>
         )}
 
-        {/* Render saved elements */}
+        {/* Canvas Elements */}
         {elements.map(element => (
-          <CanvasElement key={element.id} element={element} />
+          <CanvasElement key={element.id} element={element} pixelsPerMeter={PIXELS_PER_METER} />
         ))}
         
-        {/* Render current shape being drawn */}
-        {currentShape && <CanvasElement element={currentShape} />}
+        {/* Current shape being drawn */}
+        {currentShape && <CanvasElement element={currentShape} pixelsPerMeter={PIXELS_PER_METER} />}
 
-        {/* Welcome Text for Empty Canvas */}
+        {/* Welcome message for empty canvas */}
         {elements.length === 0 && !currentShape && <CanvasWelcome />}
       </div>
     </div>

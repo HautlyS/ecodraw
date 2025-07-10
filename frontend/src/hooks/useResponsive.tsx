@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-// Enhanced responsive breakpoints
+// Enhanced responsive breakpoints with better large screen support
 const breakpoints = {
   xs: 0,
   sm: 640,
@@ -8,6 +8,8 @@ const breakpoints = {
   lg: 1024,
   xl: 1280,
   '2xl': 1536,
+  '3xl': 1920,
+  '4xl': 2560,
 } as const;
 
 type Breakpoint = keyof typeof breakpoints;
@@ -16,11 +18,16 @@ interface ResponsiveValues {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
+  isLargeDesktop: boolean;
+  isUltraWide: boolean;
   screenWidth: number;
   screenHeight: number;
   orientation: 'portrait' | 'landscape';
   currentBreakpoint: Breakpoint;
   isTouch: boolean;
+  aspectRatio: number;
+  devicePixelRatio: number;
+  isHighDensity: boolean;
 }
 
 export function useResponsive(): ResponsiveValues {
@@ -30,26 +37,38 @@ export function useResponsive(): ResponsiveValues {
         isMobile: false,
         isTablet: false,
         isDesktop: true,
+        isLargeDesktop: false,
+        isUltraWide: false,
         screenWidth: 1024,
         screenHeight: 768,
         orientation: 'landscape',
         currentBreakpoint: 'lg',
         isTouch: false,
+        aspectRatio: 1.33,
+        devicePixelRatio: 1,
+        isHighDensity: false,
       };
     }
 
     const width = window.innerWidth;
     const height = window.innerHeight;
+    const aspectRatio = width / height;
+    const devicePixelRatio = window.devicePixelRatio || 1;
     
     return {
       isMobile: width < breakpoints.md,
       isTablet: width >= breakpoints.md && width < breakpoints.lg,
-      isDesktop: width >= breakpoints.lg,
+      isDesktop: width >= breakpoints.lg && width < breakpoints['3xl'],
+      isLargeDesktop: width >= breakpoints['3xl'] && width < breakpoints['4xl'],
+      isUltraWide: width >= breakpoints['4xl'],
       screenWidth: width,
       screenHeight: height,
       orientation: width > height ? 'landscape' : 'portrait',
       currentBreakpoint: getCurrentBreakpoint(width),
       isTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+      aspectRatio,
+      devicePixelRatio,
+      isHighDensity: devicePixelRatio > 1.5,
     };
   });
 
@@ -57,16 +76,23 @@ export function useResponsive(): ResponsiveValues {
     const handleResize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
+      const aspectRatio = width / height;
+      const devicePixelRatio = window.devicePixelRatio || 1;
       
       setValues({
         isMobile: width < breakpoints.md,
         isTablet: width >= breakpoints.md && width < breakpoints.lg,
-        isDesktop: width >= breakpoints.lg,
+        isDesktop: width >= breakpoints.lg && width < breakpoints['3xl'],
+        isLargeDesktop: width >= breakpoints['3xl'] && width < breakpoints['4xl'],
+        isUltraWide: width >= breakpoints['4xl'],
         screenWidth: width,
         screenHeight: height,
         orientation: width > height ? 'landscape' : 'portrait',
         currentBreakpoint: getCurrentBreakpoint(width),
         isTouch: 'ontouchstart' in window || navigator.maxTouchPoints > 0,
+        aspectRatio,
+        devicePixelRatio,
+        isHighDensity: devicePixelRatio > 1.5,
       });
     };
 
@@ -98,6 +124,8 @@ export function useResponsive(): ResponsiveValues {
 }
 
 function getCurrentBreakpoint(width: number): Breakpoint {
+  if (width >= breakpoints['4xl']) return '4xl';
+  if (width >= breakpoints['3xl']) return '3xl';
   if (width >= breakpoints['2xl']) return '2xl';
   if (width >= breakpoints.xl) return 'xl';
   if (width >= breakpoints.lg) return 'lg';
@@ -109,7 +137,7 @@ function getCurrentBreakpoint(width: number): Breakpoint {
 // Hook for checking specific breakpoints
 export function useBreakpoint(breakpoint: Breakpoint): boolean {
   const { currentBreakpoint } = useResponsive();
-  const breakpointOrder: Breakpoint[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl'];
+  const breakpointOrder: Breakpoint[] = ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl'];
   
   const currentIndex = breakpointOrder.indexOf(currentBreakpoint);
   const targetIndex = breakpointOrder.indexOf(breakpoint);
