@@ -1,29 +1,15 @@
-import { useState } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-  DrawerClose,
-} from "@/components/ui/mobile-drawer";
-import { 
-  Menu, 
-  X,
   MousePointer, 
   Square, 
   Circle, 
-  Hand, 
+  Hand,
   Palette,
-  Grid3X3,
-  Copy,
-  RotateCw,
-  Trash2,
-  Layers,
   Leaf,
-  Mountain
+  Mountain,
+  Grid3X3,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,196 +18,128 @@ interface MobileNavigationProps {
   onToolSelect: (tool: string) => void;
   activeLibrary: "plants" | "terrain";
   onLibraryChange: (library: "plants" | "terrain") => void;
-  className?: string;
 }
 
-export const MobileNavigation = ({
-  selectedTool,
-  onToolSelect,
-  activeLibrary,
-  onLibraryChange,
-  className,
-}: MobileNavigationProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+const tools = [
+  { id: "select", icon: MousePointer, label: "Selecionar" },
+  { id: "move", icon: Hand, label: "Navegar" },
+  { id: "rectangle", icon: Square, label: "Retângulo" },
+  { id: "circle", icon: Circle, label: "Círculo" },
+  { id: "terrain", icon: Palette, label: "Terreno" },
+  { id: "grid", icon: Grid3X3, label: "Grade" },
+  { id: "delete", icon: Trash2, label: "Excluir" },
+];
 
-  const mainTools = [
-    { 
-      id: "select", 
-      icon: MousePointer, 
-      label: "Selecionar", 
-      description: "Selecione e mova elementos"
-    },
-    { 
-      id: "move", 
-      icon: Hand, 
-      label: "Navegar", 
-      description: "Navegue pelo canvas"
-    },
-    { 
-      id: "rectangle", 
-      icon: Square, 
-      label: "Retângulo", 
-      description: "Desenhe retângulos"
-    },
-    { 
-      id: "circle", 
-      icon: Circle, 
-      label: "Círculo", 
-      description: "Desenhe círculos"
-    },
-    { 
-      id: "terrain", 
-      icon: Palette, 
-      label: "Terreno", 
-      description: "Pinte terreno",
-      highlight: true
-    },
-  ];
-
-  const utilityTools = [
-    { id: "grid", icon: Grid3X3, label: "Grid", description: "Grade de alinhamento" },
-    { id: "copy", icon: Copy, label: "Copiar", description: "Copie elementos" },
-    { id: "rotate", icon: RotateCw, label: "Rotacionar", description: "Rotacione elementos" },
-    { id: "delete", icon: Trash2, label: "Excluir", description: "Remova elementos" },
-  ];
-
-  const handleToolSelect = (toolId: string) => {
-    onToolSelect(toolId);
-    setIsOpen(false);
-  };
-
-  const currentTool = [...mainTools, ...utilityTools].find(tool => tool.id === selectedTool);
+const MobileToolButton = memo(({ tool, isSelected, onSelect }: {
+  tool: typeof tools[0];
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+}) => {
+  const handleClick = useCallback(() => {
+    onSelect(tool.id);
+  }, [tool.id, onSelect]);
 
   return (
-    <>
-      {/* Mobile Bottom Navigation Bar */}
-      <div className={cn(
-        "fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border",
-        "flex items-center justify-between px-4 py-2 md:hidden",
-        className
-      )}>
-        {/* Library Switcher */}
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-          <Button
-            variant={activeLibrary === "plants" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onLibraryChange("plants")}
-            className="gap-1 text-xs"
-          >
-            <Leaf className="w-4 h-4" />
-            Plantas
-          </Button>
-          <Button
-            variant={activeLibrary === "terrain" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => onLibraryChange("terrain")}
-            className="gap-1 text-xs"
-          >
-            <Mountain className="w-4 h-4" />
-            Terreno
-          </Button>
-        </div>
-
-        {/* Current Tool Display */}
-        <div className="flex items-center gap-2 px-3 py-1 bg-muted rounded-lg">
-          {currentTool && (
-            <>
-              <currentTool.icon className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">{currentTool.label}</span>
-              {currentTool.highlight && (
-                <Badge variant="secondary" className="text-xs px-1 py-0">
-                  New
-                </Badge>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Tools Menu */}
-        <Drawer open={isOpen} onOpenChange={setIsOpen}>
-          <DrawerTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Menu className="w-4 h-4" />
-              Ferramentas
-            </Button>
-          </DrawerTrigger>
-          <DrawerContent className="max-h-[80vh]">
-            <DrawerHeader>
-              <div className="flex items-center justify-between">
-                <DrawerTitle>Selecionar Ferramenta</DrawerTitle>
-                <DrawerClose asChild>
-                  <Button variant="ghost" size="sm">
-                    <X className="w-4 h-4" />
-                  </Button>
-                </DrawerClose>
-              </div>
-            </DrawerHeader>
-            
-            <div className="px-4 pb-6 space-y-6">
-              {/* Main Tools */}
-              <div>
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <Layers className="w-4 h-4" />
-                  Ferramentas Principais
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {mainTools.map((tool) => (
-                    <Button
-                      key={tool.id}
-                      variant={selectedTool === tool.id ? "default" : "outline"}
-                      className={cn(
-                        "flex flex-col gap-2 h-auto p-4 text-left",
-                        selectedTool === tool.id && tool.highlight && 
-                        "bg-gradient-to-r from-emerald-500 to-green-600 text-white border-emerald-400"
-                      )}
-                      onClick={() => handleToolSelect(tool.id)}
-                    >
-                      <div className="flex items-center gap-2 w-full">
-                        <tool.icon className="w-5 h-5 flex-shrink-0" />
-                        <span className="font-medium">{tool.label}</span>
-                        {tool.highlight && (
-                          <Badge variant="secondary" className="text-xs ml-auto">
-                            New
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground text-left">
-                        {tool.description}
-                      </p>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Utility Tools */}
-              <div>
-                <h3 className="text-sm font-semibold mb-3">Ferramentas Auxiliares</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {utilityTools.map((tool) => (
-                    <Button
-                      key={tool.id}
-                      variant={selectedTool === tool.id ? "default" : "outline"}
-                      className="flex flex-col gap-2 h-auto p-4 text-left"
-                      onClick={() => handleToolSelect(tool.id)}
-                    >
-                      <div className="flex items-center gap-2 w-full">
-                        <tool.icon className="w-5 h-5 flex-shrink-0" />
-                        <span className="font-medium">{tool.label}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground text-left">
-                        {tool.description}
-                      </p>
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </DrawerContent>
-        </Drawer>
-      </div>
-
-      {/* Bottom padding to prevent content from being hidden behind the mobile nav */}
-      <div className="h-16 md:hidden" />
-    </>
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className={cn(
+        "flex-1 flex flex-col items-center gap-1 h-auto py-2 px-1 border-0 bg-transparent transition-all duration-150",
+        "touch-target",
+        isSelected 
+          ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" 
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+      )}
+    >
+      <tool.icon className="w-5 h-5" />
+      <span className="text-xs font-medium leading-none">{tool.label}</span>
+      {isSelected && (
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-blue-500/10 rounded-md pointer-events-none" />
+      )}
+    </Button>
   );
-};
+});
+
+MobileToolButton.displayName = "MobileToolButton";
+
+const LibraryButton = memo(({ library, isActive, onSelect }: {
+  library: "plants" | "terrain";
+  isActive: boolean;
+  onSelect: (library: "plants" | "terrain") => void;
+}) => {
+  const handleClick = useCallback(() => {
+    onSelect(library);
+  }, [library, onSelect]);
+
+  const Icon = library === "plants" ? Leaf : Mountain;
+  const label = library === "plants" ? "Plantas" : "Terreno";
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className={cn(
+        "flex items-center gap-2 h-8 px-3 border-0 bg-transparent transition-all duration-150",
+        isActive 
+          ? "bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400" 
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+      )}
+    >
+      <Icon className="w-4 h-4" />
+      <span className="text-sm font-medium">{label}</span>
+    </Button>
+  );
+});
+
+LibraryButton.displayName = "LibraryButton";
+
+export const MobileNavigation = memo(({ 
+  selectedTool, 
+  onToolSelect, 
+  activeLibrary, 
+  onLibraryChange 
+}: MobileNavigationProps) => {
+  const memoizedTools = useMemo(() => tools.map(tool => (
+    <MobileToolButton
+      key={tool.id}
+      tool={tool}
+      isSelected={selectedTool === tool.id}
+      onSelect={onToolSelect}
+    />
+  )), [selectedTool, onToolSelect]);
+
+  const memoizedLibraryButtons = useMemo(() => (
+    <>
+      <LibraryButton
+        library="plants"
+        isActive={activeLibrary === "plants"}
+        onSelect={onLibraryChange}
+      />
+      <LibraryButton
+        library="terrain"
+        isActive={activeLibrary === "terrain"}
+        onSelect={onLibraryChange}
+      />
+    </>
+  ), [activeLibrary, onLibraryChange]);
+
+  return (
+    <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 contain-paint">
+      <div className="safe-area-bottom">
+        {/* Library Selector */}
+        <div className="flex items-center justify-center gap-2 px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+          {memoizedLibraryButtons}
+        </div>
+        
+        {/* Tools Grid */}
+        <div className="flex items-center px-2 py-1">
+          {memoizedTools}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+MobileNavigation.displayName = "MobileNavigation";
