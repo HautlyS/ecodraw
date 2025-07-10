@@ -1086,15 +1086,18 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         {showGrid && (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             {/* Horizontal scale labels */}
-            <div className="absolute top-0 left-0 right-0 h-6">
+            <div className="absolute top-0 left-0 right-0 h-8">
               {Array.from({ length: MAX_HORIZONTAL_GRIDS }, (_, i) => (
                 <div
                   key={`h-${i}`}
-                  className="absolute text-xs text-gray-600 dark:text-gray-300 bg-white/90 dark:bg-gray-800/90 px-1.5 py-0.5 rounded-md border shadow-sm font-medium"
+                  className="absolute text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900 dark:to-emerald-800 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-700 shadow-sm backdrop-blur-sm"
                   style={{
-                    left: i * GRID_SIZE_PIXELS + 4,
-                    top: 4,
+                    left: i * GRID_SIZE_PIXELS + 8,
+                    top: 8,
                     fontSize: '10px',
+                    minWidth: '32px',
+                    textAlign: 'center',
+                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.1)',
                   }}
                 >
                   {i * GRID_SIZE_METERS}m
@@ -1103,16 +1106,22 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
             </div>
             
             {/* Vertical scale labels */}
-            <div className="absolute top-0 left-0 bottom-0 w-10">
+            <div className="absolute top-0 left-0 bottom-0 w-12">
               {Array.from({ length: MAX_VERTICAL_GRIDS }, (_, i) => (
                 <div
                   key={`v-${i}`}
-                  className="absolute text-xs text-gray-600 dark:text-gray-300 bg-white/90 dark:bg-gray-800/90 px-1 py-0.5 rounded-md border shadow-sm font-medium"
+                  className="absolute text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-gradient-to-b from-emerald-50 to-emerald-100 dark:from-emerald-900 dark:to-emerald-800 px-1.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-700 shadow-sm backdrop-blur-sm"
                   style={{
-                    left: 4,
-                    top: i * GRID_SIZE_PIXELS + 4,
+                    left: 8,
+                    top: i * GRID_SIZE_PIXELS + 8,
                     fontSize: '10px',
                     writingMode: 'vertical-rl',
+                    textOrientation: 'mixed',
+                    minHeight: '24px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.1)',
                   }}
                 >
                   {i * GRID_SIZE_METERS}m
