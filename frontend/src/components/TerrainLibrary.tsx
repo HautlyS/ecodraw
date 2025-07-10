@@ -28,9 +28,9 @@ const SAMPLE_TERRAINS: Terrain[] = [
     category: "soil",
     size: "variável",
     color: "#8b5a2b",
-    texture: "soil",
+    texture: "grass",
     icon: "🟫",
-    description: "Solo rico em nutrientes"
+    description: "Solo rico em nutrientes para cultivo"
   },
   {
     id: "2",
@@ -40,7 +40,7 @@ const SAMPLE_TERRAINS: Terrain[] = [
     color: "#3b82f6",
     texture: "water",
     icon: "🌊",
-    description: "Corpo d'água natural"
+    description: "Corpo d'água natural para irrigação"
   },
   {
     id: "3",
@@ -50,7 +50,7 @@ const SAMPLE_TERRAINS: Terrain[] = [
     color: "#ef4444",
     texture: "building",
     icon: "🏠",
-    description: "Residência principal"
+    description: "Residência principal da propriedade"
   },
   {
     id: "4",
@@ -60,7 +60,7 @@ const SAMPLE_TERRAINS: Terrain[] = [
     color: "#92400e",
     texture: "fence",
     icon: "🪵",
-    description: "Delimitação de propriedade"
+    description: "Delimitação e proteção da propriedade"
   },
   {
     id: "5",
@@ -70,17 +70,17 @@ const SAMPLE_TERRAINS: Terrain[] = [
     color: "#1f2937",
     texture: "solar",
     icon: "☀️",
-    description: "Energia renovável"
+    description: "Geração de energia renovável"
   },
   {
     id: "6",
-    name: "Trilha",
+    name: "Trilha Principal",
     category: "paths",
     size: "2m largura",
     color: "#a3a3a3",
     texture: "path",
     icon: "🛤️",
-    description: "Caminho para circulação"
+    description: "Caminho principal para circulação"
   },
   {
     id: "7",
@@ -90,24 +90,94 @@ const SAMPLE_TERRAINS: Terrain[] = [
     color: "#059669",
     texture: "compost",
     icon: "♻️",
-    description: "Área de compostagem"
+    description: "Área para compostagem orgânica"
   },
   {
     id: "8",
-    name: "Poço",
+    name: "Poço Artesiano",
     category: "water",
     size: "1x1m",
     color: "#1e40af",
     texture: "well",
     icon: "🕳️",
     description: "Fonte de água subterrânea"
+  },
+  {
+    id: "9",
+    name: "Horta Elevada",
+    category: "structures",
+    size: "3x1.5m",
+    color: "#16a34a",
+    texture: "structure",
+    icon: "📦",
+    description: "Canteiro elevado para hortaliças"
+  },
+  {
+    id: "10",
+    name: "Reservatório",
+    category: "water",
+    size: "variável",
+    color: "#0ea5e9",
+    texture: "water",
+    icon: "🛁",
+    description: "Reserva de água para irrigação"
+  },
+  {
+    id: "11",
+    name: "Barracão",
+    category: "structures",
+    size: "6x4m",
+    color: "#78716c",
+    texture: "building",
+    icon: "🏭",
+    description: "Armazenamento de ferramentas e equipamentos"
+  },
+  {
+    id: "12",
+    name: "Cerca Elétrica",
+    category: "fences",
+    size: "variável",
+    color: "#fbbf24",
+    texture: "fence",
+    icon: "⚡",
+    description: "Cerca eletrificada para proteção"
+  },
+  {
+    id: "13",
+    name: "Estrada de Terra",
+    category: "paths",
+    size: "3m largura",
+    color: "#d97706",
+    texture: "dirt_road",
+    icon: "🛣️",
+    description: "Estrada principal de acesso"
+  },
+  {
+    id: "14",
+    name: "Área Sombreada",
+    category: "soil",
+    size: "variável",
+    color: "#065f46",
+    texture: "grass",
+    icon: "🌳",
+    description: "Área coberta por árvores"
+  },
+  {
+    id: "15",
+    name: "Pedreira",
+    category: "soil",
+    size: "variável",
+    color: "#6b7280",
+    texture: "rock",
+    icon: "🪨",
+    description: "Área rochosa natural"
   }
 ];
 
 const BRUSH_MODES = [
-  { id: "rectangle", name: "Retângulo", icon: "⬜" },
-  { id: "circle", name: "Círculo", icon: "⭕" },
-  { id: "brush", name: "Pincel", icon: "🖌️" },
+  { id: "rectangle", name: "Retângulo", icon: "⬜", description: "Forma retangular" },
+  { id: "circle", name: "Círculo", icon: "⭕", description: "Forma circular" },
+  { id: "brush", name: "Pincel", icon: "🖌️", description: "Desenho livre" },
 ] as const;
 
 interface TerrainLibraryProps {
@@ -214,6 +284,7 @@ const BrushModeButton = memo(({ mode, isSelected, onSelect }: {
           ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300" 
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
       )}
+      title={mode.description}
     >
       <span className="mr-1.5">{mode.icon}</span>
       {mode.name}
@@ -247,7 +318,9 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
     const terrainWithSettings = isCurrentlySelected ? null : {
       ...terrain,
       selectedBrushMode,
-      brushThickness: brushThickness[0]
+      brushThickness: brushThickness[0],
+      // Ensure all terrains support all brush modes
+      supportedModes: ["rectangle", "circle", "brush"]
     };
     onTerrainSelect(terrainWithSettings);
   }, [selectedTerrain?.id, onTerrainSelect, selectedBrushMode, brushThickness]);
@@ -303,20 +376,23 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
           {memoizedCategories}
         </div>
 
-        {/* Brush Settings */}
+        {/* Enhanced Brush Settings */}
         <div className="space-y-3">
           <div>
             <Label className="text-xs text-gray-600 dark:text-gray-400 mb-2 block">
-              Modo do Pincel
+              Modo de Aplicação
             </Label>
             <div className="flex flex-wrap gap-1">
               {memoizedBrushModes}
             </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Todos os terrenos suportam todos os modos de aplicação
+            </p>
           </div>
           
           <div>
             <Label className="text-xs text-gray-600 dark:text-gray-400 mb-2 block">
-              Espessura: {brushThickness[0]}px
+              Espessura do Pincel: {brushThickness[0]}px
             </Label>
             <Slider
               value={brushThickness}
@@ -326,6 +402,10 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
               step={5}
               className="w-full"
             />
+            <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <span>Fino (5px)</span>
+              <span>Grosso (100px)</span>
+            </div>
           </div>
         </div>
       </div>
@@ -361,7 +441,10 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
                 {selectedTerrain.name}
               </h3>
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                Modo: {selectedBrushMode} • {selectedTerrain.size}
+                Modo: {selectedBrushMode} • Tamanho: {selectedTerrain.size}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Espessura: {brushThickness[0]}px • Textura: {selectedTerrain.texture}
               </p>
             </div>
           </div>

@@ -1,6 +1,6 @@
+import React, { useState, memo, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Plant, Terrain } from '../../types/canvasTypes';
-import { useState } from "react";
 import { parseSpacingToMeters, realWorldSizeToPixels, calculateIconSize, formatRealWorldSize } from "@/utils/plantSizes";
 import { getPlantBorderColor, getShapeColor, hexToRgba, lightenColor, darkenColor } from "@/utils/colorUtils";
 
@@ -16,15 +16,11 @@ interface DrawingElement {
   terrain?: Terrain;
   selected?: boolean;
   rotation?: number;
-  // Real-world size in meters (for terrain elements)
   realWorldWidth?: number;
   realWorldHeight?: number;
-  // Terrain brush properties
-  brushType?: 'rectangle' | 'circle' | 'path';
+  brushType?: 'rectangle' | 'circle' | 'path' | 'brush';
   texture?: string;
-  // Path points for trail-like terrains
   pathPoints?: { x: number; y: number }[];
-  // Brush properties
   selectedBrushMode?: 'rectangle' | 'circle' | 'brush';
   brushThickness?: number;
 }
@@ -34,43 +30,66 @@ interface CanvasElementProps {
   pixelsPerMeter?: number;
 }
 
-export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementProps) => {
+const CanvasElementComponent = ({ element, pixelsPerMeter = 10 }: CanvasElementProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const isSelected = element.selected;
-  const selectionStyle = isSelected ? 'ring-2 ring-primary ring-offset-2 shadow-lg' : '';
+  const selectionStyle = isSelected ? 'ring-2 ring-blue-500 ring-offset-2 shadow-lg' : '';
 
+  const handleMouseEnter = useCallback(() => setShowTooltip(true), []);
+  const handleMouseLeave = useCallback(() => setShowTooltip(false), []);
+
+  // Improved plant rendering with better selection area
   if (element.type === 'plant') {
     const realWorldSize = parseSpacingToMeters(element.plant?.spacing || '1x1m');
     const pixelSize = realWorldSizeToPixels(realWorldSize, pixelsPerMeter);
     const iconSize = calculateIconSize(pixelSize);
     
-    // Get consistent color for this plant
+    // Minimum clickable area for small plants
+    const minClickableSize = 32;
+    const clickableSize = {
+      width: Math.max(pixelSize.width, minClickableSize),
+      height: Math.max(pixelSize.height, minClickableSize)
+    };
+    
     const borderColor = getPlantBorderColor(element.plant?.id || String(element.id));
     const backgroundColorLight = hexToRgba(borderColor, 0.1);
-    const backgroundColorMedium = hexToRgba(borderColor, 0.2);
     const borderColorAlpha = hexToRgba(borderColor, 0.6);
     
     return (
       <div
         className={cn(
           "absolute plant-area cursor-move transition-all group border-2 border-dashed rounded-lg",
+          "hover:border-solid hover:shadow-md",
           selectionStyle,
-          isSelected && "border-solid border-primary bg-primary/10"
+          isSelected && "border-solid border-blue-500 bg-blue-50 dark:bg-blue-950"
         )}
         style={{
-          left: element.x - pixelSize.width / 2,
-          top: element.y - pixelSize.height / 2,
-          width: pixelSize.width,
-          height: pixelSize.height,
+          left: element.x - clickableSize.width / 2,
+          top: element.y - clickableSize.height / 2,
+          width: clickableSize.width,
+          height: clickableSize.height,
           transform: `rotate(${element.rotation || 0}deg)`,
           zIndex: isSelected ? 10 : 1,
           borderColor: isSelected ? undefined : borderColorAlpha,
           backgroundColor: isSelected ? undefined : backgroundColorLight,
           boxShadow: isSelected ? undefined : `0 0 8px ${hexToRgba(borderColor, 0.3)}`,
         }}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
+        {/* Plant visual area (actual size) */}
+        <div 
+          className="absolute border border-dashed opacity-60"
+          style={{
+            left: (clickableSize.width - pixelSize.width) / 2,
+            top: (clickableSize.height - pixelSize.height) / 2,
+            width: pixelSize.width,
+            height: pixelSize.height,
+            borderColor: borderColor,
+            backgroundColor: 'transparent',
+          }}
+        />
+        
         {/* Plant icon in center */}
         <div 
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 dark:bg-gray-800/95 shadow-md hover:shadow-lg transition-all relative border-2 flex items-center justify-center"
@@ -85,39 +104,42 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
           {element.plant?.icon}
         </div>
         
-        {/* Size indicator */}
+        {/* Plant name label - Always visible */}
         <div 
-          className="absolute top-1 left-1 text-xs text-white px-1.5 py-0.5 rounded font-medium shadow-sm"
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
           style={{
             backgroundColor: borderColor,
-            color: 'white',
           }}
         >
-          {formatRealWorldSize(realWorldSize)}
+          {element.plant?.name}
         </div>
         
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
+            <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
+            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
+            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
           </>
         )}
         
+        {/* Hover tooltip with detailed info */}
         {showTooltip && (
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded-lg shadow-lg border whitespace-nowrap z-20 min-w-max">
-            <div className="font-medium" style={{ color: borderColor }}>{element.plant?.name}</div>
-            <div className="text-muted-foreground text-xs">Espaçamento: {element.plant?.spacing}</div>
-            <div className="text-muted-foreground text-xs">Época: {element.plant?.season}</div>
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm rounded-lg shadow-lg border whitespace-nowrap z-20 min-w-max">
+            <div className="font-semibold" style={{ color: borderColor }}>{element.plant?.name}</div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">Espaçamento: {element.plant?.spacing}</div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">Área: {formatRealWorldSize(realWorldSize)}</div>
+            {element.plant?.description && (
+              <div className="text-gray-600 dark:text-gray-400 text-xs mt-1">{element.plant.description}</div>
+            )}
           </div>
         )}
       </div>
     );
   }
 
-  // Terrain texture patterns
+  // Terrain texture patterns - Enhanced
   const getTerrainPattern = (texture: string, color: string) => {
     switch (texture) {
       case 'water':
@@ -137,19 +159,36 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
                 radial-gradient(ellipse at 70% 20%, ${color}50 2px, transparent 2px)`;
       case 'trail':
       case 'dirt_road':
+      case 'path':
         return `repeating-linear-gradient(
                   45deg, ${color}40, ${color}40 3px, transparent 3px, transparent 6px)`;
       case 'building':
+      case 'structure':
         return `repeating-linear-gradient(
                   0deg, ${color}50, ${color}50 5px, transparent 5px, transparent 10px),
                 repeating-linear-gradient(
                   90deg, ${color}40, ${color}40 5px, transparent 5px, transparent 10px)`;
+      case 'fence':
+        return `repeating-linear-gradient(
+                  90deg, ${color}60, ${color}60 2px, transparent 2px, transparent 8px)`;
+      case 'solar':
+        return `repeating-linear-gradient(
+                  0deg, ${color}70, ${color}70 1px, transparent 1px, transparent 3px),
+                repeating-linear-gradient(
+                  90deg, ${color}50, ${color}50 1px, transparent 1px, transparent 6px)`;
+      case 'compost':
+        return `radial-gradient(circle at 30% 30%, ${color}50 2px, transparent 2px),
+                radial-gradient(circle at 70% 70%, ${color}60 1px, transparent 1px),
+                repeating-linear-gradient(30deg, ${color}20, ${color}20 1px, transparent 1px, transparent 4px)`;
+      case 'well':
+        return `radial-gradient(circle at 50% 50%, ${color}80 10px, ${color}40 10px, ${color}40 15px, transparent 15px)`;
       default:
         return `repeating-linear-gradient(
                   45deg, ${color}30, ${color}30 2px, transparent 2px, transparent 8px)`;
     }
   };
 
+  // Enhanced terrain rendering
   if (element.type === 'terrain') {
     const terrainWidth = element.width || 40;
     const terrainHeight = element.height || 40;
@@ -175,7 +214,7 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
       return (
         <div
           className={cn(
-            "absolute terrain-path cursor-move transition-all",
+            "absolute terrain-path cursor-move transition-all hover:opacity-90",
             selectionStyle
           )}
           style={{
@@ -186,8 +225,8 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
             transform: `rotate(${element.rotation || 0}deg)`,
             zIndex: isSelected ? 10 : 1,
           }}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <svg
             width={maxX - minX + 10}
@@ -213,7 +252,7 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
               strokeLinecap="round"
               strokeLinejoin="round"
             />
-            {/* Path texture pattern - only for thinner paths */}
+            {/* Path texture pattern */}
             {strokeWidth <= 12 && (
               <path
                 d={pathD}
@@ -227,39 +266,32 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
             )}
           </svg>
           
-          {/* Trail icon */}
+          {/* Trail name label */}
           <div 
-            className="absolute text-sm pointer-events-none"
-            style={{ 
-              left: (maxX - minX) / 2,
-              top: (maxY - minY) / 2,
-              transform: 'translate(-50%, -50%)',
-              color: element.terrain?.color,
-              textShadow: '0 0 3px rgba(255,255,255,0.8)',
-              fontSize: Math.min(strokeWidth, 16)
-            }}
+            className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
+            style={{ backgroundColor: element.terrain?.color }}
           >
-            {element.terrain?.icon}
+            {element.terrain?.name}
           </div>
           
           {/* Selection handles for paths */}
           {isSelected && (
             <>
-              <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
-              <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
-              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
-              <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-move"></div>
+              <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-move"></div>
+              <div className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-move"></div>
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-move"></div>
+              <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-move"></div>
             </>
           )}
           
           {showTooltip && (
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded shadow-lg border whitespace-nowrap z-20 min-w-max">
-              <div className="font-medium">{element.terrain?.name}</div>
-              <div className="text-muted-foreground text-xs">{element.terrain?.description}</div>
-              <div className="text-muted-foreground text-xs">
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm rounded-lg shadow-lg border whitespace-nowrap z-20 min-w-max">
+              <div className="font-semibold">{element.terrain?.name}</div>
+              <div className="text-gray-600 dark:text-gray-400 text-xs">{element.terrain?.description}</div>
+              <div className="text-gray-600 dark:text-gray-400 text-xs">
                 Espessura: {strokeWidth}px ({(strokeWidth / 10).toFixed(1)}m)
               </div>
-              <div className="text-muted-foreground text-xs">
+              <div className="text-gray-600 dark:text-gray-400 text-xs">
                 Comprimento: ~{Math.round(Math.sqrt(Math.pow(maxX - minX, 2) + Math.pow(maxY - minY, 2)) / 10)}m
               </div>
             </div>
@@ -268,34 +300,53 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
       );
     }
     
-    // Handle area-based terrain
-    if (element.brushType === 'brush') return null; // Remove icon for brush terrains
+    // Handle area-based terrain (rectangle, circle, brush)
     const isCircle = brushType === 'circle';
-    const borderRadius = isCircle ? '50%' : '4px';
+    const borderRadius = isCircle ? '50%' : '8px';
+    
+    // Minimum clickable size for small terrain elements
+    const minClickableSize = 32;
+    const clickableWidth = Math.max(terrainWidth, minClickableSize);
+    const clickableHeight = Math.max(terrainHeight, minClickableSize);
     
     return (
       <div
         className={cn(
-          "absolute terrain-brush cursor-move transition-all group border-2",
-          selectionStyle
+          "absolute terrain-area cursor-move transition-all group border-2 hover:shadow-md",
+          selectionStyle,
+          isSelected && "border-orange-500 bg-orange-50 dark:bg-orange-950"
         )}
         style={{
-          left: element.x,
-          top: element.y,
-          width: terrainWidth,
-          height: terrainHeight,
-          borderRadius: borderRadius,
+          left: element.x - (clickableWidth - terrainWidth) / 2,
+          top: element.y - (clickableHeight - terrainHeight) / 2,
+          width: clickableWidth,
+          height: clickableHeight,
+          borderRadius: isCircle ? '50%' : '8px',
           transform: `rotate(${element.rotation || 0}deg)`,
           backgroundColor: element.terrain?.color + '40',
-          borderColor: element.terrain?.color,
+          borderColor: isSelected ? undefined : element.terrain?.color,
           backgroundImage: getTerrainPattern(element.texture || 'default', element.terrain?.color || '#666'),
           backgroundSize: '8px 8px',
           zIndex: isSelected ? 10 : 1,
           boxShadow: `inset 0 0 0 1px ${element.terrain?.color}60`,
         }}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
+        {/* Actual terrain area indicator */}
+        <div 
+          className="absolute border border-dashed opacity-60"
+          style={{
+            left: (clickableWidth - terrainWidth) / 2,
+            top: (clickableHeight - terrainHeight) / 2,
+            width: terrainWidth,
+            height: terrainHeight,
+            borderRadius: isCircle ? '50%' : '4px',
+            borderColor: element.terrain?.color,
+            backgroundColor: 'transparent',
+          }}
+        />
+        
         {/* Central icon for identification */}
         <div 
           className="absolute inset-0 flex items-center justify-center text-lg font-bold pointer-events-none"
@@ -308,33 +359,34 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
           {element.terrain?.icon}
         </div>
         
-        {/* Size indicator */}
+        {/* Terrain name label - Always visible */}
         <div 
-          className="absolute top-1 left-1 text-xs font-medium px-1 rounded text-white shadow-sm"
-          style={{ backgroundColor: element.terrain?.color + 'CC' }}
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
+          style={{ backgroundColor: element.terrain?.color }}
         >
-          {realWidth}×{realHeight}m
+          {element.terrain?.name}
         </div>
         
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
+            <div className="absolute -top-2 -left-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
+            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
+            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
           </>
         )}
         
+        {/* Hover tooltip with detailed info */}
         {showTooltip && (
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded shadow-lg border whitespace-nowrap z-20 min-w-max">
-            <div className="font-medium">{element.terrain?.name}</div>
-            <div className="text-muted-foreground text-xs">{element.terrain?.description}</div>
-            <div className="text-muted-foreground text-xs">
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm rounded-lg shadow-lg border whitespace-nowrap z-20 min-w-max">
+            <div className="font-semibold">{element.terrain?.name}</div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">{element.terrain?.description}</div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
               Área: {realWidth}×{realHeight}m ({realWidth * realHeight}m²)
             </div>
-            <div className="text-muted-foreground text-xs">
-              Textura: {element.texture}
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              Modo: {brushType} • Textura: {element.texture}
             </div>
           </div>
         )}
@@ -342,6 +394,7 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
     );
   }
 
+  // Enhanced rectangle rendering
   if (element.type === 'rectangle') {
     const shapeColor = getShapeColor(element.id);
     const lightColor = hexToRgba(shapeColor, 0.2);
@@ -349,7 +402,7 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
     return (
       <div
         className={cn(
-          "absolute border-2 cursor-move transition-all rounded-lg",
+          "absolute border-2 cursor-move transition-all rounded-lg hover:shadow-md",
           selectionStyle
         )}
         style={{
@@ -363,27 +416,44 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
           backgroundColor: lightColor,
           boxShadow: `0 0 8px ${hexToRgba(shapeColor, 0.3)}`,
         }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
+        {/* Shape name label */}
         <div 
-          className="absolute top-1 left-1 text-xs text-white px-1 rounded font-medium shadow-sm"
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
           style={{ backgroundColor: shapeColor }}
         >
-          {Math.round((element.width || 0) / 10)}x{Math.round((element.height || 0) / 10)}m
+          Retângulo
         </div>
         
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
+            <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
+            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
+            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
           </>
+        )}
+        
+        {/* Hover tooltip */}
+        {showTooltip && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm rounded-lg shadow-lg border whitespace-nowrap z-20">
+            <div className="font-semibold">Retângulo</div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              Tamanho: {Math.round((element.width || 0) / 10)}×{Math.round((element.height || 0) / 10)}m
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              Área: {Math.round(((element.width || 0) * (element.height || 0)) / 100)}m²
+            </div>
+          </div>
         )}
       </div>
     );
   }
 
+  // Enhanced circle rendering
   if (element.type === 'circle') {
     const diameter = element.radius ? element.radius * 2 : 0;
     const shapeColor = getShapeColor(element.id);
@@ -392,7 +462,7 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
     return (
       <div
         className={cn(
-          "absolute border-2 rounded-full cursor-move transition-all",
+          "absolute border-2 rounded-full cursor-move transition-all hover:shadow-md",
           selectionStyle
         )}
         style={{
@@ -406,22 +476,38 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
           backgroundColor: lightColor,
           boxShadow: `0 0 8px ${hexToRgba(shapeColor, 0.3)}`,
         }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
+        {/* Shape name label */}
         <div 
-          className="absolute top-1 left-1 text-xs text-white px-1 rounded font-medium shadow-sm"
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
           style={{ backgroundColor: shapeColor }}
         >
-          ⌀{Math.round(diameter / 10)}m
+          Círculo
         </div>
         
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
+            <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
+            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
+            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
           </>
+        )}
+        
+        {/* Hover tooltip */}
+        {showTooltip && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm rounded-lg shadow-lg border whitespace-nowrap z-20">
+            <div className="font-semibold">Círculo</div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              Diâmetro: {Math.round(diameter / 10)}m
+            </div>
+            <div className="text-gray-600 dark:text-gray-400 text-xs">
+              Área: {Math.round((Math.PI * Math.pow(diameter / 2, 2)) / 100)}m²
+            </div>
+          </div>
         )}
       </div>
     );
@@ -429,3 +515,6 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
 
   return null;
 };
+
+export const CanvasElement = memo(CanvasElementComponent);
+CanvasElement.displayName = "CanvasElement";
