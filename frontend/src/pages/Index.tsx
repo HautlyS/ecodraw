@@ -12,7 +12,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Leaf, Mountain, Building } from "lucide-react";
+import { ChevronLeft, ChevronRight, Leaf, Mountain, Building, Sparkles, X } from "lucide-react";
 
 const MemoizedCanvas = memo(Canvas);
 const MemoizedPlantLibrary = memo(PlantLibrary);
@@ -28,6 +28,7 @@ const Index = () => {
   const [activeLibrary, setActiveLibrary] = useState<"plants" | "terrain" | "structures">("plants");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 50, height: 30 });
+  const [showMobileLibrary, setShowMobileLibrary] = useState(false);
   const canvasRef = useRef<CanvasRef>(null);
 
   const { isMobile, isTablet } = useResponsive();
@@ -57,13 +58,32 @@ const Index = () => {
     } else if (library === "structures" && selectedTool === "terrain") {
       setSelectedTool("select");
     }
-  }, [selectedTool]);
+    
+    // Show mobile library when changing library on mobile
+    if (isCompact) {
+      setShowMobileLibrary(true);
+    }
+  }, [selectedTool, isCompact]);
 
-  const handlePlantUsed = useCallback(() => {}, []);
-  const handleTerrainUsed = useCallback(() => {}, []);
+  const handlePlantUsed = useCallback(() => {
+    if (isCompact) {
+      setShowMobileLibrary(false);
+    }
+  }, [isCompact]);
+
+  const handleTerrainUsed = useCallback(() => {
+    if (isCompact) {
+      setShowMobileLibrary(false);
+    }
+  }, [isCompact]);
+
+  const handleStructureUsed = useCallback(() => {
+    if (isCompact) {
+      setShowMobileLibrary(false);
+    }
+  }, [isCompact]);
+
   const handleWelcomeClose = useCallback(() => setShowWelcome(false), []);
-
-  const handleStructureUsed = useCallback(() => {}, []);
   
   const handleCanvasSizeChange = useCallback((size: { width: number; height: number }) => {
     setCanvasSize(size);
@@ -73,35 +93,53 @@ const Index = () => {
     setSidebarCollapsed(prev => !prev);
   }, []);
 
-  // Memoized sidebar content to prevent unnecessary re-renders
+  const toggleMobileLibrary = useCallback(() => {
+    setShowMobileLibrary(prev => !prev);
+  }, []);
+
+  const closeMobileLibrary = useCallback(() => {
+    setShowMobileLibrary(false);
+  }, []);
+
+  // Memoized sidebar content with enhanced styling
   const sidebarContent = useMemo(() => (
-    <div className="h-full flex flex-col bg-gradient-to-b from-transparent to-gray-50/20 dark:to-gray-900/20">
+    <div className="h-full flex flex-col">
       <Tabs 
         value={activeLibrary} 
         onValueChange={(value) => handleLibraryChange(value as "plants" | "terrain" | "structures")} 
         className="flex-1 flex flex-col"
       >
-        <div className="sticky top-0 z-10 mx-4 mt-4 mb-2 space-y-2 bg-gradient-to-b from-white/90 to-transparent dark:from-gray-900/90 backdrop-blur-sm pt-2 pb-4">
-          {/* First row: Plants and Terrain */}
-          <TabsList className="grid w-full grid-cols-2 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-200/50 dark:border-gray-700/50">
-            <TabsTrigger value="plants" className="flex items-center gap-2 text-xs data-[state=active]:bg-green-500 data-[state=active]:text-white transition-all duration-200">
-              <Leaf className="h-3.5 w-3.5" />
-              Plantas
-            </TabsTrigger>
-            <TabsTrigger value="terrain" className="flex items-center gap-2 text-xs data-[state=active]:bg-orange-500 data-[state=active]:text-white transition-all duration-200">
-              <Mountain className="h-3.5 w-3.5" />
-              Terreno
-            </TabsTrigger>
-          </TabsList>
-          
-          {/* Second row: Structures (centered) */}
-          <div className="flex justify-center">
-            <TabsList className="w-48 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-200/50 dark:border-gray-700/50">
-              <TabsTrigger value="structures" className="flex items-center gap-2 text-xs w-full data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200">
-                <Building className="h-3.5 w-3.5" />
-                Estruturas
+        <div className="sticky top-0 z-10 mx-4 mt-4 mb-2 space-y-3 bg-gradient-to-b from-white/90 to-transparent dark:from-gray-900/90 backdrop-blur-xl pt-2 pb-4 rounded-2xl">
+          {/* Enhanced Tab Navigation */}
+          <div className="space-y-2">
+            <TabsList className="grid w-full grid-cols-2 h-12 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl shadow-lg border border-white/20 dark:border-gray-700/20 rounded-2xl p-1">
+              <TabsTrigger 
+                value="plants" 
+                className="flex items-center gap-2 text-sm font-semibold rounded-xl h-10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <Leaf className="h-4 w-4" />
+                <span className="hidden sm:inline">Plantas</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="terrain" 
+                className="flex items-center gap-2 text-sm font-semibold rounded-xl h-10 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-amber-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <Mountain className="h-4 w-4" />
+                <span className="hidden sm:inline">Terreno</span>
               </TabsTrigger>
             </TabsList>
+            
+            <div className="flex justify-center">
+              <TabsList className="w-48 h-12 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl shadow-lg border border-white/20 dark:border-gray-700/20 rounded-2xl p-1">
+                <TabsTrigger 
+                  value="structures" 
+                  className="flex items-center gap-2 text-sm font-semibold rounded-xl h-10 w-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-400 data-[state=active]:to-indigo-500 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:scale-105"
+                >
+                  <Building className="h-4 w-4" />
+                  <span>Estruturas</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </div>
         </div>
 
@@ -130,10 +168,55 @@ const Index = () => {
     </div>
   ), [activeLibrary, selectedPlant, selectedTerrain, selectedStructure, handleLibraryChange]);
 
+  // Enhanced mobile library modal
+  const mobileLibraryModal = useMemo(() => (
+    <div className={cn(
+      "fixed inset-0 z-50 transition-all duration-300",
+      showMobileLibrary ? "opacity-100" : "opacity-0 pointer-events-none"
+    )}>
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+        onClick={closeMobileLibrary}
+      />
+      
+      {/* Modal */}
+      <div className={cn(
+        "absolute inset-x-4 top-4 bottom-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-gray-700/20 shadow-2xl transition-all duration-300",
+        showMobileLibrary ? "scale-100 translate-y-0" : "scale-95 translate-y-8"
+      )}>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-white/20 dark:border-gray-700/20">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-white" />
+            </div>
+            <h2 className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-400">
+              Bibliotecas
+            </h2>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={closeMobileLibrary}
+            className="h-10 w-10 p-0 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/50 text-red-500 dark:text-red-400"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+        
+        {/* Content */}
+        <div className="flex-1 overflow-hidden">
+          {sidebarContent}
+        </div>
+      </div>
+    </div>
+  ), [showMobileLibrary, sidebarContent, closeMobileLibrary]);
+
   return (
     <ThemeProvider>
-      <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950 overflow-hidden layout-container">
-        {/* Unified Toolbar - Borderless Integration */}
+      <div className="h-screen flex flex-col overflow-hidden layout-container">
+        {/* Enhanced Unified Toolbar */}
         <UnifiedToolbar 
           selectedTool={selectedTool}
           onToolSelect={handleToolSelect}
@@ -145,9 +228,9 @@ const Index = () => {
           onCanvasSizeChange={handleCanvasSizeChange}
         />
 
-        {/* Main Content: Canvas + Sidebar - Seamless Integration */}
-        <div className="flex-1 flex min-h-0">
-          {/* Canvas - Performance Optimized */}
+        {/* Main Content with Glass Morphism */}
+        <div className="flex-1 flex min-h-0 relative">
+          {/* Canvas with enhanced styling */}
           <div className="flex-1 relative canvas-area">
             <Canvas 
               ref={canvasRef}
@@ -164,54 +247,60 @@ const Index = () => {
             />
           </div>
 
-          {/* Modern Sidebar - Borderless Design */}
+          {/* Enhanced Desktop Sidebar */}
           {!isCompact && (
             <div className={cn(
-              "sidebar transition-all duration-300 ease-in-out relative",
-              "bg-gradient-to-br from-gray-50/50 to-gray-100/30 dark:from-gray-900/50 dark:to-gray-800/30",
-              "backdrop-blur-sm shadow-2xl",
-              "border-l border-gray-200/50 dark:border-gray-700/50",
-              "max-w-[320px] min-w-0 mr-2",
-              sidebarCollapsed ? "w-0 overflow-hidden mr-0" : "w-80"
+              "sidebar transition-all duration-500 ease-in-out relative",
+              "bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl shadow-2xl",
+              "border-l border-white/20 dark:border-gray-700/20",
+              "max-w-[400px] min-w-0",
+              sidebarCollapsed ? "w-0 overflow-hidden" : "w-96"
             )}>
-              {/* Sidebar Toggle - Floating Design */}
+              {/* Enhanced Sidebar Toggle */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={toggleSidebar}
                 className={cn(
-                  "absolute top-4 z-20 h-10 w-10 rounded-full transition-all duration-300",
-                  "bg-gradient-to-br from-white to-gray-100 dark:from-gray-800 dark:to-gray-700",
-                  "border border-gray-200/50 dark:border-gray-600/50 shadow-lg",
-                  "hover:shadow-xl hover:scale-110",
-                  "backdrop-blur-sm",
-                  sidebarCollapsed ? "-left-5" : "left-4"
+                  "absolute top-6 z-20 h-12 w-12 rounded-2xl transition-all duration-300",
+                  "bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl",
+                  "border border-white/20 dark:border-gray-700/20 shadow-lg",
+                  "hover:shadow-xl hover:scale-110 hover:bg-white/90 dark:hover:bg-gray-700/90",
+                  sidebarCollapsed ? "-left-6" : "left-6"
                 )}
               >
                 {sidebarCollapsed ? (
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-5 w-5" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-5 w-5" />
                 )}
               </Button>
 
-              {/* Sidebar Content - Only render when not collapsed for performance */}
-              {!sidebarCollapsed && sidebarContent}
+              {/* Sidebar Content */}
+              {!sidebarCollapsed && (
+                <div className="h-full pt-4">
+                  {sidebarContent}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Mobile Navigation - Clean Integration */}
+        {/* Enhanced Mobile Navigation */}
         {isCompact && (
           <MobileNavigation
             selectedTool={selectedTool}
             onToolSelect={handleToolSelect}
             activeLibrary={activeLibrary}
             onLibraryChange={handleLibraryChange}
+            onShowLibrary={toggleMobileLibrary}
           />
         )}
 
-        {/* Welcome Modal */}
+        {/* Mobile Library Modal */}
+        {isCompact && mobileLibraryModal}
+
+        {/* Enhanced Welcome Modal */}
         <WelcomeModal 
           open={showWelcome}
           onClose={handleWelcomeClose}
