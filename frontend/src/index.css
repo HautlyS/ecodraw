@@ -1,137 +1,157 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Enhanced responsive base styles */
+/* Modern flat design variables - GitHub Atom inspired */
 html {
-  /* Custom property for viewport height (mobile-friendly) */
   --vh: 1vh;
-  /* Custom properties for responsive breakpoints */
-  --breakpoint-xs: 480px;
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
-  --breakpoint-3xl: 1920px;
-  --breakpoint-4xl: 2560px;
-  /* Container max-widths */
-  --container-sm: 640px;
-  --container-md: 768px;
-  --container-lg: 1024px;
-  --container-xl: 1280px;
-  --container-2xl: 1400px;
-  --container-3xl: 1800px;
-  --container-4xl: 2400px;
+  /* Clean modern color system */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #fafbfc;
+  --color-bg-tertiary: #f6f8fa;
+  --color-bg-overlay: rgba(255, 255, 255, 0.95);
+  --color-border-subtle: #e1e4e8;
+  --color-border-muted: #d0d7de;
+  --color-text-primary: #24292f;
+  --color-text-secondary: #656d76;
+  --color-text-tertiary: #8b949e;
+  --color-accent-primary: #0969da;
+  --color-accent-secondary: #1f883d;
+  --color-surface-subtle: rgba(175, 184, 193, 0.2);
+  
+  /* Dark mode colors */
+  --color-bg-primary-dark: #0d1117;
+  --color-bg-secondary-dark: #161b22;
+  --color-bg-tertiary-dark: #21262d;
+  --color-bg-overlay-dark: rgba(13, 17, 23, 0.95);
+  --color-border-subtle-dark: #30363d;
+  --color-border-muted-dark: #21262d;
+  --color-text-primary-dark: #f0f6fc;
+  --color-text-secondary-dark: #8b949e;
+  --color-text-tertiary-dark: #6e7681;
+  --color-accent-primary-dark: #58a6ff;
+  --color-accent-secondary-dark: #3fb950;
+  --color-surface-subtle-dark: rgba(110, 118, 129, 0.1);
 }
 
 body {
-  /* Use dynamic viewport height for mobile */
   min-height: 100vh;
   min-height: calc(var(--vh, 1vh) * 100);
-  /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
-  /* Improve touch scrolling on iOS */
   -webkit-overflow-scrolling: touch;
-  /* Ensure proper layout */
   margin: 0;
   padding: 0;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Ensure root container takes full height */
+.dark body {
+  background: var(--color-bg-primary-dark);
+  color: var(--color-text-primary-dark);
+}
+
 #root {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
 }
 
-/* Fix for layout containers */
+/* Modern layout system */
 .layout-container {
   height: 100vh;
   width: 100vw;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--color-bg-primary);
 }
 
-/* Canvas area specific styles */
+.dark .layout-container {
+  background: var(--color-bg-primary-dark);
+}
+
+/* Canvas area - performance optimized */
 .canvas-area {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  contain: layout style paint;
+  transform: translateZ(0);
 }
 
-/* Sidebar specific styles */
+/* Sidebar - borderless integration */
 .sidebar {
   height: 100%;
   overflow-y: auto;
   flex-shrink: 0;
+  background: var(--color-bg-secondary);
+  contain: layout style paint;
 }
 
-/* Modern clean design - removed old complex animations */
+.dark .sidebar {
+  background: var(--color-bg-secondary-dark);
+}
+
+/* Performance optimizations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.contain-paint {
+  contain: layout style paint;
+}
 
 @layer base {
   :root {
-    --background: 46 46% 97%;
-    --foreground: 120 12% 15%;
-
+    /* Clean flat color system */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
-    --card-foreground: 120 12% 15%;
-
+    --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 120 12% 15%;
-
-    --primary: 95 38% 32%;
-    --primary-foreground: 46 46% 97%;
-
-    --secondary: 95 15% 88%;
-    --secondary-foreground: 120 12% 15%;
-
-    --muted: 95 15% 92%;
-    --muted-foreground: 120 8% 46%;
-
-    --accent: 85 48% 45%;
-    --accent-foreground: 46 46% 97%;
-
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 222.2 84% 4.9%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 95 15% 88%;
-    --input: 95 15% 88%;
-    --ring: 95 38% 32%;
-
-    --radius: 0.75rem;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.375rem;
   }
 
   .dark {
-    --background: 120 12% 8%;
-    --foreground: 46 46% 97%;
-
-    --card: 120 12% 10%;
-    --card-foreground: 46 46% 97%;
-
-    --popover: 120 12% 10%;
-    --popover-foreground: 46 46% 97%;
-
-    --primary: 95 38% 45%;
-    --primary-foreground: 120 12% 8%;
-
-    --secondary: 120 8% 15%;
-    --secondary-foreground: 46 46% 97%;
-
-    --muted: 120 8% 15%;
-    --muted-foreground: 95 15% 65%;
-
-    --accent: 85 48% 55%;
-    --accent-foreground: 120 12% 8%;
-
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
-    --border: 120 8% 15%;
-    --input: 120 8% 15%;
-    --ring: 95 38% 45%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 94.1%;
   }
 }
 
@@ -139,202 +159,119 @@ body {
   * {
     @apply border-border;
   }
-
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   }
 }
 
-/* Custom agricultural patterns and textures */
-.soil-pattern {
-  background-image: 
-    radial-gradient(circle at 2px 2px, rgba(139, 102, 77, 0.1) 1px, transparent 0),
-    radial-gradient(circle at 12px 12px, rgba(139, 102, 77, 0.05) 1px, transparent 0);
-  background-size: 20px 20px;
-}
-
+/* Clean minimal grid patterns */
 .grid-pattern {
   background-image: 
-    linear-gradient(rgba(74, 126, 74, 0.15) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(74, 126, 74, 0.15) 1px, transparent 1px);
+    linear-gradient(rgba(var(--color-accent-secondary), 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--color-accent-secondary), 0.08) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-/* Enhanced terrain grid pattern with dynamic scaling */
 .terrain-grid-pattern {
-  /* Major grid lines every 2 meters */
   background-image: 
-    linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px),
-    /* Minor grid lines every 1 meter */
-    linear-gradient(rgba(34, 197, 94, 0.15) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34, 197, 94, 0.15) 1px, transparent 1px);
-  background-size: calc(var(--grid-major, 20px)) calc(var(--grid-major, 20px)), 
-                   calc(var(--grid-major, 20px)) calc(var(--grid-major, 20px)), 
-                   calc(var(--grid-minor, 10px)) calc(var(--grid-minor, 10px)), 
-                   calc(var(--grid-minor, 10px)) calc(var(--grid-minor, 10px));
-  background-position: 0 0, 0 0, 0 0, 0 0;
+    linear-gradient(rgba(var(--color-accent-secondary), 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--color-accent-secondary), 0.12) 1px, transparent 1px),
+    linear-gradient(rgba(var(--color-accent-secondary), 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--color-accent-secondary), 0.06) 1px, transparent 1px);
+  background-size: 
+    calc(var(--grid-major, 20px)) calc(var(--grid-major, 20px)), 
+    calc(var(--grid-major, 20px)) calc(var(--grid-major, 20px)), 
+    calc(var(--grid-minor, 10px)) calc(var(--grid-minor, 10px)), 
+    calc(var(--grid-minor, 10px)) calc(var(--grid-minor, 10px));
 }
 
-.dark .grid-pattern {
-  background-image: 
-    linear-gradient(rgba(134, 239, 172, 0.2) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(134, 239, 172, 0.2) 1px, transparent 1px);
-  background-size: 20px 20px;
+/* Clean element styles */
+.plant-element, .terrain-element {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  contain: layout style paint;
 }
 
-.dark .terrain-grid-pattern {
-  /* Major grid lines every 2 meters */
-  background-image: 
-    linear-gradient(rgba(134, 239, 172, 0.4) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(134, 239, 172, 0.4) 1px, transparent 1px),
-    /* Minor grid lines every 1 meter */
-    linear-gradient(rgba(134, 239, 172, 0.2) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(134, 239, 172, 0.2) 1px, transparent 1px);
-  background-size: calc(var(--grid-major, 20px)) calc(var(--grid-major, 20px)), 
-                   calc(var(--grid-major, 20px)) calc(var(--grid-major, 20px)), 
-                   calc(var(--grid-minor, 10px)) calc(var(--grid-minor, 10px)), 
-                   calc(var(--grid-minor, 10px)) calc(var(--grid-minor, 10px));
-  background-position: 0 0, 0 0, 0 0, 0 0;
-}
-
-.plant-icon {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transition: all 0.2s ease;
-}
-
-.plant-icon:hover {
-  transform: scale(1.05);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
-}
-
-.terrain-element {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transition: all 0.2s ease;
-}
-
-.terrain-element:hover {
-  transform: scale(1.05);
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
-}
-
-.terrain-area {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  transition: all 0.2s ease;
-  border-radius: 4px;
-  backdrop-filter: blur(2px);
-}
-
-.terrain-area:hover {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+.plant-element:hover, .terrain-element:hover {
   transform: scale(1.02);
+  opacity: 0.95;
 }
 
-/* New terrain brush styles */
-.terrain-brush {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
-  transition: all 0.2s ease;
-  backdrop-filter: blur(1px);
-  position: relative;
-  overflow: hidden;
+.canvas-element {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  contain: layout style paint;
 }
 
-.terrain-brush:hover {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
-  transform: scale(1.01);
+.canvas-element.selected {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
 }
 
-.terrain-path {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
-  transition: all 0.2s ease;
+/* Modern button styles - flat and clean */
+.btn-flat {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
-.terrain-path:hover {
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25));
+.btn-flat:hover {
+  background: var(--color-surface-subtle);
 }
 
-/* Terrain texture overlays */
-.terrain-texture-water {
-  background-image: 
-    radial-gradient(circle at 20% 20%, rgba(135, 206, 235, 0.4) 2px, transparent 2px),
-    radial-gradient(circle at 80% 80%, rgba(135, 206, 235, 0.6) 1px, transparent 1px);
-  background-size: 16px 16px, 8px 8px;
-  animation: water-flow 4s linear infinite;
+.btn-flat.active {
+  background: var(--color-accent-primary);
+  color: white;
 }
 
-.terrain-texture-grass {
-  background-image: 
-    repeating-linear-gradient(0deg, rgba(50, 205, 50, 0.3), rgba(50, 205, 50, 0.3) 2px, transparent 2px, transparent 4px),
-    repeating-linear-gradient(90deg, rgba(50, 205, 50, 0.2), rgba(50, 205, 50, 0.2) 1px, transparent 1px, transparent 3px);
-  background-size: 8px 8px, 6px 6px;
+.dark .btn-flat:hover {
+  background: var(--color-surface-subtle-dark);
 }
 
-.terrain-texture-sand {
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(244, 164, 96, 0.4) 1px, transparent 1px),
-    radial-gradient(circle at 75% 75%, rgba(244, 164, 96, 0.3) 1px, transparent 1px);
-  background-size: 12px 12px, 8px 8px;
+.dark .btn-flat.active {
+  background: var(--color-accent-primary-dark);
 }
 
-@keyframes water-flow {
-  0% { background-position: 0px 0px, 0px 0px; }
-  100% { background-position: 16px 16px, 8px 8px; }
-}
-
-/* Nature-inspired gradients */
-.nature-gradient {
-  background: linear-gradient(135deg, 
-    hsl(var(--primary)) 0%, 
-    hsl(var(--accent)) 50%, 
-    hsl(var(--primary)) 100%);
-}
-
-.earth-gradient {
-  background: linear-gradient(135deg, 
-    #8B664D 0%, 
-    #A0785A 50%, 
-    #6B4E3D 100%);
-}
-
-/* Keyboard shortcuts styles */
-kbd {
-  @apply inline-flex items-center px-1.5 py-0.5 border border-border rounded text-xs font-mono bg-muted text-muted-foreground;
-}
-
-/* Drag and drop feedback */
-.drag-over {
-  @apply ring-2 ring-accent ring-offset-2;
-}
-
-/* Smooth transitions for theme switching */
+/* Smooth transitions for all interactive elements */
 * {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
-/* Responsive improvements */
-@media (max-width: 480px) {
-  .grid-pattern {
-    background-size: 12px 12px;
-  }
-  
-  .terrain-grid-pattern {
-    background-size: 12px 12px, 12px 12px, 6px 6px, 6px 6px;
-  }
-  
-  /* Mobile-specific touch targets */
-  .touch-target {
-    min-width: 44px;
-    min-height: 44px;
-  }
-  
-  /* Improve text legibility on small screens */
-  .mobile-text {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
+/* Performance optimized scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-muted);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-border-muted-dark);
+  background-clip: content-box;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary-dark);
+  background-clip: content-box;
+}
+
+/* Mobile optimizations */
 @media (max-width: 768px) {
   .grid-pattern {
     background-size: 15px 15px;
@@ -344,314 +281,94 @@ kbd {
     background-size: 15px 15px, 15px 15px, 7.5px 7.5px, 7.5px 7.5px;
   }
   
-  /* Tablet optimizations */
-  .tablet-spacing {
-    padding: 0.75rem;
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
   }
 }
 
-/* Large screen optimizations */
-@media (min-width: 1920px) {
-  .grid-pattern {
-    background-size: 25px 25px;
-  }
-  
-  .terrain-grid-pattern {
-    background-size: 25px 25px, 25px 25px, 12.5px 12.5px, 12.5px 12.5px;
-  }
-  
-/* Enhanced spacing for large screens */
-  .large-screen-spacing {
-    padding: 2rem;
-  }
-  
-  /* Better typography for large screens */
-  .large-screen-text {
-    font-size: 1.125rem;
-    line-height: 1.75rem;
-  }
+/* Touch-friendly interactions */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Enhanced UI animations and effects */
-.canvas-element {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* Focus styles for accessibility */
+.focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
 }
 
-.canvas-element:hover {
-  filter: brightness(1.1) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+.dark .focus-visible {
+  outline-color: var(--color-accent-primary-dark);
 }
 
-.canvas-element.selected {
-  animation: pulse-selection 2s infinite;
+/* Loading animations */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes pulse-selection {
-  0%, 100% { 
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-  }
-  50% { 
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
-  }
+.animate-fade-in {
+  animation: fade-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Improved plant and terrain visual feedback */
-.plant-area {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(1px);
-}
-
-.plant-area:hover {
-  transform: scale(1.02);
-  backdrop-filter: blur(2px);
-}
-
-.terrain-area {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(1px);
-}
-
-.terrain-area:hover {
-  transform: scale(1.01);
-  backdrop-filter: blur(2px);
-}
-
-/* Smooth tool transitions */
-.tool-button {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.tool-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.tool-button:hover::before {
-  left: 100%;
-}
-
-@media (min-width: 2560px) {
-  .grid-pattern {
-    background-size: 30px 30px;
-  }
-  
-  .terrain-grid-pattern {
-    background-size: 30px 30px, 30px 30px, 15px 15px, 15px 15px;
-  }
-  
-  /* Ultra-wide screen optimizations */
-  .ultra-wide-spacing {
-    padding: 3rem;
-  }
-  
-  .ultra-wide-text {
-    font-size: 1.25rem;
-    line-height: 1.875rem;
-  }
-}
-
-/* Dynamic viewport height utility classes */
-.h-screen-dynamic {
-  height: 100vh;
-  height: calc(var(--vh, 1vh) * 100);
-}
-
-.min-h-screen-dynamic {
-  min-height: 100vh;
-  min-height: calc(var(--vh, 1vh) * 100);
-}
-
-.max-h-screen-dynamic {
-  max-height: 100vh;
-  max-height: calc(var(--vh, 1vh) * 100);
-}
-
-/* Responsive layout utilities */
-.container-fluid {
-  width: 100%;
-  padding-left: 1rem;
-  padding-right: 1rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-@media (min-width: 640px) {
-  .container-fluid {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
-}
-
-@media (min-width: 768px) {
-  .container-fluid {
-    padding-left: 2rem;
-    padding-right: 2rem;
-  }
-}
-
-/* Responsive canvas utilities */
+/* High performance canvas optimizations */
 .canvas-container {
   position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  contain: strict;
+  transform: translateZ(0);
 }
 
-@media (max-width: 768px) {
-  .canvas-container {
-    /* Allow for mobile browser UI */
-    height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem);
-    height: calc(var(--vh, 1vh) * 100 - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem);
-  }
-}
-
-/* Touch-friendly button styles */
-.touch-button {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
-}
-
-.touch-button:active {
-  transform: scale(0.95);
-}
-
-/* Improved focus styles for keyboard navigation */
-.focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-}
-
-/* Mobile-optimized scrollbars */
-@media (max-width: 768px) {
-  ::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  ::-webkit-scrollbar-thumb {
-    background: hsl(var(--border));
-    border-radius: 2px;
-  }
-}
-
-/* Text truncation utilities */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Responsive container utilities */
-.container-responsive {
+/* Responsive utilities */
+.container-fluid {
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   padding-left: 1rem;
   padding-right: 1rem;
 }
 
 @media (min-width: 640px) {
-  .container-responsive {
-    max-width: 640px;
+  .container-fluid {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
 }
 
 @media (min-width: 768px) {
-  .container-responsive {
-    max-width: 768px;
+  .container-fluid {
     padding-left: 2rem;
     padding-right: 2rem;
   }
 }
 
-@media (min-width: 1024px) {
-  .container-responsive {
-    max-width: 1024px;
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-@media (min-width: 1280px) {
-  .container-responsive {
-    max-width: 1280px;
-    padding-left: 3rem;
-    padding-right: 3rem;
+/* Memory-efficient backdrop blur */
+.backdrop-blur-efficient {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+@supports not (backdrop-filter: blur(8px)) {
+  .backdrop-blur-efficient {
+    background: var(--color-bg-overlay);
   }
-}
-
-@media (min-width: 1536px) {
-  .container-responsive {
-    max-width: 1400px;
-    padding-left: 3.5rem;
-    padding-right: 3.5rem;
+  
+  .dark .backdrop-blur-efficient {
+    background: var(--color-bg-overlay-dark);
   }
-}
-
-@media (min-width: 1920px) {
-  .container-responsive {
-    max-width: 1800px;
-    padding-left: 4rem;
-    padding-right: 4rem;
-  }
-}
-
-@media (min-width: 2560px) {
-  .container-responsive {
-    max-width: 2400px;
-    padding-left: 5rem;
-    padding-right: 5rem;
-  }
-}
-
-/* Touch-friendly improvements */
-@media (hover: none) and (pointer: coarse) {
-  .plant-icon:hover,
-  .terrain-element:hover,
-  .terrain-area:hover,
-  .terrain-brush:hover,
-  .terrain-path:hover {
-    transform: none;
-  }
-}
-
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
-}
-
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--accent));
 }
