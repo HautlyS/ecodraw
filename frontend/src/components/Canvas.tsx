@@ -1358,4 +1358,6 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
       </div>
     </div>
   );
-};
+});
+
+Canvas.displayName = "Canvas";
