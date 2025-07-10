@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo, memo, useRef } from "react";
 import { Plant, Terrain } from "@/types/canvasTypes";
 import { UnifiedToolbar } from "@/components/UnifiedToolbar";
 import { PlantLibrary } from "@/components/PlantLibrary";
-import { Canvas, CanvasRef } from "@/components/Canvas";
+import { Canvas } from "@/components/Canvas";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { TerrainLibrary } from "@/components/TerrainLibrary";
 import { MobileNavigation } from "@/components/MobileNavigation";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChevronLeft, ChevronRight, Leaf, Mountain } from "lucide-react";
 
+const MemoizedCanvas = memo(Canvas);
 const MemoizedPlantLibrary = memo(PlantLibrary);
 const MemoizedTerrainLibrary = memo(TerrainLibrary);
 
