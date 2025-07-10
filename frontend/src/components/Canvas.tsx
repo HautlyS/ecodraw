@@ -1237,12 +1237,12 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
           getCursorStyle()
         )}
         style={{
-          backgroundColor: showGrid ? 'transparent' : '#fafafa',
+          backgroundColor: showGrid ? 'transparent' : '#f9fafb',
           backgroundImage: showGrid ? `
-            linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px),
-            linear-gradient(rgba(34, 197, 94, 0.15) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(34, 197, 94, 0.15) 1px, transparent 1px)
+            linear-gradient(rgba(107, 114, 128, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(107, 114, 128, 0.08) 1px, transparent 1px),
+            linear-gradient(rgba(107, 114, 128, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(107, 114, 128, 0.04) 1px, transparent 1px)
           ` : 'none',
           backgroundSize: showGrid ? `
             ${GRID_SIZE_PIXELS * zoom / 100}px ${GRID_SIZE_PIXELS * zoom / 100}px,
