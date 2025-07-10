@@ -30,6 +30,12 @@ const Index = () => {
   const { isMobile, isTablet } = useResponsive();
   const isCompact = isMobile || isTablet;
 
+  const handleExportCanvas = useCallback(() => {
+    if (canvasRef.current) {
+      canvasRef.current.exportFullCanvas();
+    }
+  }, []);
+
   const handleToolSelect = useCallback((tool: string) => {
     setSelectedTool(tool);
     if (tool === "terrain") {
