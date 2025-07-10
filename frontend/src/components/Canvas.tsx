@@ -333,6 +333,9 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ selectedTool, select
       toast.error('Erro ao exportar canvas');
     }
   }, []);
+
+  // Export selected elements
+  const exportSelectedElementsAsPNG = useCallback(async () => {
     const selectedElements = elements.filter(el => el.selected);
     if (selectedElements.length === 0) {
       toast.error("Nenhum elemento selecionado para exportar!");
