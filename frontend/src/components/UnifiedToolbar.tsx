@@ -71,6 +71,7 @@ export const UnifiedToolbar = ({
     { label: '50m × 30m', width: 50, height: 30 },
     { label: '100m × 50m', width: 100, height: 50 },
     { label: '200m × 100m', width: 200, height: 100 },
+    { label: 'Personalizado...', width: -1, height: -1, custom: true },
   ];
 
   const handleSave = () => {
