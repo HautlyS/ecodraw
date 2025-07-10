@@ -38,7 +38,6 @@ interface UnifiedToolbarProps {
   canRedo: boolean;
   canvasSize: { width: number; height: number };
   onCanvasSizeChange: (size: { width: number; height: number }) => void;
-  onExportCanvas?: () => void;
 }
 
 const tools = [
