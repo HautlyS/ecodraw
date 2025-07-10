@@ -24,6 +24,8 @@ const Index = () => {
   const [activeLibrary, setActiveLibrary] = useState<"plants" | "terrain">("plants");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 50, height: 30 });
+  
+  const canvasRef = useRef<CanvasRef>(null);
 
   const { isMobile, isTablet } = useResponsive();
   const isCompact = isMobile || isTablet;
