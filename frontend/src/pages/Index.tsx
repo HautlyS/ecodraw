@@ -115,7 +115,6 @@ const Index = () => {
           canRedo={false}
           canvasSize={canvasSize}
           onCanvasSizeChange={handleCanvasSizeChange}
-          onExportCanvas={handleExportCanvas}
         />
 
         {/* Main Content: Canvas + Sidebar - Seamless Integration */}
