@@ -154,7 +154,11 @@ export const UnifiedToolbar = ({
               value={`${canvasSize.width}x${canvasSize.height}`}
               onValueChange={(value) => {
                 const preset = canvasSizePresets.find(p => `${p.width}x${p.height}` === value);
-                if (preset) {
+                if (preset?.custom) {
+                  setCustomWidth(canvasSize.width);
+                  setCustomHeight(canvasSize.height);
+                  setShowCustomSizeDialog(true);
+                } else if (preset) {
                   onCanvasSizeChange({ width: preset.width, height: preset.height });
                   toast.success(`Canvas redimensionado para ${preset.label}`, {
                     description: `Novo tamanho: ${preset.width}m × ${preset.height}m`
@@ -167,12 +171,29 @@ export const UnifiedToolbar = ({
               </SelectTrigger>
               <SelectContent>
                 {canvasSizePresets.map((preset) => (
-                  <SelectItem key={`${preset.width}x${preset.height}`} value={`${preset.width}x${preset.height}`} className="text-xs">
+                  <SelectItem 
+                    key={preset.custom ? 'custom' : `${preset.width}x${preset.height}`} 
+                    value={preset.custom ? 'custom' : `${preset.width}x${preset.height}`} 
+                    className="text-xs"
+                  >
                     {preset.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setCustomWidth(canvasSize.width);
+                setCustomHeight(canvasSize.height);
+                setShowCustomSizeDialog(true);
+              }}
+              className="h-8 w-8 p-0"
+              title="Tamanho personalizado"
+            >
+              <Maximize2 className="w-3 h-3" />
+            </Button>
           </div>
         )}
       </div>
