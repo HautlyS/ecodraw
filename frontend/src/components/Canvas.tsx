@@ -63,7 +63,6 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ selectedTool, select
     },
   });
 
-  // Expose export functions to parent component
   React.useImperativeHandle(ref, () => ({
     exportFullCanvas,
     exportSelectionAsPNG,
