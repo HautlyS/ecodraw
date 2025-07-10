@@ -23,7 +23,8 @@ import {
   Sprout,
   Settings,
   Sun,
-  Moon
+  Moon,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/hooks/useTheme";
@@ -46,43 +47,48 @@ const tools = [
     icon: MousePointer, 
     label: "Selecionar", 
     description: "Selecione e mova elementos",
-    category: "selection"
+    category: "selection",
+    color: "bg-gradient-to-r from-blue-400 to-cyan-500"
   },
   { 
     id: "move", 
     icon: Hand, 
     label: "Navegar", 
     description: "Navegue pelo canvas",
-    category: "navigation"
+    category: "navigation",
+    color: "bg-gradient-to-r from-purple-400 to-pink-500"
   },
   { 
     id: "rectangle", 
     icon: Square, 
     label: "Retângulo", 
     description: "Desenhe retângulos",
-    category: "shapes"
+    category: "shapes",
+    color: "bg-gradient-to-r from-orange-400 to-red-500"
   },
   { 
     id: "circle", 
     icon: Circle, 
     label: "Círculo", 
     description: "Desenhe círculos",
-    category: "shapes"
+    category: "shapes",
+    color: "bg-gradient-to-r from-pink-400 to-rose-500"
   },
   { 
     id: "terrain", 
     icon: Palette, 
     label: "Terreno", 
     description: "Pinte texturas",
-    category: "terrain"
+    category: "terrain",
+    color: "bg-gradient-to-r from-green-400 to-emerald-500"
   },
 ];
 
 const utilityTools = [
-  { id: "grid", icon: Grid3X3, label: "Grade", description: "Alternar grade (G)" },
-  { id: "copy", icon: Copy, label: "Copiar", description: "Copiar elementos (Ctrl+C)" },
-  { id: "rotate", icon: RotateCw, label: "Rotacionar", description: "Rotacionar elementos (R)" },
-  { id: "delete", icon: Trash2, label: "Excluir", description: "Remover elementos (Del)" },
+  { id: "grid", icon: Grid3X3, label: "Grade", description: "Alternar grade (G)", color: "bg-gradient-to-r from-slate-400 to-gray-500" },
+  { id: "copy", icon: Copy, label: "Copiar", description: "Copiar elementos (Ctrl+C)", color: "bg-gradient-to-r from-indigo-400 to-purple-500" },
+  { id: "rotate", icon: RotateCw, label: "Rotacionar", description: "Rotacionar elementos (R)", color: "bg-gradient-to-r from-teal-400 to-cyan-500" },
+  { id: "delete", icon: Trash2, label: "Excluir", description: "Remover elementos (Del)", color: "bg-gradient-to-r from-red-400 to-rose-500" },
 ];
 
 const ToolButton = memo(({ tool, isSelected, onSelect, isUtility = false }: {
@@ -96,9 +102,12 @@ const ToolButton = memo(({ tool, isSelected, onSelect, isUtility = false }: {
     size="sm"
     onClick={() => onSelect(tool.id)}
     className={cn(
-      "relative h-9 px-3 border-0 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-150",
-      isSelected && "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400",
-      isUtility && "h-8 px-2"
+      "relative h-12 px-4 rounded-2xl transition-all duration-300 backdrop-blur-xl border font-semibold",
+      "hover:scale-105 hover:shadow-lg",
+      isSelected 
+        ? `${tool.color} text-white shadow-lg border-white/20 hover:shadow-xl` 
+        : "bg-white/60 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-white/20 dark:border-gray-700/20 hover:bg-white/80 dark:hover:bg-gray-700/80",
+      isUtility && "h-10 px-3 text-xs"
     )}
     title={tool.description}
   >
@@ -107,10 +116,10 @@ const ToolButton = memo(({ tool, isSelected, onSelect, isUtility = false }: {
       !isUtility && "mr-2"
     )} />
     {!isUtility && (
-      <span className="text-sm font-medium">{tool.label}</span>
+      <span className="text-sm font-semibold">{tool.label}</span>
     )}
     {isSelected && (
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-500/5 rounded-md pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-2xl pointer-events-none" />
     )}
   </Button>
 ));
@@ -130,7 +139,6 @@ export const UnifiedToolbar = memo(({
   const { theme, toggleTheme } = useTheme();
 
   const handleExport = useCallback(() => {
-    // Simple export function - try to find canvas and export it
     const canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
     if (!canvasElement) {
       toast.error("Canvas não encontrado para exportação");
@@ -138,12 +146,20 @@ export const UnifiedToolbar = memo(({
     }
 
     import('html2canvas').then(({ default: html2canvas }) => {
+      toast.info('Preparando exportação...', { duration: 2000 });
+      
       html2canvas(canvasElement, {
-        backgroundColor: '#f9fafb',
+        backgroundColor: '#fafbfc',
         scale: 2,
         logging: false,
         allowTaint: true,
-        useCORS: true
+        useCORS: true,
+        removeContainer: true,
+        ignoreElements: (element) => {
+          return element.classList.contains('ignore-export') ||
+                 element.tagName === 'SCRIPT' ||
+                 element.tagName === 'STYLE';
+        }
       }).then(canvas => {
         canvas.toBlob((blob) => {
           if (!blob) {
@@ -154,7 +170,7 @@ export const UnifiedToolbar = memo(({
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `canvas-export-${Date.now()}.png`;
+          link.download = `agroecologia-canvas-${Date.now()}.png`;
           link.style.display = 'none';
           
           document.body.appendChild(link);
@@ -179,22 +195,25 @@ export const UnifiedToolbar = memo(({
     const projectData = {
       timestamp: new Date().toISOString(),
       canvasSize,
-      version: "1.0"
+      version: "2.0",
+      theme
     };
     localStorage.setItem('agroecologia-project', JSON.stringify(projectData));
-    toast.success("Projeto salvo!");
-  }, [canvasSize]);
+    toast.success("Projeto salvo com sucesso!", {
+      description: "Seus dados foram salvos localmente"
+    });
+  }, [canvasSize, theme]);
 
   const handleShare = useCallback(() => {
     if (navigator.share) {
       navigator.share({
         title: 'Meu Projeto Agroecológico',
-        text: 'Confira meu mapa de plantio',
+        text: 'Confira meu planejamento agrícola sustentável',
         url: window.location.href
       }).catch(() => toast.info("Compartilhamento cancelado"));
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copiado!");
+      toast.success("Link copiado para a área de transferência!");
     }
   }, []);
 
@@ -228,41 +247,53 @@ export const UnifiedToolbar = memo(({
   )), [selectedTool, onToolSelect]);
 
   return (
-    <div className="flex items-center justify-between h-12 px-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+    <div className="flex items-center justify-between h-16 px-6 bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-white/20 dark:border-gray-700/20">
       {/* Left: Logo & Brand */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600">
-          <Sprout className="w-4 h-4 text-white" />
-        </div>
-        <div className="hidden sm:block">
-          <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Agroecologia</h1>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg">
+            <Sprout className="w-5 h-5 text-white" />
+          </div>
+          <div className="hidden sm:block">
+            <h1 className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-400">
+              Agroecologia
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+              Planejamento Sustentável
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Center: Tools */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-3">
         {/* Main Tools */}
-        <div className="flex items-center gap-1 p-1 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="flex items-center gap-2 p-2 bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/20">
           {memoizedTools}
         </div>
 
-        <Separator orientation="vertical" className="h-6 mx-2" />
+        <Separator orientation="vertical" className="h-8 mx-2 bg-white/20 dark:bg-gray-700/20" />
 
         {/* Utility Tools */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 p-2 bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/20">
           {memoizedUtilityTools}
         </div>
 
-        <Separator orientation="vertical" className="h-6 mx-2" />
+        <Separator orientation="vertical" className="h-8 mx-2 bg-white/20 dark:bg-gray-700/20" />
 
         {/* History */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 p-2 bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/20">
           <Button
             variant="ghost"
             size="sm"
             onClick={onUndo}
             disabled={!canUndo}
-            className="h-8 w-8 p-0"
+            className={cn(
+              "h-10 w-10 p-0 rounded-xl transition-all duration-300 backdrop-blur-xl",
+              canUndo 
+                ? "hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:scale-105 text-blue-600 dark:text-blue-400" 
+                : "text-gray-400 dark:text-gray-600"
+            )}
             title="Desfazer (Ctrl+Z)"
           >
             <Undo className="w-4 h-4" />
@@ -272,7 +303,12 @@ export const UnifiedToolbar = memo(({
             size="sm"
             onClick={onRedo}
             disabled={!canRedo}
-            className="h-8 w-8 p-0"
+            className={cn(
+              "h-10 w-10 p-0 rounded-xl transition-all duration-300 backdrop-blur-xl",
+              canRedo 
+                ? "hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:scale-105 text-blue-600 dark:text-blue-400" 
+                : "text-gray-400 dark:text-gray-600"
+            )}
             title="Refazer (Ctrl+Y)"
           >
             <Redo className="w-4 h-4" />
@@ -281,10 +317,10 @@ export const UnifiedToolbar = memo(({
       </div>
 
       {/* Right: Canvas Settings & Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         {/* Canvas Size */}
-        <div className="hidden lg:flex items-center gap-2 text-sm">
-          <Label htmlFor="canvas-width" className="text-xs text-gray-600 dark:text-gray-400">
+        <div className="hidden lg:flex items-center gap-3 text-sm p-3 bg-white/40 dark:bg-gray-800/40 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/20">
+          <Label htmlFor="canvas-width" className="text-xs font-semibold text-gray-600 dark:text-gray-400">
             Tamanho:
           </Label>
           <Input
@@ -292,31 +328,31 @@ export const UnifiedToolbar = memo(({
             type="number"
             value={canvasSize.width}
             onChange={(e) => handleCanvasSizeChange('width', e.target.value)}
-            className="w-16 h-7 text-xs"
+            className="w-16 h-8 text-xs rounded-lg bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border-white/20 dark:border-gray-700/20 focus:border-blue-400/60 dark:focus:border-blue-600/60"
             min="1"
             max="200"
           />
-          <span className="text-xs text-gray-500">×</span>
+          <span className="text-xs text-gray-500 font-medium">×</span>
           <Input
             id="canvas-height"
             type="number"
             value={canvasSize.height}
             onChange={(e) => handleCanvasSizeChange('height', e.target.value)}
-            className="w-16 h-7 text-xs"
+            className="w-16 h-8 text-xs rounded-lg bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl border-white/20 dark:border-gray-700/20 focus:border-blue-400/60 dark:focus:border-blue-600/60"
             min="1"
             max="200"
           />
-          <span className="text-xs text-gray-500">m</span>
+          <span className="text-xs text-gray-500 font-medium">m</span>
         </div>
 
-        <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-8 bg-white/20 dark:bg-gray-700/20" />
 
         {/* Theme Toggle */}
         <Button
           variant="ghost"
           size="sm"
           onClick={toggleTheme}
-          className="h-8 w-8 p-0"
+          className="h-10 w-10 p-0 rounded-xl transition-all duration-300 backdrop-blur-xl hover:bg-yellow-100 dark:hover:bg-yellow-900/50 hover:scale-105 text-yellow-600 dark:text-yellow-400"
           title="Alternar tema"
         >
           {theme === "light" ? (
@@ -327,37 +363,40 @@ export const UnifiedToolbar = memo(({
         </Button>
 
         {/* Actions */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleSave}
-          className="h-8 px-3"
-          title="Salvar projeto"
-        >
-          <Save className="w-4 h-4 mr-1" />
-          <span className="hidden sm:inline text-sm">Salvar</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSave}
+            className="h-10 px-4 rounded-xl transition-all duration-300 backdrop-blur-xl hover:bg-green-100 dark:hover:bg-green-900/50 hover:scale-105 text-green-600 dark:text-green-400 border border-white/20 dark:border-gray-700/20"
+            title="Salvar projeto"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline text-sm font-semibold">Salvar</span>
+          </Button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleShare}
-          className="h-8 px-3"
-          title="Compartilhar"
-        >
-          <Share2 className="w-4 h-4 mr-1" />
-          <span className="hidden sm:inline text-sm">Compartilhar</span>
-        </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleShare}
+            className="h-10 px-4 rounded-xl transition-all duration-300 backdrop-blur-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 hover:scale-105 text-blue-600 dark:text-blue-400 border border-white/20 dark:border-gray-700/20"
+            title="Compartilhar"
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline text-sm font-semibold">Compartilhar</span>
+          </Button>
 
-        <Button
-          onClick={handleExport}
-          size="sm"
-          className="h-8 px-3 bg-blue-600 hover:bg-blue-700 text-white"
-          title="Exportar PNG"
-        >
-          <Download className="w-4 h-4 mr-1" />
-          <span className="hidden sm:inline text-sm">Exportar</span>
-        </Button>
+          <Button
+            onClick={handleExport}
+            size="sm"
+            className="h-10 px-4 rounded-xl transition-all duration-300 backdrop-blur-xl hover:scale-105 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg border border-white/20"
+            title="Exportar PNG"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline text-sm font-semibold">Exportar</span>
+            <Sparkles className="w-3 h-3 ml-1 animate-pulse" />
+          </Button>
+        </div>
       </div>
     </div>
   );
