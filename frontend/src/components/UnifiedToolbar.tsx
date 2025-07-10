@@ -126,13 +126,18 @@ export const UnifiedToolbar = memo(({
   canUndo, 
   canRedo,
   canvasSize,
-  onCanvasSizeChange 
+  onCanvasSizeChange,
+  onExportCanvas
 }: UnifiedToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
 
   const handleExport = useCallback(() => {
-    toast.success("Exportando mapa...");
-  }, []);
+    if (onExportCanvas) {
+      onExportCanvas();
+    } else {
+      toast.error("Função de exportação não disponível");
+    }
+  }, [onExportCanvas]);
 
   const handleSave = useCallback(() => {
     const projectData = {
