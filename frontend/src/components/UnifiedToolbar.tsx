@@ -87,6 +87,20 @@ export const UnifiedToolbar = ({
     toast.success("Link copied!", { description: "Share this link with others." });
   };
 
+  const handleCustomSizeSubmit = () => {
+    if (customWidth > 0 && customHeight > 0 && customWidth <= 1000 && customHeight <= 1000) {
+      onCanvasSizeChange?.({ width: customWidth, height: customHeight });
+      setShowCustomSizeDialog(false);
+      toast.success(`Canvas personalizado aplicado!`, {
+        description: `Novo tamanho: ${customWidth}m × ${customHeight}m`
+      });
+    } else {
+      toast.error("Tamanho inválido", { 
+        description: "Largura e altura devem estar entre 1 e 1000 metros." 
+      });
+    }
+  };
+
   return (
     <div className="h-14 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 flex-shrink-0">
       {/* Left: Branding + Tools */}
