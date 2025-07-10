@@ -57,6 +57,36 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
     },
   });
 
+  // Export full canvas - expose to parent
+  React.useEffect(() => {
+    if (onExportCanvas) {
+      // The parent can call this method to trigger export
+      (window as any).exportCanvasFunction = exportFullCanvas;
+    }
+  }, [onExportCanvas]);
+
+  // Enhanced zoom controls
+  const {
+    zoom,
+    panOffset,
+    zoomIn,
+    zoomOut,
+    zoomToFit,
+    resetZoom,
+    setPanOffset,
+    zoomLevel,
+    canZoomIn,
+    canZoomOut,
+  } = useCanvasZoom({
+    minZoom: isCompact ? 25 : 10,
+    maxZoom: isWideScreen ? 400 : isCompact ? 200 : 300,
+    zoomStep: isWideScreen ? 2 : 3, // Further reduced zoom step for slower zooming
+    canvasRef,
+    onZoomChange: (newZoom) => {
+      toast.info(`Zoom: ${newZoom}%`, { duration: 1000 });
+    },
+  });
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
