@@ -125,8 +125,7 @@ export const UnifiedToolbar = memo(({
   canUndo, 
   canRedo,
   canvasSize,
-  onCanvasSizeChange,
-  onExportCanvas
+  onCanvasSizeChange
 }: UnifiedToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
 
