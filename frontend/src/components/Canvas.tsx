@@ -355,6 +355,13 @@ export const Canvas = forwardRef<CanvasRef, CanvasProps>(({ selectedTool, select
       backgroundColor: '#f9fafb'
     });
   }, [elements]);
+
+  // Expose export functions to parent component
+  useImperativeHandle(ref, () => ({
+    exportFullCanvas,
+    exportSelectionAsPNG,
+    exportSelectedElementsAsPNG
+  }), [exportFullCanvas, exportSelectionAsPNG, exportSelectedElementsAsPNG]);
   
   // Center selection area in canvas
   const centerSelectionArea = useCallback(() => {
