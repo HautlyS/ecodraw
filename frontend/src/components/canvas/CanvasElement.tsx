@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { parseSpacingToMeters, realWorldSizeToPixels, calculateIconSize, formatRealWorldSize } from "@/utils/plantSizes";
+import { getPlantBorderColor, getShapeColor, hexToRgba, lightenColor, darkenColor } from "@/utils/colorUtils";
 
 interface DrawingElement {
   id: number;
@@ -42,10 +43,16 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
     const pixelSize = realWorldSizeToPixels(realWorldSize, pixelsPerMeter);
     const iconSize = calculateIconSize(pixelSize);
     
+    // Get consistent color for this plant
+    const borderColor = getPlantBorderColor(element.plant?.id || String(element.id));
+    const backgroundColorLight = hexToRgba(borderColor, 0.1);
+    const backgroundColorMedium = hexToRgba(borderColor, 0.2);
+    const borderColorAlpha = hexToRgba(borderColor, 0.6);
+    
     return (
       <div
         className={cn(
-          "absolute plant-area cursor-move transition-all group border-2 border-dashed border-green-400/60 bg-green-50/30 dark:bg-green-900/20 rounded-lg",
+          "absolute plant-area cursor-move transition-all group border-2 border-dashed rounded-lg",
           selectionStyle,
           isSelected && "border-solid border-primary bg-primary/10"
         )}
@@ -55,26 +62,37 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
           width: pixelSize.width,
           height: pixelSize.height,
           transform: `rotate(${element.rotation || 0}deg)`,
-          zIndex: isSelected ? 10 : 1
+          zIndex: isSelected ? 10 : 1,
+          borderColor: isSelected ? undefined : borderColorAlpha,
+          backgroundColor: isSelected ? undefined : backgroundColorLight,
+          boxShadow: isSelected ? undefined : `0 0 8px ${hexToRgba(borderColor, 0.3)}`,
         }}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         {/* Plant icon in center */}
         <div 
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 dark:bg-gray-800/95 shadow-md hover:shadow-lg transition-all relative border border-green-200 dark:border-green-700 flex items-center justify-center"
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 dark:bg-gray-800/95 shadow-md hover:shadow-lg transition-all relative border-2 flex items-center justify-center"
           style={{
             width: iconSize,
             height: iconSize,
-            fontSize: iconSize * 0.5
+            fontSize: iconSize * 0.5,
+            borderColor: borderColor,
+            boxShadow: `0 2px 8px ${hexToRgba(borderColor, 0.4)}`,
           }}
         >
           {element.plant?.icon}
         </div>
         
         {/* Size indicator */}
-        <div className="absolute top-1 left-1 text-xs bg-green-600 text-white px-1 rounded font-medium shadow-sm">
-{formatRealWorldSize(realWorldSize)}
+        <div 
+          className="absolute top-1 left-1 text-xs text-white px-1.5 py-0.5 rounded font-medium shadow-sm"
+          style={{
+            backgroundColor: borderColor,
+            color: 'white',
+          }}
+        >
+          {formatRealWorldSize(realWorldSize)}
         </div>
         
         {/* Selection handles */}
@@ -89,7 +107,7 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
         
         {showTooltip && (
           <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-card dark:bg-gray-700 text-foreground text-sm rounded-lg shadow-lg border whitespace-nowrap z-20 min-w-max">
-            <div className="font-medium text-green-600 dark:text-green-400">{element.plant?.name}</div>
+            <div className="font-medium" style={{ color: borderColor }}>{element.plant?.name}</div>
             <div className="text-muted-foreground text-xs">Espaçamento: {element.plant?.spacing}</div>
             <div className="text-muted-foreground text-xs">Época: {element.plant?.season}</div>
           </div>
@@ -323,10 +341,13 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
   }
 
   if (element.type === 'rectangle') {
+    const shapeColor = getShapeColor(element.id);
+    const lightColor = hexToRgba(shapeColor, 0.2);
+    
     return (
       <div
         className={cn(
-          "absolute border-2 border-primary bg-primary/20 cursor-move transition-all rounded-lg",
+          "absolute border-2 cursor-move transition-all rounded-lg",
           selectionStyle
         )}
         style={{
@@ -335,10 +356,16 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
           width: element.width,
           height: element.height,
           transform: `rotate(${element.rotation || 0}deg)`,
-          zIndex: isSelected ? 10 : 1
+          zIndex: isSelected ? 10 : 1,
+          borderColor: shapeColor,
+          backgroundColor: lightColor,
+          boxShadow: `0 0 8px ${hexToRgba(shapeColor, 0.3)}`,
         }}
       >
-        <div className="absolute top-1 left-1 text-xs bg-primary text-primary-foreground px-1 rounded font-medium shadow-sm">
+        <div 
+          className="absolute top-1 left-1 text-xs text-white px-1 rounded font-medium shadow-sm"
+          style={{ backgroundColor: shapeColor }}
+        >
           {Math.round((element.width || 0) / 10)}x{Math.round((element.height || 0) / 10)}m
         </div>
         
@@ -357,10 +384,13 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
 
   if (element.type === 'circle') {
     const diameter = element.radius ? element.radius * 2 : 0;
+    const shapeColor = getShapeColor(element.id);
+    const lightColor = hexToRgba(shapeColor, 0.2);
+    
     return (
       <div
         className={cn(
-          "absolute border-2 border-primary bg-primary/20 rounded-full cursor-move transition-all",
+          "absolute border-2 rounded-full cursor-move transition-all",
           selectionStyle
         )}
         style={{
@@ -369,10 +399,16 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
           width: diameter,
           height: diameter,
           transform: `rotate(${element.rotation || 0}deg)`,
-          zIndex: isSelected ? 10 : 1
+          zIndex: isSelected ? 10 : 1,
+          borderColor: shapeColor,
+          backgroundColor: lightColor,
+          boxShadow: `0 0 8px ${hexToRgba(shapeColor, 0.3)}`,
         }}
       >
-        <div className="absolute top-1 left-1 text-xs bg-primary text-primary-foreground px-1 rounded font-medium shadow-sm">
+        <div 
+          className="absolute top-1 left-1 text-xs text-white px-1 rounded font-medium shadow-sm"
+          style={{ backgroundColor: shapeColor }}
+        >
           ⌀{Math.round(diameter / 10)}m
         </div>
         
