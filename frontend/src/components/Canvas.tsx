@@ -63,12 +63,12 @@ export const Canvas = React.forwardRef<CanvasRef, CanvasProps>(({ selectedTool, 
     },
   });
 
-  // Export full canvas - expose to parent
-  React.useEffect(() => {
-    if (onExportCanvas) {
-      onExportCanvas = () => exportFullCanvas();
-    }
-  }, [exportFullCanvas, onExportCanvas]);
+  // Expose export functions to parent component
+  React.useImperativeHandle(ref, () => ({
+    exportFullCanvas,
+    exportSelectionAsPNG,
+    exportSelectedElementsAsPNG
+  }), [exportFullCanvas, exportSelectionAsPNG, exportSelectedElementsAsPNG]);
 
   // Enhanced zoom controls
   const {
