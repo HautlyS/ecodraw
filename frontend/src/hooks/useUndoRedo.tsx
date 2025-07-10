@@ -11,8 +11,8 @@ interface UndoRedoActions {
   canRedo: boolean;
   undo: () => void;
   redo: () => void;
-  set: (newState: any) => void;
-  reset: (initialState: any) => void;
+  set: (newState: T) => void;
+  reset: (initialState: T) => void;
   clear: () => void;
 }
 

@@ -71,7 +71,7 @@ export const Toolbar = ({ selectedTool, onToolSelect }: ToolbarProps) => {
     { id: "delete", icon: Trash2, label: "Excluir", description: "Remova elementos (Del)" },
   ];
 
-  const renderToolButton = (tool: any, isUtility = false) => (
+const renderToolButton = (tool: { id: string; icon: React.ComponentType<{ className?: string }>; label: string; description: string; highlight?: boolean; }, isUtility = false) => (
     <Button
       key={tool.id}
       variant={selectedTool === tool.id ? "default" : "ghost"}

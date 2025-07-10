@@ -25,7 +25,8 @@ import {
   Sprout,
   Zap,
   Settings,
-  Maximize2
+  Maximize2,
+  Target
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/ThemeProvider";
@@ -58,7 +59,8 @@ export const UnifiedToolbar = ({
   const [customHeight, setCustomHeight] = useState(canvasSize.height);
 
   const tools = [
-    { id: "select", icon: MousePointer, label: "Select", shortcut: "V" },
+    { id: "select", icon: MousePointer, label: "Select", shortcut: "S" },
+    { id: "selectArea", icon: Square, label: "Select Area", shortcut: "A" },
     { id: "rectangle", icon: Square, label: "Rectangle", shortcut: "R" },
     { id: "circle", icon: Circle, label: "Circle", shortcut: "C" },
     { id: "terrain", icon: Palette, label: "Paint", shortcut: "B", highlight: true },

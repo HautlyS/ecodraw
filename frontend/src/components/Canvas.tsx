@@ -1,5 +1,5 @@
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -10,45 +10,14 @@ import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
-import { Grid3X3 } from "lucide-react";
+import { Grid3X3, Download, Square, Target, Move } from "lucide-react";
+import html2canvas from "html2canvas";
 
-interface CanvasProps {
-  selectedTool: string;
-  selectedPlant: any;
-  selectedTerrain: any;
-  onPlantUsed: () => void;
-  onTerrainUsed: () => void;
-  onToolChange: (tool: string) => void;
-  canvasSize?: { width: number; height: number };
-  onCanvasSizeChange?: (size: { width: number; height: number }) => void;
-}
+import { CANVAS_CONSTANTS } from "../utils/canvasConstants";
+import { calculatePixelsPerMeter, metersToPixels, getCanvasMousePosition, snapToGrid } from "../utils/canvasCoordinates";
+import { CanvasProps, DrawingElement } from "../types/canvasTypes";
 
-interface DrawingElement {
-  id: number;
-  type: 'plant' | 'terrain' | 'rectangle' | 'circle';
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  radius?: number;
-  plant?: any;
-  terrain?: any;
-  selected?: boolean;
-  rotation?: number;
-  // Real-world size in meters (for terrain elements)
-  realWorldWidth?: number;
-  realWorldHeight?: number;
-  // Terrain brush properties
-  brushType?: 'rectangle' | 'circle' | 'path';
-  texture?: string;
-  // Path points for trail-like terrains
-  pathPoints?: { x: number; y: number }[];
-  // Brush properties
-  selectedBrushMode?: 'rectangle' | 'circle' | 'brush';
-  brushThickness?: number;
-}
-
-export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange, canvasSize, onCanvasSizeChange }: CanvasProps) => {
+export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange, canvasSize = CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE, onCanvasSizeChange }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [elements, elementsActions] = useUndoRedo<DrawingElement[]>([], {
     maxHistorySize: 50,
@@ -56,10 +25,10 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   });
   
   // Canvas dimensions state for dynamic measurements
-  const [canvasDimensions, setCanvasDimensions] = useState({ width: 1000, height: 800 });
+  const [canvasDimensions, setCanvasDimensions] = useState(CANVAS_CONSTANTS.DEFAULT_CANVAS_DIMENSIONS);
   
   // Canvas real-world size in meters
-  const [canvasRealSize, setCanvasRealSize] = useState({ width: 50, height: 30 });
+  const [canvasRealSize, setCanvasRealSize] = useState(CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE);
   
   const { isMobile, isTablet, isDesktop, isLargeDesktop, isUltraWide, screenWidth, screenHeight } = useResponsive();
   const isCompact = isMobile || isTablet;
@@ -80,7 +49,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   } = useCanvasZoom({
     minZoom: isCompact ? 25 : 10,
     maxZoom: isWideScreen ? 400 : isCompact ? 200 : 300,
-    zoomStep: isWideScreen ? 10 : 15, // Reduced zoom step for smoother zooming
+    zoomStep: isWideScreen ? 2 : 3, // Further reduced zoom step for slower zooming
     canvasRef,
     onZoomChange: (newZoom) => {
       toast.info(`Zoom: ${newZoom}%`, { duration: 1000 });
@@ -104,25 +73,114 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const [resizeElement, setResizeElement] = useState<DrawingElement | null>(null);
   const [resizeStartPos, setResizeStartPos] = useState({ x: 0, y: 0 });
   const [originalElementBounds, setOriginalElementBounds] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  
+  // Selection area states
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState({ x: 0, y: 0 });
+  const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
+  const [selectionArea, setSelectionArea] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [showSelectionTool, setShowSelectionTool] = useState(false);
 
   // World-to-pixel conversion constants (responsive and based on canvas real size)
   // Use the smaller dimension to ensure consistent scaling
-  const PIXELS_PER_METER = Math.min(
-    canvasDimensions.width / (canvasSize?.width || canvasRealSize.width),
-    canvasDimensions.height / (canvasSize?.height || canvasRealSize.height)
-  );
+
+  const PIXELS_PER_METER = useMemo(() => calculatePixelsPerMeter(
+    canvasDimensions,
+    canvasRealSize
+  ), [canvasDimensions, canvasRealSize]);
   const GRID_SIZE_METERS = 2; // Each grid square = 2m x 2m
   const GRID_SIZE_PIXELS = GRID_SIZE_METERS * PIXELS_PER_METER;
   
   // Dynamic grid calculations based on actual canvas size
-  const MAX_HORIZONTAL_GRIDS = Math.floor((canvasSize?.width || canvasRealSize.width) / GRID_SIZE_METERS);
-  const MAX_VERTICAL_GRIDS = Math.floor((canvasSize?.height || canvasRealSize.height) / GRID_SIZE_METERS);
+  const MAX_HORIZONTAL_GRIDS = useMemo(() => {
+    const canvasWidth = (canvasSize?.width || canvasRealSize.width);
+    const gridCount = Math.floor(canvasWidth / GRID_SIZE_METERS);
+    // Ensure we have a reasonable maximum (prevent infinite grids)
+    return Math.max(1, Math.min(gridCount, 200)); // Cap at 200 grids maximum
+  }, [canvasSize, canvasRealSize, GRID_SIZE_METERS]);
+  
+  const MAX_VERTICAL_GRIDS = useMemo(() => {
+    const canvasHeight = (canvasSize?.height || canvasRealSize.height);
+    const gridCount = Math.floor(canvasHeight / GRID_SIZE_METERS);
+    // Ensure we have a reasonable maximum (prevent infinite grids)
+    return Math.max(1, Math.min(gridCount, 200)); // Cap at 200 grids maximum
+  }, [canvasSize, canvasRealSize, GRID_SIZE_METERS]);
 
   // Utility functions for world-to-pixel conversion
   const metersToPixels = useCallback((meters: number) => meters * PIXELS_PER_METER, [PIXELS_PER_METER]);
   const pixelsToMeters = useCallback((pixels: number) => pixels / PIXELS_PER_METER, [PIXELS_PER_METER]);
 
   const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
+  
+  // Export function for selected area
+  const exportSelectionAsPNG = useCallback(async () => {
+    if (!selectionArea || !canvasRef.current) {
+      toast.error("Nenhuma área selecionada para exportar!");
+      return;
+    }
+
+    try {
+      toast.info("Exportando imagem...");
+      
+      // Create a temporary div with the selected area content
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.width = `${selectionArea.width}px`;
+      tempDiv.style.height = `${selectionArea.height}px`;
+      tempDiv.style.background = 'white';
+      tempDiv.style.overflow = 'hidden';
+      
+      // Clone the canvas content within the selection area
+      const canvasClone = canvasRef.current.cloneNode(true) as HTMLElement;
+      canvasClone.style.position = 'relative';
+      canvasClone.style.left = `-${selectionArea.x}px`;
+      canvasClone.style.top = `-${selectionArea.y}px`;
+      canvasClone.style.transform = 'none';
+      
+      tempDiv.appendChild(canvasClone);
+      document.body.appendChild(tempDiv);
+      
+      const canvas = await html2canvas(tempDiv, {
+        width: selectionArea.width,
+        height: selectionArea.height,
+        backgroundColor: '#ffffff',
+        scale: 1,
+      });
+      
+      document.body.removeChild(tempDiv);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `canvas-export-${Date.now()}.png`;
+      link.click();
+      
+      toast.success("Imagem exportada com sucesso!");
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error("Erro ao exportar imagem");
+    }
+  }, [selectionArea]);
+  
+  // Center selection area in canvas
+  const centerSelectionArea = useCallback(() => {
+    if (selectionArea && canvasRef.current) {
+      const canvasRect = canvasRef.current.getBoundingClientRect();
+      const centerX = (canvasRect.width / 2) - (selectionArea.width / 2);
+      const centerY = (canvasRect.height / 2) - (selectionArea.height / 2);
+      
+      setPanOffset({ x: centerX, y: centerY });
+      toast.info("Área selecionada centralizada");
+    }
+  }, [selectionArea]);
+  
+  // Clear selection area
+  const clearSelectionArea = useCallback(() => {
+    setSelectionArea(null);
+    setIsSelecting(false);
+    toast.info("Seleção removida");
+  }, []);
   
   // Parse terrain size string to get dimensions in meters
   const parseTerrainSize = useCallback((sizeString: string) => {
@@ -292,8 +350,20 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    const rawPos = getMousePosition(e, canvasRef, zoom, panOffset);
-    const pos = snapToGrid(rawPos, showGrid);
+    
+    // Calculate mouse position relative to the canvas viewport
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    
+    // Convert to world coordinates (account for pan and zoom)
+    const worldX = (canvasX - panOffset.x) / (zoom / 100);
+    const worldY = (canvasY - panOffset.y) / (zoom / 100);
+    
+    const rawPos = { x: worldX, y: worldY };
+    const pos = snapToGrid(rawPos, showGrid, GRID_SIZE_PIXELS);
     
     console.log('Mouse down at:', pos, 'Elements count:', elements.length);
     
@@ -301,6 +371,15 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     if (isSpacePressed) {
       setIsPanning(true);
       setLastPanPoint({ x: e.clientX, y: e.clientY });
+      return;
+    }
+
+    // Handle selection tool
+    if (selectedTool === 'selectArea') {
+      setIsSelecting(true);
+      setSelectionStart(pos);
+      setSelectionEnd(pos);
+      setSelectionArea({ x: pos.x, y: pos.y, width: 0, height: 0 });
       return;
     }
     
@@ -311,7 +390,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     }
 
     // Check if clicking on an existing element for auto-selection or resize
-    const clickedElement = findElementAtPosition(pos, elements);
+const clickedElement = findElementAtPosition(pos, elements);
     
     if (clickedElement && selectedTool !== 'delete') {
       // Check if clicking on a resize handle
@@ -490,9 +569,20 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     }
   }, [selectedTool, selectedPlant, selectedTerrain, elements, getMousePosition, snapToGrid, selectElement, clearSelection, onPlantUsed, onTerrainUsed, deleteElementAtPosition, findElementAtPosition, zoom, showGrid, isSpacePressed, panOffset, metersToPixels, parseTerrainSize, elementsActions, PIXELS_PER_METER]);
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    const rawPos = getMousePosition(e, canvasRef, zoom, panOffset);
-    const pos = snapToGrid(rawPos, showGrid);
+const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    // Calculate mouse position relative to the canvas viewport
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    
+    // Convert to world coordinates (account for pan and zoom)
+    const worldX = (canvasX - panOffset.x) / (zoom / 100);
+    const worldY = (canvasY - panOffset.y) / (zoom / 100);
+    
+    const rawPos = { x: worldX, y: worldY };
+    const pos = snapToGrid(rawPos, showGrid, GRID_SIZE_PIXELS);
 
     // Handle panning
     if (isPanning) {
@@ -506,12 +596,28 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
+    // Handle selection area
+    if (isSelecting && selectionArea) {
+      const newSelectionEnd = pos;
+      setSelectionEnd(newSelectionEnd);
+
+      const newSelectionArea = {
+        x: Math.min(selectionStart.x, newSelectionEnd.x),
+        y: Math.min(selectionStart.y, newSelectionEnd.y),
+        width: Math.abs(newSelectionEnd.x - selectionStart.x),
+        height: Math.abs(newSelectionEnd.y - selectionStart.y),
+      };
+
+      setSelectionArea(newSelectionArea);
+      return;
+    }
+
     // Handle resizing elements
     if (isResizing && resizeElement && resizeHandle) {
       const deltaX = pos.x - resizeStartPos.x;
       const deltaY = pos.y - resizeStartPos.y;
       
-      let newBounds = { ...originalElementBounds };
+      const newBounds = { ...originalElementBounds };
       
       // Calculate new bounds based on resize handle
       switch (resizeHandle) {
@@ -585,7 +691,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         y: pos.y - dragOffset.y
       }, showGrid);
       
-      const updatedElements = elements.map(el => 
+      const updatedElements = elements.map(el =>
         el.id === dragElement.id 
           ? { ...el, x: newPos.x, y: newPos.y }
           : el
@@ -607,7 +713,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       return;
     }
 
-      // Handle drawing new shapes (rectangles, circles, terrain areas)
+    // Handle drawing new shapes (rectangles, circles, terrain areas)
     if (!isDrawing || !currentShape) return;
 
     const width = Math.abs(pos.x - startPos.x);
@@ -636,7 +742,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       };
       setCurrentShape(updatedShape);
     }
-  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, getMousePosition, snapToGrid, zoom, showGrid, isPanning, lastPanPoint, panOffset, isDrawingTerrain, selectedTerrain, elements, elementsActions]);
+  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, getMousePosition, snapToGrid, zoom, showGrid, isPanning, lastPanPoint, panOffset, isDrawingTerrain, selectedTerrain, elements, elementsActions, isSelecting, selectionStart, selectionArea]);
 
   const handleMouseUp = useCallback(() => {
     if (isPanning) {
@@ -649,6 +755,13 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       setResizeElement(null);
       setResizeStartPos({ x: 0, y: 0 });
       setOriginalElementBounds({ x: 0, y: 0, width: 0, height: 0 });
+    }
+
+    if (isSelecting) {
+      setIsSelecting(false);
+      if (selectionArea) {
+        toast.success('Área selecionada: ' + JSON.stringify(selectionArea));
+      }
     }
 
     if (isDragging) {
@@ -687,7 +800,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
     // Finish drawing terrain area
     if (isDrawing && currentShape) {
       const minSize = 10;
-      const isValidSize = (currentShape.width && currentShape.width > minSize) || 
+      const isValidSize = (currentShape.width && currentShape.width > minSize) ||
                          (currentShape.radius && currentShape.radius > minSize);
       
       if (isValidSize) {
@@ -762,6 +875,46 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const handleTouchEnd = useCallback(() => {
     setIsPanning(false);
   }, []);
+  
+  // Handle wheel zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      // Get mouse position relative to canvas
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      
+      // Calculate zoom with much slower speed
+      const delta = e.deltaY * -0.001; // Made 10x slower
+      const newZoom = Math.max(10, Math.min(400, zoom + delta * 2)); // Reduced multiplier
+      
+      if (newZoom !== zoom) {
+        // Calculate the world position under the mouse before and after zoom
+        const worldXBefore = (mouseX - panOffset.x) / (zoom / 100);
+        const worldYBefore = (mouseY - panOffset.y) / (zoom / 100);
+        
+        const worldXAfter = (mouseX - panOffset.x) / (newZoom / 100);
+        const worldYAfter = (mouseY - panOffset.y) / (newZoom / 100);
+        
+        // Adjust pan to keep the same world position under the mouse
+        setPanOffset({
+          x: panOffset.x + (worldXAfter - worldXBefore) * (newZoom / 100),
+          y: panOffset.y + (worldYAfter - worldYBefore) * (newZoom / 100),
+        });
+        
+        // Update zoom through the hook
+        if (delta > 0) {
+          zoomIn();
+        } else {
+          zoomOut();
+        }
+      }
+    }
+  }, [zoom, panOffset, zoomIn, zoomOut]);
 
   // Update canvas dimensions when the container resizes
   useEffect(() => {
@@ -841,6 +994,15 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         e.preventDefault();
         onToolChange('select');
         toast.info("Ferramenta Selecionar ativada");
+      }
+      
+      // A - select area tool
+      if (e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        if (!(e.ctrlKey || e.metaKey)) { // Only if not Ctrl+A
+          onToolChange('selectArea');
+          toast.info("Ferramenta de Seleção de Área ativada");
+        }
       }
       
       // R - rectangle tool
@@ -954,6 +1116,7 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
   const getCursorStyle = () => {
     if (isSpacePressed || isPanning) return 'cursor-grab';
     if (selectedTool === 'select') return 'cursor-default';
+    if (selectedTool === 'selectArea') return 'cursor-crosshair';
     if (selectedTool === 'delete') return 'cursor-pointer';
     if (selectedPlant || selectedTerrain) return 'cursor-copy';
     return 'cursor-crosshair';
@@ -961,13 +1124,15 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
 
   return (
     <div className="w-full h-full relative bg-white dark:bg-gray-900 overflow-hidden">
-        {/* Canvas Info & Controls */}
+      {/* Canvas Info & Controls */}
       <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
-        <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-          {(canvasSize?.width || canvasRealSize.width)}m × {(canvasSize?.height || canvasRealSize.height)}m
-        </div>
-        <div className="text-xs text-gray-500 dark:text-gray-500">
-          {Math.round(PIXELS_PER_METER * 10) / 10} px/m
+        <div className="flex flex-col gap-1">
+          <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Posição: {Math.round(-panOffset.x / (zoom / 100))}, {Math.round(-panOffset.y / (zoom / 100))}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-500">
+            Zoom: {zoom}% • {Math.round(PIXELS_PER_METER * 10) / 10} px/m
+          </div>
         </div>
       </div>
       
@@ -1023,24 +1188,85 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         >
           <span className="text-xs font-bold">1:1</span>
         </Button>
+        
+        <Separator orientation="vertical" className="h-6" />
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            onToolChange('selectArea');
+            toast.info("Ferramenta de Seleção ativada");
+          }}
+          className={cn("h-8 w-8 p-0", selectedTool === 'selectArea' && "bg-blue-100 dark:bg-blue-900")}
+          title="Select Area (A)"
+        >
+          <Square className="h-4 w-4" />
+        </Button>
+        
+        {selectionArea && (
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={centerSelectionArea}
+              className="h-8 w-8 p-0"
+              title="Center Selection"
+            >
+              <Target className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={exportSelectionAsPNG}
+              className="h-8 w-8 p-0"
+              title="Export Selection as PNG"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSelectionArea}
+              className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+              title="Clear Selection"
+            >
+              ×
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Canvas Area */}
       <div
         ref={canvasRef}
         className={cn(
-          "w-full h-full relative overflow-hidden transition-transform duration-200",
-          getCursorStyle(),
-          showGrid ? 'terrain-grid-pattern' : '',
-          isCompact && "touch-pan-y touch-pinch-zoom"
+          "w-full h-full relative overflow-hidden",
+          getCursorStyle()
         )}
-        style={{ 
-          transform: `scale(${zoom / 100}) translate(${panOffset.x}px, ${panOffset.y}px)`, 
-          transformOrigin: 'center',
-          transition: isPanning ? 'none' : 'transform 0.2s ease',
-          '--grid-major': `${GRID_SIZE_PIXELS}px`,
-          '--grid-minor': `${GRID_SIZE_PIXELS / 2}px`
-        } as React.CSSProperties}
+        style={{
+          backgroundColor: showGrid ? 'transparent' : '#fafafa',
+          backgroundImage: showGrid ? `
+            linear-gradient(rgba(34, 197, 94, 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(34, 197, 94, 0.3) 1px, transparent 1px),
+            linear-gradient(rgba(34, 197, 94, 0.15) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(34, 197, 94, 0.15) 1px, transparent 1px)
+          ` : 'none',
+          backgroundSize: showGrid ? `
+            ${GRID_SIZE_PIXELS * zoom / 100}px ${GRID_SIZE_PIXELS * zoom / 100}px,
+            ${GRID_SIZE_PIXELS * zoom / 100}px ${GRID_SIZE_PIXELS * zoom / 100}px,
+            ${GRID_SIZE_PIXELS * zoom / 200}px ${GRID_SIZE_PIXELS * zoom / 200}px,
+            ${GRID_SIZE_PIXELS * zoom / 200}px ${GRID_SIZE_PIXELS * zoom / 200}px
+          ` : 'none',
+          backgroundPosition: `
+            ${panOffset.x}px ${panOffset.y}px,
+            ${panOffset.x}px ${panOffset.y}px,
+            ${panOffset.x}px ${panOffset.y}px,
+            ${panOffset.x}px ${panOffset.y}px
+          `,
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -1052,95 +1278,115 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
         onTouchEnd={handleTouchEnd}
         data-canvas="true"
       >
-        {/* Canvas Boundary Visualization */}
+        {/* Infinite Canvas Content Layer */}
         <div 
-          className="absolute border-4 border-dashed bg-gradient-to-br from-emerald-50/20 via-green-50/10 to-emerald-100/20 dark:from-emerald-900/10 dark:via-green-900/5 dark:to-emerald-800/10 pointer-events-none rounded-lg shadow-inner"
+          className="absolute" 
           style={{
-            width: `${(canvasSize?.width || canvasRealSize.width) * PIXELS_PER_METER}px`,
-            height: `${(canvasSize?.height || canvasRealSize.height) * PIXELS_PER_METER}px`,
-            top: 0,
-            left: 0,
-            borderColor: '#10B981', // Emerald-500
-            borderImage: 'linear-gradient(45deg, #10B981, #059669, #047857, #065F46) 1',
-            boxShadow: `inset 0 0 20px rgba(16, 185, 129, 0.1), 0 0 30px rgba(16, 185, 129, 0.05)`,
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom / 100})`,
+            transformOrigin: '0 0',
+            width: '100%',
+            height: '100%',
+            willChange: 'transform',
           }}
         >
-          {/* Corner indicators */}
-          <div className="absolute -top-2 -left-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
-          <div className="absolute -top-2 -right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
-          <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
-          <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
-          
-          {/* Canvas info overlay */}
-          <div className="absolute bottom-2 right-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-700 shadow-sm">
-            <div className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-              {(canvasSize?.width || canvasRealSize.width)} × {(canvasSize?.height || canvasRealSize.height)}m
-            </div>
-            <div className="text-xs text-emerald-600 dark:text-emerald-400">
-              {((canvasSize?.width || canvasRealSize.width) * (canvasSize?.height || canvasRealSize.height)).toLocaleString()}m²
-            </div>
-          </div>
-        </div>
-        
-        {/* Grid Labels for Scale Reference */}
-        {showGrid && (
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {/* Horizontal scale labels */}
-            <div className="absolute top-0 left-0 right-0 h-8">
-              {Array.from({ length: MAX_HORIZONTAL_GRIDS }, (_, i) => (
-                <div
-                  key={`h-${i}`}
-                  className="absolute text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900 dark:to-emerald-800 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-700 shadow-sm backdrop-blur-sm"
-                  style={{
-                    left: i * GRID_SIZE_PIXELS + 8,
-                    top: 8,
-                    fontSize: '10px',
-                    minWidth: '32px',
-                    textAlign: 'center',
-                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.1)',
-                  }}
-                >
-                  {i * GRID_SIZE_METERS}m
-                </div>
-              ))}
+          {/* Working Area Indicator - Enhanced Visibility */}
+          <div 
+            className="absolute border-4 border-dashed border-emerald-500/70 dark:border-emerald-400/70 bg-emerald-50/15 dark:bg-emerald-900/25 rounded-xl pointer-events-none shadow-lg"
+            style={{
+              width: `${(canvasSize?.width || canvasRealSize.width) * PIXELS_PER_METER}px`,
+              height: `${(canvasSize?.height || canvasRealSize.height) * PIXELS_PER_METER}px`,
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              boxShadow: 'inset 0 0 0 2px rgba(16, 185, 129, 0.2), 0 0 20px rgba(16, 185, 129, 0.1)',
+            }}
+          >
+            {/* Corner indicators */}
+            <div className="absolute -top-2 -left-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
+            <div className="absolute -top-2 -right-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
+            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
+            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
+            
+            {/* Working area info - Enhanced */}
+            <div className="absolute top-4 left-4 bg-emerald-500/90 dark:bg-emerald-600/90 backdrop-blur-sm px-3 py-2 rounded-lg text-xs text-white font-medium shadow-lg border border-emerald-400/50">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                <span>Área de Trabalho: {(canvasSize?.width || canvasRealSize.width)} × {(canvasSize?.height || canvasRealSize.height)}m</span>
+              </div>
             </div>
             
-            {/* Vertical scale labels */}
-            <div className="absolute top-0 left-0 bottom-0 w-12">
-              {Array.from({ length: MAX_VERTICAL_GRIDS }, (_, i) => (
-                <div
-                  key={`v-${i}`}
-                  className="absolute text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-gradient-to-b from-emerald-50 to-emerald-100 dark:from-emerald-900 dark:to-emerald-800 px-1.5 py-1 rounded-md border border-emerald-200 dark:border-emerald-700 shadow-sm backdrop-blur-sm"
-                  style={{
-                    left: 8,
-                    top: i * GRID_SIZE_PIXELS + 8,
-                    fontSize: '10px',
-                    writingMode: 'vertical-rl',
-                    textOrientation: 'mixed',
-                    minHeight: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.1)',
-                  }}
-                >
-                  {i * GRID_SIZE_METERS}m
-                </div>
-              ))}
+            {/* Center cross indicator */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+              <div className="relative">
+                <div className="absolute w-8 h-0.5 bg-emerald-500/60 dark:bg-emerald-400/60 -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute h-8 w-0.5 bg-emerald-500/60 dark:bg-emerald-400/60 -translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute w-2 h-2 bg-emerald-500 dark:bg-emerald-400 rounded-full border border-white dark:border-gray-800 -translate-x-1/2 -translate-y-1/2"></div>
+              </div>
+            </div>
+            
+            {/* Grid pattern overlay for better definition */}
+            <div 
+              className="absolute inset-2 opacity-20 dark:opacity-30 pointer-events-none rounded-lg"
+              style={{
+                backgroundImage: `
+                  linear-gradient(rgba(16, 185, 129, 0.3) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(16, 185, 129, 0.3) 1px, transparent 1px)
+                `,
+                backgroundSize: `${GRID_SIZE_PIXELS * zoom / 100}px ${GRID_SIZE_PIXELS * zoom / 100}px`
+              }}
+            ></div>
+          </div>
+        
+        {/* Selection Area Visualization */}
+        {selectionArea && (
+          <div
+            className="absolute border-4 border-blue-500 bg-blue-300/30 dark:bg-blue-700/30 pointer-events-none z-20"
+            style={{
+              left: selectionArea.x,
+              top: selectionArea.y,
+              width: selectionArea.width,
+              height: selectionArea.height,
+              boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.5)',
+            }}
+          >
+            {/* Selection area corners */}
+            <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+            
+            {/* Selection info */}
+            <div className="absolute -top-8 left-0 bg-blue-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+              {Math.round(selectionArea.width)} × {Math.round(selectionArea.height)} px
             </div>
           </div>
         )}
-
-        {/* Canvas Elements */}
-        {elements.map(element => (
-          <CanvasElement key={element.id} element={element} pixelsPerMeter={PIXELS_PER_METER} />
-        ))}
         
-        {/* Current shape being drawn */}
-        {currentShape && <CanvasElement element={currentShape} pixelsPerMeter={PIXELS_PER_METER} />}
+          {/* Canvas Elements */}
+          {elements.map(element => (
+            <CanvasElement key={element.id} element={element} pixelsPerMeter={PIXELS_PER_METER} />
+          ))}
+          
+          {/* Current shape being drawn */}
+          {currentShape && <CanvasElement element={currentShape} pixelsPerMeter={PIXELS_PER_METER} />}
+        </div>
 
         {/* Welcome message for empty canvas */}
         {elements.length === 0 && !currentShape && <CanvasWelcome />}
+        
+        {/* Scale Ruler */}
+        <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg z-20">
+          <div className="flex items-center gap-2">
+            <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Escala:</div>
+            <div 
+              className="h-1 bg-emerald-500 rounded"
+              style={{ width: `${GRID_SIZE_PIXELS * zoom / 100}px` }}
+            />
+            <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              {GRID_SIZE_METERS}m
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

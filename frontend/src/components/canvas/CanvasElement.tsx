@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Plant, Terrain } from '../../types/canvasTypes';
 import { useState } from "react";
 import { parseSpacingToMeters, realWorldSizeToPixels, calculateIconSize, formatRealWorldSize } from "@/utils/plantSizes";
 import { getPlantBorderColor, getShapeColor, hexToRgba, lightenColor, darkenColor } from "@/utils/colorUtils";
@@ -11,8 +12,8 @@ interface DrawingElement {
   width?: number;
   height?: number;
   radius?: number;
-  plant?: any;
-  terrain?: any;
+  plant?: Plant;
+  terrain?: Terrain;
   selected?: boolean;
   rotation?: number;
   // Real-world size in meters (for terrain elements)
@@ -267,7 +268,8 @@ export const CanvasElement = ({ element, pixelsPerMeter = 10 }: CanvasElementPro
       );
     }
     
-    // Handle area-based terrain (rectangle/circle)
+    // Handle area-based terrain
+    if (element.brushType === 'brush') return null; // Remove icon for brush terrains
     const isCircle = brushType === 'circle';
     const borderRadius = isCircle ? '50%' : '4px';
     

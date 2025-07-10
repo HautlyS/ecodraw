@@ -94,7 +94,7 @@ export function useEnhancedSearch<T>(
 }
 
 // Helper function to search in all string fields of an object
-function searchInAllFields(item: any, searchTerm: string, caseSensitive: boolean): boolean {
+function searchInAllFields(item: unknown, searchTerm: string, caseSensitive: boolean): boolean {
   if (typeof item === 'string') {
     const value = caseSensitive ? item : item.toLowerCase();
     return value.includes(searchTerm);
@@ -110,7 +110,7 @@ function searchInAllFields(item: any, searchTerm: string, caseSensitive: boolean
 }
 
 // Helper function to get nested object values by dot notation
-function getNestedValue(obj: any, path: string): any {
+function getNestedValue(obj: unknown, path: string): unknown {
   return path.split('.').reduce((current, key) => {
     return current && typeof current === 'object' ? current[key] : undefined;
   }, obj);
@@ -195,7 +195,7 @@ export function useFuzzySearch<T>(
 }
 
 // Simple fuzzy matching score calculation
-function calculateFuzzyScore(item: any, searchTerm: string, options: SearchOptions): number {
+function calculateFuzzyScore(item: unknown, searchTerm: string, options: SearchOptions): number {
   const searchFields = options.searchFields || [];
   let maxScore = 0;
 

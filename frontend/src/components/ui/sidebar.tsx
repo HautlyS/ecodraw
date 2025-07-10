@@ -18,11 +18,26 @@ import {
 } from "@/components/ui/tooltip"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
+const FAVORITES_COOKIE_NAME = "sidebar:favorites"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-const SIDEBAR_WIDTH = "16rem"
+const SIDEBAR_WIDTH = "20rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "3rem"
+const SIDEBAR_WIDTH_ICON = "4rem"
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
+
+// Cookie utilities
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null
+  return null
+}
+
+const setCookie = (name: string, value: string, maxAge: number = SIDEBAR_COOKIE_MAX_AGE) => {
+  if (typeof document === 'undefined') return
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`
+}
 
 type SidebarContext = {
   state: "expanded" | "collapsed"
@@ -32,6 +47,11 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void
   isMobile: boolean
   toggleSidebar: () => void
+  // Favorites functionality
+  favorites: string[]
+  addToFavorites: (id: string) => void
+  removeFromFavorites: (id: string) => void
+  isFavorite: (id: string) => boolean
 }
 
 const SidebarContext = React.createContext<SidebarContext | null>(null)
@@ -67,10 +87,17 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
+    const [favorites, setFavorites] = React.useState<string[]>(() => {
+      const saved = getCookie(FAVORITES_COOKIE_NAME)
+      return saved ? JSON.parse(saved) : []
+    })
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen)
+    const [_open, _setOpen] = React.useState(() => {
+      const saved = getCookie(SIDEBAR_COOKIE_NAME)
+      return saved ? JSON.parse(saved) : defaultOpen
+    })
     const open = openProp ?? _open
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -82,10 +109,31 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        setCookie(SIDEBAR_COOKIE_NAME, JSON.stringify(openState))
       },
       [setOpenProp, open]
     )
+
+    // Favorites methods
+    const addToFavorites = React.useCallback((id: string) => {
+      setFavorites(prev => {
+        const newFavorites = [...prev, id]
+        setCookie(FAVORITES_COOKIE_NAME, JSON.stringify(newFavorites))
+        return newFavorites
+      })
+    }, [])
+
+    const removeFromFavorites = React.useCallback((id: string) => {
+      setFavorites(prev => {
+        const newFavorites = prev.filter(fav => fav !== id)
+        setCookie(FAVORITES_COOKIE_NAME, JSON.stringify(newFavorites))
+        return newFavorites
+      })
+    }, [])
+
+    const isFavorite = React.useCallback((id: string) => {
+      return favorites.includes(id)
+    }, [favorites])
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
@@ -123,8 +171,12 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        favorites,
+        addToFavorites,
+        removeFromFavorites,
+        isFavorite,
       }),
-      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
+      [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, favorites, addToFavorites, removeFromFavorites, isFavorite]
     )
 
     return (
@@ -133,13 +185,16 @@ const SidebarProvider = React.forwardRef<
           <div
             style={
               {
-                "--sidebar-width": SIDEBAR_WIDTH,
+                flex: isMobile ? 'auto' : `0 0 ${SIDEBAR_WIDTH}`,
+                "--sidebar-width": isMobile ? SIDEBAR_WIDTH_MOBILE : SIDEBAR_WIDTH,
                 "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
                 ...style,
               } as React.CSSProperties
             }
             className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar transition-all duration-300 ease-in-out",
+              "bg-gradient-to-br from-background via-background/95 to-background/90",
+              "backdrop-blur-sm border-r border-border/50 shadow-lg",
               className
             )}
             ref={ref}
@@ -222,9 +277,10 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
+            "duration-300 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-in-out",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
+            "shadow-[inset_-1px_0_0_hsl(var(--border)/0.1)]",
             variant === "floating" || variant === "inset"
               ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
               : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
@@ -246,7 +302,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className="flex h-full w-full flex-col bg-sidebar/95 backdrop-blur-md group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow-xl group-data-[variant=floating]:shadow-primary/5"
           >
             {children}
           </div>

@@ -1,5 +1,6 @@
 
 import { useState, useCallback, useMemo } from "react";
+import { Plant, Terrain } from "@/types/canvasTypes";
 import { UnifiedToolbar } from "@/components/UnifiedToolbar";
 import { PlantLibrary } from "@/components/PlantLibrary";
 import { Canvas } from "@/components/Canvas";
@@ -15,8 +16,8 @@ import { ChevronLeft, ChevronRight, Leaf, Mountain } from "lucide-react";
 
 const Index = () => {
   const [selectedTool, setSelectedTool] = useState<string>("select");
-  const [selectedPlant, setSelectedPlant] = useState<any>(null);
-  const [selectedTerrain, setSelectedTerrain] = useState<any>(null);
+  const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const [selectedTerrain, setSelectedTerrain] = useState<Terrain | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeLibrary, setActiveLibrary] = useState<"plants" | "terrain">("plants");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);

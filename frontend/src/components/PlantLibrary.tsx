@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Star, Loader2 } from "lucide-react";
+import { Search, Plus, Star, Loader2, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useEnhancedSearch } from "@/hooks/useEnhancedSearch";
@@ -30,8 +30,32 @@ interface PlantLibraryProps {
   onPlantSelect: (plant: Plant) => void;
 }
 
+// Cookie utilities
+const FAVORITES_COOKIE_NAME = "plant-favorites";
+const FAVORITES_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
+const setCookie = (name: string, value: string, maxAge: number = FAVORITES_COOKIE_MAX_AGE) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+};
+
 export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps) => {
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = getCookie(FAVORITES_COOKIE_NAME);
+    try {
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [customPlants, setCustomPlants] = useState<Plant[]>([]);
   const [newPlant, setNewPlant] = useState({
     name: "",
@@ -116,13 +140,30 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
     return filteredPlants.filter(plant => plant.category === categoryId);
   };
 
+  // Save favorites to cookies whenever they change
+  useEffect(() => {
+    setCookie(FAVORITES_COOKIE_NAME, JSON.stringify(favorites));
+  }, [favorites]);
+
   const toggleFavorite = (plantId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFavorites(prev => 
-      prev.includes(plantId) 
+    setFavorites(prev => {
+      const newFavorites = prev.includes(plantId) 
         ? prev.filter(id => id !== plantId)
-        : [...prev, plantId]
-    );
+        : [...prev, plantId];
+      
+      // Show toast notification
+      const plant = plants.find(p => p.id === plantId);
+      if (plant) {
+        if (newFavorites.includes(plantId)) {
+          toast.success(`${plant.name} adicionada aos favoritos! ⭐`);
+        } else {
+          toast.info(`${plant.name} removida dos favoritos`);
+        }
+      }
+      
+      return newFavorites;
+    });
   };
 
   const handleDragStart = (e: React.DragEvent, plant: Plant) => {
@@ -434,7 +475,7 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">Dificuldade</Label>
-                  <Select value={newPlant.difficulty} onValueChange={(value: any) => setNewPlant(prev => ({ ...prev, difficulty: value }))}>
+                  <Select value={newPlant.difficulty} onValueChange={(value: string) => setNewPlant(prev => ({ ...prev, difficulty: value }))}>
                     <SelectTrigger className="text-xs h-8">
                       <SelectValue />
                     </SelectTrigger>
@@ -447,7 +488,7 @@ export const PlantLibrary = ({ selectedPlant, onPlantSelect }: PlantLibraryProps
                 </div>
                 <div>
                   <Label className="text-xs">Água</Label>
-                  <Select value={newPlant.waterNeeds} onValueChange={(value: any) => setNewPlant(prev => ({ ...prev, waterNeeds: value }))}>
+                  <Select value={newPlant.waterNeeds} onValueChange={(value: string) => setNewPlant(prev => ({ ...prev, waterNeeds: value }))}>
                     <SelectTrigger className="text-xs h-8">
                       <SelectValue />
                     </SelectTrigger>

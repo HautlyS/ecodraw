@@ -1,5 +1,6 @@
 
 import { useCallback } from "react";
+import { Plant, Terrain } from '../types/canvasTypes';
 
 interface Position {
   x: number;
@@ -14,8 +15,8 @@ interface DrawingElement {
   width?: number;
   height?: number;
   radius?: number;
-  plant?: any;
-  terrain?: any;
+  plant?: Plant;
+  terrain?: Terrain;
   selected?: boolean;
   rotation?: number;
   // Real-world size in meters (for terrain elements)
@@ -71,6 +72,9 @@ export const useCanvasEvents = () => {
   }, []);
 
   const isPointInElement = useCallback((pos: Position, element: DrawingElement): boolean => {
+    // Consider margins around elements for selection
+    const marginSize = 10; // 10px margin
+
     if (element.type === 'plant') {
       // Parse plant spacing to get actual dimensions
       const parsePlantSpacing = (spacing: string) => {
@@ -98,11 +102,11 @@ export const useCanvasEvents = () => {
       };
       
       const plantSize = parsePlantSpacing(element.plant?.spacing || '1x1m');
-      const plantLeft = element.x - plantSize.width / 2;
-      const plantTop = element.y - plantSize.height / 2;
+      const plantLeft = element.x - plantSize.width / 2 - marginSize;
+      const plantTop = element.y - plantSize.height / 2 - marginSize;
       
-      return pos.x >= plantLeft && pos.x <= plantLeft + plantSize.width &&
-             pos.y >= plantTop && pos.y <= plantTop + plantSize.height;
+      return pos.x >= plantLeft && pos.x <= plantLeft + plantSize.width + (marginSize * 2) &&
+             pos.y >= plantTop && pos.y <= plantTop + plantSize.height + (marginSize * 2);
     } else if (element.type === 'terrain') {
       // Handle path-based terrain (trails, streams)
       if (element.brushType === 'path' && element.pathPoints) {
@@ -128,19 +132,19 @@ export const useCanvasEvents = () => {
         // Rectangle terrain
         const width = element.width || 40;
         const height = element.height || 40;
-        return pos.x >= element.x && pos.x <= element.x + width &&
-               pos.y >= element.y && pos.y <= element.y + height;
+        return pos.x >= element.x - marginSize && pos.x <= element.x + width + marginSize &&
+               pos.y >= element.y - marginSize && pos.y <= element.y + height + marginSize;
       }
     } else if (element.type === 'rectangle') {
-      return pos.x >= element.x && pos.x <= element.x + (element.width || 0) &&
-             pos.y >= element.y && pos.y <= element.y + (element.height || 0);
+      return pos.x >= element.x - marginSize && pos.x <= element.x + (element.width || 0) + marginSize &&
+             pos.y >= element.y - marginSize && pos.y <= element.y + (element.height || 0) + marginSize;
     } else if (element.type === 'circle') {
       const centerX = element.x + (element.radius || 0);
       const centerY = element.y + (element.radius || 0);
       const distance = Math.sqrt(
         Math.pow(pos.x - centerX, 2) + Math.pow(pos.y - centerY, 2)
       );
-      return distance <= (element.radius || 0);
+      return distance <= (element.radius || 0) + marginSize;
     }
     return false;
   }, []);
