@@ -16,7 +16,7 @@ import { exportCanvasArea, exportSelectedElements } from "@/utils/canvasExport";
 
 import { CANVAS_CONSTANTS } from "../utils/canvasConstants";
 import { calculatePixelsPerMeter, metersToPixels, getCanvasMousePosition, snapToGrid } from "../utils/canvasCoordinates";
-import { Plant, Terrain } from "@/types/canvasTypes";
+import { CanvasProps, DrawingElement } from "../types/canvasTypes";
 
 export interface CanvasRef {
   exportFullCanvas: () => Promise<void>;
