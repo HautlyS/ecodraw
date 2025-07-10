@@ -18,11 +18,6 @@ import { CANVAS_CONSTANTS } from "../utils/canvasConstants";
 import { calculatePixelsPerMeter, metersToPixels, getCanvasMousePosition, snapToGrid } from "../utils/canvasCoordinates";
 import { CanvasProps, DrawingElement } from "../types/canvasTypes";
 
-export interface CanvasRef {
-  exportFullCanvas: () => Promise<void>;
-  exportSelectionAsPNG: () => Promise<void>;
-  exportSelectedElementsAsPNG: () => Promise<void>;
-}
 
 export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange, canvasSize = CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE, onCanvasSizeChange }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
