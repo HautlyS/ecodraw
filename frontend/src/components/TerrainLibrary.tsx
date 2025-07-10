@@ -1,342 +1,374 @@
-
-import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useMemo, memo, useCallback } from "react";
+import { Search, Mountain, Droplets, Home, Shield, Zap, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Plus, Star, Square, Circle, Paintbrush, Settings } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useEnhancedSearch } from "@/hooks/useEnhancedSearch";
+import { Terrain } from "@/types/canvasTypes";
 
-interface TerrainElement {
-  id: string;
-  name: string;
-  category: string;
-  icon: string;
-  size: string;
-  description: string;
-  color: string;
-  texture: string;
-  brushType: 'rectangle' | 'circle' | 'path';
-  selectedBrushMode?: 'rectangle' | 'circle' | 'brush';
-  brushThickness?: number;
-}
+const TERRAIN_CATEGORIES = [
+  { id: "all", name: "Todos", icon: Mountain },
+  { id: "favorites", name: "Favoritos", icon: Sparkles },
+  { id: "soil", name: "Solos", icon: Mountain },
+  { id: "water", name: "Água", icon: Droplets },
+  { id: "structures", name: "Estruturas", icon: Home },
+  { id: "fences", name: "Cercas", icon: Shield },
+  { id: "energy", name: "Energia", icon: Zap },
+  { id: "paths", name: "Caminhos", icon: Mountain },
+] as const;
+
+const SAMPLE_TERRAINS: Terrain[] = [
+  {
+    id: "1",
+    name: "Terra Fértil",
+    category: "soil",
+    size: "variável",
+    color: "#8b5a2b",
+    texture: "soil",
+    icon: "🟫",
+    description: "Solo rico em nutrientes"
+  },
+  {
+    id: "2",
+    name: "Lago",
+    category: "water",
+    size: "variável",
+    color: "#3b82f6",
+    texture: "water",
+    icon: "🌊",
+    description: "Corpo d'água natural"
+  },
+  {
+    id: "3",
+    name: "Casa Principal",
+    category: "structures",
+    size: "10x8m",
+    color: "#ef4444",
+    texture: "building",
+    icon: "🏠",
+    description: "Residência principal"
+  },
+  {
+    id: "4",
+    name: "Cerca de Madeira",
+    category: "fences",
+    size: "variável",
+    color: "#92400e",
+    texture: "fence",
+    icon: "🪵",
+    description: "Delimitação de propriedade"
+  },
+  {
+    id: "5",
+    name: "Painel Solar",
+    category: "energy",
+    size: "4x2m",
+    color: "#1f2937",
+    texture: "solar",
+    icon: "☀️",
+    description: "Energia renovável"
+  },
+  {
+    id: "6",
+    name: "Trilha",
+    category: "paths",
+    size: "2m largura",
+    color: "#a3a3a3",
+    texture: "path",
+    icon: "🛤️",
+    description: "Caminho para circulação"
+  },
+  {
+    id: "7",
+    name: "Composteira",
+    category: "structures",
+    size: "2x2m",
+    color: "#059669",
+    texture: "compost",
+    icon: "♻️",
+    description: "Área de compostagem"
+  },
+  {
+    id: "8",
+    name: "Poço",
+    category: "water",
+    size: "1x1m",
+    color: "#1e40af",
+    texture: "well",
+    icon: "🕳️",
+    description: "Fonte de água subterrânea"
+  }
+];
+
+const BRUSH_MODES = [
+  { id: "rectangle", name: "Retângulo", icon: "⬜" },
+  { id: "circle", name: "Círculo", icon: "⭕" },
+  { id: "brush", name: "Pincel", icon: "🖌️" },
+] as const;
 
 interface TerrainLibraryProps {
-  selectedTerrain: TerrainElement | null;
-  onTerrainSelect: (terrain: TerrainElement) => void;
+  selectedTerrain: Terrain | null;
+  onTerrainSelect: (terrain: Terrain | null) => void;
 }
 
-export const TerrainLibrary = ({ selectedTerrain, onTerrainSelect }: TerrainLibraryProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [brushMode, setBrushMode] = useState<'rectangle' | 'circle' | 'brush'>('rectangle');
-  const [brushThickness, setBrushThickness] = useState(20);
-  const [showSettings, setShowSettings] = useState(false);
-  
-  const terrainElements: TerrainElement[] = [
-    // Solos - painted as large areas
-    { id: "1", name: "Terra Argilosa", category: "solo", icon: "🟤", size: "Variável", description: "Solo rico em argila, retém água", color: "#A0522D", texture: "clay", brushType: "rectangle" },
-    { id: "2", name: "Terra Arenosa", category: "solo", icon: "🟡", size: "Variável", description: "Solo bem drenado", color: "#F4A460", texture: "sand", brushType: "rectangle" },
-    { id: "3", name: "Terra Humífera", category: "solo", icon: "🟫", size: "Variável", description: "Solo rico em matéria orgânica", color: "#8B4513", texture: "humus", brushType: "rectangle" },
-    { id: "4", name: "Solo Calcário", category: "solo", icon: "⚪", size: "Variável", description: "Solo alcalino", color: "#E5E5DC", texture: "limestone", brushType: "rectangle" },
-    { id: "30", name: "Terra Preta", category: "solo", icon: "⚫", size: "Variável", description: "Solo muito fértil", color: "#2F2F2F", texture: "fertile", brushType: "rectangle" },
-    { id: "31", name: "Solo Pedregoso", category: "solo", icon: "🔘", size: "Variável", description: "Solo com muitas pedras", color: "#708090", texture: "rocky", brushType: "rectangle" },
-    
-    // Água - painted as irregular shapes with vibrant blues
-    { id: "5", name: "Nascente", category: "agua", icon: "💧", size: "2x2m", description: "Fonte natural de água", color: "#00CED1", texture: "spring", brushType: "circle" },
-    { id: "6", name: "Poço Artesiano", category: "agua", icon: "🕳️", size: "1x1m", description: "Poço perfurado", color: "#4682B4", texture: "well", brushType: "circle" },
-    { id: "7", name: "Açude", category: "agua", icon: "🏞️", size: "10x10m", description: "Reservatório de água", color: "#1E90FF", texture: "water", brushType: "rectangle" },
-    { id: "8", name: "Riacho", category: "agua", icon: "〰️", size: "Variável", description: "Curso d'água natural", color: "#20B2AA", texture: "stream", brushType: "path" },
-    { id: "9", name: "Cisterna", category: "agua", icon: "⭕", size: "3x3m", description: "Reservatório de água da chuva", color: "#00BFFF", texture: "water", brushType: "circle" },
-    { id: "32", name: "Lagoa", category: "agua", icon: "🔵", size: "8x8m", description: "Corpo d'água natural", color: "#4169E1", texture: "water", brushType: "circle" },
-    { id: "33", name: "Tanque", category: "agua", icon: "🔷", size: "4x4m", description: "Reservatório artificial", color: "#0000CD", texture: "water", brushType: "rectangle" },
-    
-    // Estruturas - painted as defined shapes with browns and grays
-    { id: "10", name: "Viveiro de Mudas", category: "estrutura", icon: "🏠", size: "5x3m", description: "Estufa para mudas", color: "#32CD32", texture: "building", brushType: "rectangle" },
-    { id: "11", name: "Composteira", category: "estrutura", icon: "♻️", size: "2x2m", description: "Local para compostagem", color: "#228B22", texture: "compost", brushType: "rectangle" },
-    { id: "12", name: "Galinheiro", category: "estrutura", icon: "🏘️", size: "4x4m", description: "Abrigo para aves", color: "#D2691E", texture: "building", brushType: "rectangle" },
-    { id: "13", name: "Cerca Viva", category: "estrutura", icon: "🌿", size: "Variável", description: "Cerca natural", color: "#228B22", texture: "hedge", brushType: "path" },
-    { id: "14", name: "Porteira", category: "estrutura", icon: "🚪", size: "3x1m", description: "Entrada da propriedade", color: "#8B4513", texture: "gate", brushType: "rectangle" },
-    { id: "34", name: "Galpão", category: "estrutura", icon: "🏢", size: "10x8m", description: "Edificação para armazenamento", color: "#A0522D", texture: "building", brushType: "rectangle" },
-    { id: "35", name: "Casa", category: "estrutura", icon: "🏡", size: "8x8m", description: "Residência", color: "#CD853F", texture: "house", brushType: "rectangle" },
-    { id: "36", name: "Curral", category: "estrutura", icon: "🏗️", size: "6x6m", description: "Área para gado", color: "#BC8F8F", texture: "corral", brushType: "rectangle" },
-    
-    // Área Cercada with green variations
-    { id: "15", name: "Área Cercada", category: "cerca", icon: "⬜", size: "Variável", description: "Delimitação com cerca", color: "#696969", texture: "fence", brushType: "rectangle" },
-    { id: "16", name: "Pasto", category: "cerca", icon: "🟩", size: "Variável", description: "Área para pastagem", color: "#32CD32", texture: "grass", brushType: "rectangle" },
-    { id: "17", name: "Horta Suspensa", category: "cerca", icon: "📦", size: "2x1m", description: "Canteiro elevado", color: "#9ACD32", texture: "garden", brushType: "rectangle" },
-    { id: "37", name: "Quintal", category: "cerca", icon: "🏠", size: "Variável", description: "Área residencial cercada", color: "#6B8E23", texture: "yard", brushType: "rectangle" },
-    
-    // Pedras e Rochas with gray variations
-    { id: "18", name: "Rocha Grande", category: "rocha", icon: "🪨", size: "2x2m", description: "Formação rochosa", color: "#708090", texture: "rock", brushType: "circle" },
-    { id: "19", name: "Pedregulho", category: "rocha", icon: "🗿", size: "1x1m", description: "Pedra média", color: "#2F4F4F", texture: "stone", brushType: "circle" },
-    { id: "20", name: "Cascalho", category: "rocha", icon: "⚫", size: "Variável", description: "Área com pedras pequenas", color: "#A9A9A9", texture: "gravel", brushType: "rectangle" },
-    { id: "38", name: "Paredão", category: "rocha", icon: "🧱", size: "Variável", description: "Formação rochosa vertical", color: "#696969", texture: "wall", brushType: "rectangle" },
-    
-    // Caminhos - painted as paths with earth tones
-    { id: "21", name: "Estrada de Terra", category: "caminho", icon: "🛤️", size: "Variável", description: "Via não pavimentada", color: "#DEB887", texture: "dirt_road", brushType: "path" },
-    { id: "22", name: "Trilha", category: "caminho", icon: "👣", size: "Variável", description: "Caminho estreito", color: "#D2B48C", texture: "trail", brushType: "path" },
-    { id: "23", name: "Ponte", category: "caminho", icon: "🌉", size: "4x1m", description: "Passagem sobre água", color: "#8B4513", texture: "bridge", brushType: "rectangle" },
-    
-    // Energia with bright colors
-    { id: "24", name: "Painel Solar", category: "energia", icon: "☀️", size: "2x2m", description: "Energia solar", color: "#FFD700", texture: "solar", brushType: "rectangle" },
-    { id: "25", name: "Poste de Luz", category: "energia", icon: "💡", size: "1x1m", description: "Iluminação", color: "#FFFF00", texture: "pole", brushType: "circle" },
-    { id: "26", name: "Gerador Eólico", category: "energia", icon: "💨", size: "3x3m", description: "Energia eólica", color: "#87CEEB", texture: "wind", brushType: "circle" },
-    
-    // Áreas Especiais with vibrant colors
-    { id: "27", name: "Área de Descanso", category: "especial", icon: "🪑", size: "3x3m", description: "Local para relaxar", color: "#DDA0DD", texture: "leisure", brushType: "circle" },
-    { id: "28", name: "Fogueira", category: "especial", icon: "🔥", size: "2x2m", description: "Local para fogo", color: "#FF4500", texture: "fire", brushType: "circle" },
-    { id: "29", name: "Mirante", category: "especial", icon: "👁️", size: "2x2m", description: "Ponto de observação", color: "#20B2AA", texture: "viewpoint", brushType: "circle" },
-  ];
-
-  const categories = [
-    { id: "all", name: "Todos", icon: "🌍" },
-    { id: "favorites", name: "Favoritos", icon: "⭐" },
-    { id: "solo", name: "Solos", icon: "🟤" },
-    { id: "agua", name: "Água", icon: "💧" },
-    { id: "estrutura", name: "Estruturas", icon: "🏠" },
-    { id: "cerca", name: "Cercas", icon: "⬜" },
-    { id: "rocha", name: "Rochas", icon: "🪨" },
-    { id: "caminho", name: "Caminhos", icon: "🛤️" },
-    { id: "energia", name: "Energia", icon: "⚡" },
-    { id: "especial", name: "Especiais", icon: "✨" },
-  ];
-
-  const filteredElements = useMemo(() => {
-    return terrainElements.filter(element => 
-      element.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      element.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      element.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [searchTerm]);
-
-  const getElementsByCategory = (categoryId: string) => {
-    if (categoryId === "all") return filteredElements;
-    if (categoryId === "favorites") return filteredElements.filter(element => favorites.includes(element.id));
-    return filteredElements.filter(element => element.category === categoryId);
-  };
-
-  const toggleFavorite = (elementId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFavorites(prev => 
-      prev.includes(elementId) 
-        ? prev.filter(id => id !== elementId)
-        : [...prev, elementId]
-    );
-  };
-
-  const handleTerrainSelect = (element: TerrainElement) => {
-    const enhancedElement = {
-      ...element,
-      selectedBrushMode: brushMode,
-      brushThickness: brushThickness
-    };
-    onTerrainSelect(enhancedElement);
-  };
+const TerrainCard = memo(({ terrain, isSelected, onSelect }: {
+  terrain: Terrain;
+  isSelected: boolean;
+  onSelect: (terrain: Terrain) => void;
+}) => {
+  const handleClick = useCallback(() => {
+    onSelect(terrain);
+  }, [terrain, onSelect]);
 
   return (
-    <div className="flex flex-col h-full max-h-screen overflow-hidden">
-      {/* Header */}
-      <div className="p-3 border-b border-border flex-shrink-0">
-        <h2 className="text-base font-semibold mb-2">Elementos do Terreno</h2>
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-          <Input
-            placeholder="Buscar elementos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-7 text-xs h-8"
-          />
+    <div
+      className={cn(
+        "group relative p-3 rounded-lg border-0 bg-white dark:bg-gray-900 transition-all duration-150 cursor-pointer",
+        "hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm",
+        isSelected && "bg-orange-50 dark:bg-orange-950 ring-1 ring-orange-200 dark:ring-orange-800"
+      )}
+      onClick={handleClick}
+    >
+      <div className="flex items-center gap-3">
+        <div 
+          className="flex items-center justify-center w-10 h-10 rounded-lg text-lg"
+          style={{ backgroundColor: `${terrain.color}15` }}
+        >
+          {terrain.icon}
         </div>
-      </div>
-
-      {/* Brush Mode Selector */}
-      <div className="p-3 border-b border-border flex-shrink-0 bg-muted/30">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium">Modo de Pintura</h3>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setShowSettings(!showSettings)}
-            className="h-6 w-6 p-0"
-          >
-            <Settings className="w-3 h-3" />
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-3 gap-1 p-1 bg-background rounded-lg border">
-          <Button
-            variant={brushMode === 'rectangle' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setBrushMode('rectangle')}
-            className="flex items-center gap-1 text-xs h-8"
-          >
-            <Square className="w-3 h-3" />
-            <span className="hidden sm:inline">Retângulo</span>
-          </Button>
-          <Button
-            variant={brushMode === 'circle' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setBrushMode('circle')}
-            className="flex items-center gap-1 text-xs h-8"
-          >
-            <Circle className="w-3 h-3" />
-            <span className="hidden sm:inline">Círculo</span>
-          </Button>
-          <Button
-            variant={brushMode === 'brush' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setBrushMode('brush')}
-            className="flex items-center gap-1 text-xs h-8"
-          >
-            <Paintbrush className="w-3 h-3" />
-            <span className="hidden sm:inline">Pincel</span>
-          </Button>
-        </div>
-        
-        {/* Brush Settings */}
-        {showSettings && (
-          <Card className="mt-2">
-            <CardHeader className="p-2">
-              <CardTitle className="text-xs">Configurações do Pincel</CardTitle>
-            </CardHeader>
-            <CardContent className="p-2 pt-0">
-              <div className="space-y-2">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">
-                    Espessura: {brushThickness}px
-                  </label>
-                  <Slider
-                    value={[brushThickness]}
-                    onValueChange={(value) => setBrushThickness(value[0])}
-                    min={5}
-                    max={100}
-                    step={5}
-                    className="w-full"
-                  />
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>Modo atual:</span>
-                  <Badge variant="secondary" className="text-xs">
-                    {brushMode === 'rectangle' ? 'Retângulo' : 
-                     brushMode === 'circle' ? 'Círculo' : 'Pincel Livre'}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Categories */}
-      <div className="flex-1 overflow-hidden">
-        <Tabs defaultValue="all" className="h-full flex flex-col">
-          <TabsList className="grid grid-cols-5 gap-1 p-2 m-2 h-auto flex-shrink-0">
-            {categories.slice(0, 10).map((category) => (
-              <TabsTrigger
-                key={category.id}
-                value={category.id}
-                className="text-xs p-1 data-[state=active]:nature-gradient data-[state=active]:text-white flex flex-col gap-0.5 min-h-[44px]"
-              >
-                <span className="text-sm">{category.icon}</span>
-                <span className="text-xs leading-tight">{category.name}</span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <div className="flex-1 overflow-y-auto px-2">
-            {categories.map((category) => (
-              <TabsContent key={category.id} value={category.id} className="mt-0">
-                <div className="grid gap-2">
-                  {getElementsByCategory(category.id).map((element) => (
-                    <div
-                      key={element.id}
-                      onClick={() => handleTerrainSelect(element)}
-                      className={cn(
-                        "p-2 rounded-lg border border-border cursor-pointer transition-all hover:shadow-md hover:border-accent hover:scale-[1.02]",
-                        selectedTerrain?.id === element.id && "border-accent bg-accent/10 shadow-md ring-1 ring-accent/20"
-                      )}
-                    >
-                      <div className="flex items-start gap-2">
-                        <div 
-                          className="text-lg flex-shrink-0 w-8 h-8 rounded flex items-center justify-center border-2 transition-all hover:scale-110"
-                          style={{ 
-                            backgroundColor: element.color + '30', 
-                            borderColor: element.color,
-                            boxShadow: `0 0 8px ${element.color}40`
-                          }}
-                        >
-                          {element.icon}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-xs truncate">{element.name}</h4>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="p-0.5 h-auto w-auto hover:scale-110 transition-transform"
-                              onClick={(e) => toggleFavorite(element.id, e)}
-                            >
-                              <Star 
-                                className={cn(
-                                  "w-3 h-3 transition-colors",
-                                  favorites.includes(element.id) 
-                                    ? "fill-yellow-400 text-yellow-400" 
-                                    : "text-gray-400 hover:text-yellow-300"
-                                )}
-                              />
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground mb-1 line-clamp-2">{element.description}</p>
-                          <div className="flex flex-wrap gap-1">
-                            <Badge variant="secondary" className="text-xs px-1 py-0 font-medium">
-                              {element.size}
-                            </Badge>
-                            <Badge 
-                              className="text-xs text-white px-1 py-0 font-medium shadow-sm"
-                              style={{ backgroundColor: element.color }}
-                            >
-                              {element.brushType}
-                            </Badge>
-                            <Badge 
-                              variant="outline"
-                              className="text-xs px-1 py-0"
-                              style={{ borderColor: element.color, color: element.color }}
-                            >
-                              {element.category}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {getElementsByCategory(category.id).length === 0 && (
-                    <div className="text-center py-6 text-muted-foreground">
-                      <p className="text-xs">
-                        {category.id === 'favorites' 
-                          ? 'Nenhum elemento favoritado ainda'
-                          : 'Nenhum elemento encontrado'
-                        }
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            ))}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+              {terrain.name}
+            </h3>
+            <Badge variant="outline" className="text-xs px-1.5 py-0.5 h-auto">
+              {terrain.size}
+            </Badge>
           </div>
-        </Tabs>
+          <p className="text-xs text-gray-600 dark:text-gray-400 truncate mt-0.5">
+            {terrain.description}
+          </p>
+        </div>
       </div>
-
-      {/* Add Custom Element */}
-      <div className="p-2 border-t border-border flex-shrink-0">
-        <Button variant="outline" className="w-full gap-1 text-xs h-8" size="sm">
-          <Plus className="w-3 h-3" />
-          Adicionar Elemento
-        </Button>
-      </div>
+      
+      {/* Selection indicator */}
+      {isSelected && (
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-orange-500/10 rounded-lg pointer-events-none" />
+      )}
     </div>
   );
-};
+});
+
+TerrainCard.displayName = "TerrainCard";
+
+const CategoryButton = memo(({ category, isSelected, onSelect }: {
+  category: typeof TERRAIN_CATEGORIES[number];
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+}) => {
+  const handleClick = useCallback(() => {
+    onSelect(category.id);
+  }, [category.id, onSelect]);
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className={cn(
+        "h-8 px-3 text-xs font-medium border-0 bg-transparent transition-all duration-150",
+        isSelected 
+          ? "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300" 
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+      )}
+    >
+      <category.icon className="w-3.5 h-3.5 mr-1.5" />
+      {category.name}
+    </Button>
+  );
+});
+
+CategoryButton.displayName = "CategoryButton";
+
+const BrushModeButton = memo(({ mode, isSelected, onSelect }: {
+  mode: typeof BRUSH_MODES[number];
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+}) => {
+  const handleClick = useCallback(() => {
+    onSelect(mode.id);
+  }, [mode.id, onSelect]);
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={handleClick}
+      className={cn(
+        "h-8 px-3 text-xs font-medium border-0 bg-transparent transition-all duration-150",
+        isSelected 
+          ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300" 
+          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+      )}
+    >
+      <span className="mr-1.5">{mode.icon}</span>
+      {mode.name}
+    </Button>
+  );
+});
+
+BrushModeButton.displayName = "BrushModeButton";
+
+export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: TerrainLibraryProps) => {
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedBrushMode, setSelectedBrushMode] = useState("rectangle");
+  const [brushThickness, setBrushThickness] = useState([20]);
+  const { searchTerm, setSearchTerm, searchResults } = useEnhancedSearch(SAMPLE_TERRAINS, {
+    searchFields: ['name', 'description'],
+    debounceMs: 200
+  });
+
+  const filteredTerrains = useMemo(() => {
+    let terrains = searchTerm ? searchResults : SAMPLE_TERRAINS;
+    
+    if (selectedCategory !== "all") {
+      terrains = terrains.filter(terrain => terrain.category === selectedCategory);
+    }
+    
+    return terrains;
+  }, [searchTerm, searchResults, selectedCategory]);
+
+  const handleTerrainSelect = useCallback((terrain: Terrain) => {
+    const isCurrentlySelected = selectedTerrain?.id === terrain.id;
+    const terrainWithSettings = isCurrentlySelected ? null : {
+      ...terrain,
+      selectedBrushMode,
+      brushThickness: brushThickness[0]
+    };
+    onTerrainSelect(terrainWithSettings);
+  }, [selectedTerrain?.id, onTerrainSelect, selectedBrushMode, brushThickness]);
+
+  const memoizedCategories = useMemo(() => TERRAIN_CATEGORIES.map(category => (
+    <CategoryButton
+      key={category.id}
+      category={category}
+      isSelected={selectedCategory === category.id}
+      onSelect={setSelectedCategory}
+    />
+  )), [selectedCategory]);
+
+  const memoizedBrushModes = useMemo(() => BRUSH_MODES.map(mode => (
+    <BrushModeButton
+      key={mode.id}
+      mode={mode}
+      isSelected={selectedBrushMode === mode.id}
+      onSelect={setSelectedBrushMode}
+    />
+  )), [selectedBrushMode]);
+
+  const memoizedTerrains = useMemo(() => filteredTerrains.map(terrain => (
+    <TerrainCard
+      key={terrain.id}
+      terrain={terrain}
+      isSelected={selectedTerrain?.id === terrain.id}
+      onSelect={handleTerrainSelect}
+    />
+  )), [filteredTerrains, selectedTerrain?.id, handleTerrainSelect]);
+
+  return (
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          Biblioteca de Terreno
+        </h2>
+        
+        {/* Search */}
+        <div className="relative mb-3">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Input
+            placeholder="Buscar terrenos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+          />
+        </div>
+
+        {/* Categories */}
+        <div className="flex flex-wrap gap-1 mb-4">
+          {memoizedCategories}
+        </div>
+
+        {/* Brush Settings */}
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs text-gray-600 dark:text-gray-400 mb-2 block">
+              Modo do Pincel
+            </Label>
+            <div className="flex flex-wrap gap-1">
+              {memoizedBrushModes}
+            </div>
+          </div>
+          
+          <div>
+            <Label className="text-xs text-gray-600 dark:text-gray-400 mb-2 block">
+              Espessura: {brushThickness[0]}px
+            </Label>
+            <Slider
+              value={brushThickness}
+              onValueChange={setBrushThickness}
+              max={100}
+              min={5}
+              step={5}
+              className="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Terrains List */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-2">
+          {memoizedTerrains.length > 0 ? (
+            memoizedTerrains
+          ) : (
+            <div className="text-center py-8">
+              <Mountain className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Nenhum terreno encontrado
+              </p>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Selected Terrain Info */}
+      {selectedTerrain && (
+        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="flex items-center gap-3">
+            <div 
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
+              style={{ backgroundColor: `${selectedTerrain.color}15` }}
+            >
+              {selectedTerrain.icon}
+            </div>
+            <div className="flex-1">
+              <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                {selectedTerrain.name}
+              </h3>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Modo: {selectedBrushMode} • {selectedTerrain.size}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+TerrainLibrary.displayName = "TerrainLibrary";
