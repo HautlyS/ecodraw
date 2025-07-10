@@ -246,9 +246,59 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
       backgroundColor: '#f9fafb'
     });
   }, [selectionArea]);
-  
-  // Export selected elements
-  const exportSelectedElementsAsPNG = useCallback(async () => {
+  // Export full canvas
+  const exportFullCanvas = useCallback(async () => {
+    const canvasElement = canvasRef.current?.querySelector('[data-canvas="true"]') as HTMLElement;
+    if (!canvasElement) {
+      toast.error("Área do canvas não encontrada!");
+      return;
+    }
+
+    try {
+      toast.info('Preparando exportação do canvas...', { duration: 2000 });
+      
+      const canvas = await html2canvas(canvasElement, {
+        backgroundColor: '#f9fafb',
+        scale: 2,
+        logging: false,
+        allowTaint: true,
+        useCORS: true,
+        removeContainer: true,
+        ignoreElements: (element) => {
+          return element.classList.contains('ignore-export') ||
+                 element.tagName === 'SCRIPT' ||
+                 element.tagName === 'STYLE';
+        }
+      });
+      
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error('Erro ao gerar imagem');
+          return;
+        }
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `canvas-completo-${Date.now()}.png`;
+        link.style.display = 'none';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        URL.revokeObjectURL(url);
+        
+        toast.success('Canvas exportado com sucesso!', {
+          description: `Arquivo salvo como canvas-completo-${Date.now()}.png`
+        });
+      }, 'image/png', 0.9);
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Erro ao exportar canvas');
+    }
+  }, []);
     const selectedElements = elements.filter(el => el.selected);
     if (selectedElements.length === 0) {
       toast.error("Nenhum elemento selecionado para exportar!");
