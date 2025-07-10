@@ -15,7 +15,7 @@ const PLANT_CATEGORIES = [
   { id: "vegetables", name: "Hortaliças", icon: Leaf },
   { id: "medicinal", name: "Medicinais", icon: Pill },
   { id: "grains", name: "Grãos", icon: Wheat },
-  { id: "roots", name: "Raízes", icon: Root },
+  { id: "roots", name: "Raízes", icon: Carrot },
 ] as const;
 
 const SAMPLE_PLANTS: Plant[] = [
