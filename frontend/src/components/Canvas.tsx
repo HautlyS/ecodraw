@@ -60,10 +60,9 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
   // Export full canvas - expose to parent
   React.useEffect(() => {
     if (onExportCanvas) {
-      // The parent can call this method to trigger export
-      (window as any).exportCanvasFunction = exportFullCanvas;
+      onExportCanvas = () => exportFullCanvas();
     }
-  }, [onExportCanvas]);
+  }, [exportFullCanvas, onExportCanvas]);
 
   // Enhanced zoom controls
   const {
