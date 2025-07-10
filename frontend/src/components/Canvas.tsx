@@ -12,6 +12,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
 import { Grid3X3, Download, Square, Target, Move, Plus, Minus, RotateCcw } from "lucide-react";
 import html2canvas from "html2canvas";
+import { exportCanvasArea, exportSelectedElements } from "@/utils/canvasExport";
 
 import { CANVAS_CONSTANTS } from "../utils/canvasConstants";
 import { calculatePixelsPerMeter, metersToPixels, getCanvasMousePosition, snapToGrid } from "../utils/canvasCoordinates";
