@@ -10,7 +10,9 @@ import {
   Mountain,
   Building,
   Grid3X3,
-  Trash2
+  Trash2,
+  Library,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,16 +21,17 @@ interface MobileNavigationProps {
   onToolSelect: (tool: string) => void;
   activeLibrary: "plants" | "terrain" | "structures";
   onLibraryChange: (library: "plants" | "terrain" | "structures") => void;
+  onShowLibrary?: () => void;
 }
 
 const tools = [
-  { id: "select", icon: MousePointer, label: "Selecionar" },
-  { id: "move", icon: Hand, label: "Navegar" },
-  { id: "rectangle", icon: Square, label: "Retângulo" },
-  { id: "circle", icon: Circle, label: "Círculo" },
-  { id: "terrain", icon: Palette, label: "Terreno" },
-  { id: "grid", icon: Grid3X3, label: "Grade" },
-  { id: "delete", icon: Trash2, label: "Excluir" },
+  { id: "select", icon: MousePointer, label: "Selecionar", color: "bg-gradient-to-r from-blue-400 to-cyan-500" },
+  { id: "move", icon: Hand, label: "Navegar", color: "bg-gradient-to-r from-purple-400 to-pink-500" },
+  { id: "rectangle", icon: Square, label: "Retângulo", color: "bg-gradient-to-r from-orange-400 to-red-500" },
+  { id: "circle", icon: Circle, label: "Círculo", color: "bg-gradient-to-r from-pink-400 to-rose-500" },
+  { id: "terrain", icon: Palette, label: "Terreno", color: "bg-gradient-to-r from-green-400 to-emerald-500" },
+  { id: "grid", icon: Grid3X3, label: "Grade", color: "bg-gradient-to-r from-slate-400 to-gray-500" },
+  { id: "delete", icon: Trash2, label: "Excluir", color: "bg-gradient-to-r from-red-400 to-rose-500" },
 ];
 
 const MobileToolButton = memo(({ tool, isSelected, onSelect }: {
@@ -46,17 +49,17 @@ const MobileToolButton = memo(({ tool, isSelected, onSelect }: {
       size="sm"
       onClick={handleClick}
       className={cn(
-        "flex-1 flex flex-col items-center gap-1 h-auto py-2 px-1 border-0 bg-transparent transition-all duration-150",
-        "touch-target",
+        "flex-1 flex flex-col items-center gap-1 h-auto py-3 px-2 rounded-2xl transition-all duration-300 backdrop-blur-xl border touch-target",
+        "hover:scale-105",
         isSelected 
-          ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" 
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? `${tool.color} text-white shadow-lg border-white/20` 
+          : "bg-white/60 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-white/20 dark:border-gray-700/20 hover:bg-white/80 dark:hover:bg-gray-700/80"
       )}
     >
       <tool.icon className="w-5 h-5" />
-      <span className="text-xs font-medium leading-none">{tool.label}</span>
+      <span className="text-xs font-semibold leading-none">{tool.label}</span>
       {isSelected && (
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-blue-500/10 rounded-md pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-2xl pointer-events-none" />
       )}
     </Button>
   );
@@ -73,8 +76,13 @@ const LibraryButton = memo(({ library, isActive, onSelect }: {
     onSelect(library);
   }, [library, onSelect]);
 
-  const Icon = library === "plants" ? Leaf : library === "terrain" ? Mountain : Building;
-  const label = library === "plants" ? "Plantas" : library === "terrain" ? "Terreno" : "Estruturas";
+  const config = {
+    plants: { Icon: Leaf, label: "Plantas", color: "bg-gradient-to-r from-green-400 to-emerald-500" },
+    terrain: { Icon: Mountain, label: "Terreno", color: "bg-gradient-to-r from-orange-400 to-amber-500" },
+    structures: { Icon: Building, label: "Estruturas", color: "bg-gradient-to-r from-blue-400 to-indigo-500" }
+  };
+
+  const { Icon, label, color } = config[library];
 
   return (
     <Button
@@ -82,14 +90,15 @@ const LibraryButton = memo(({ library, isActive, onSelect }: {
       size="sm"
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-2 h-8 px-3 border-0 bg-transparent transition-all duration-150",
+        "flex items-center gap-2 h-10 px-4 rounded-2xl transition-all duration-300 backdrop-blur-xl border font-semibold",
+        "hover:scale-105",
         isActive 
-          ? "bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400" 
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? `${color} text-white shadow-lg border-white/20` 
+          : "bg-white/60 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-white/20 dark:border-gray-700/20 hover:bg-white/80 dark:hover:bg-gray-700/80"
       )}
     >
       <Icon className="w-4 h-4" />
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-semibold">{label}</span>
     </Button>
   );
 });
@@ -100,7 +109,8 @@ export const MobileNavigation = memo(({
   selectedTool, 
   onToolSelect, 
   activeLibrary, 
-  onLibraryChange 
+  onLibraryChange,
+  onShowLibrary 
 }: MobileNavigationProps) => {
   const memoizedTools = useMemo(() => tools.map(tool => (
     <MobileToolButton
@@ -132,15 +142,31 @@ export const MobileNavigation = memo(({
   ), [activeLibrary, onLibraryChange]);
 
   return (
-    <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 contain-paint">
+    <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-t border-white/20 dark:border-gray-700/20 contain-paint">
       <div className="safe-area-bottom">
-        {/* Library Selector */}
-        <div className="flex items-center justify-center gap-2 px-4 py-2 border-b border-gray-100 dark:border-gray-800">
-          {memoizedLibraryButtons}
+        {/* Enhanced Library Selector */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/20 dark:border-gray-700/20">
+          <div className="flex items-center gap-2">
+            {memoizedLibraryButtons}
+          </div>
+          
+          {/* Show Library Button */}
+          {onShowLibrary && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onShowLibrary}
+              className="h-10 px-4 rounded-2xl transition-all duration-300 backdrop-blur-xl border font-semibold hover:scale-105 bg-gradient-to-r from-purple-400 to-pink-500 text-white shadow-lg border-white/20"
+            >
+              <Library className="w-4 h-4 mr-2" />
+              <span className="text-sm font-semibold">Abrir</span>
+              <Sparkles className="w-3 h-3 ml-1" />
+            </Button>
+          )}
         </div>
         
-        {/* Tools Grid */}
-        <div className="flex items-center px-2 py-1">
+        {/* Enhanced Tools Grid */}
+        <div className="flex items-center gap-2 px-3 py-3">
           {memoizedTools}
         </div>
       </div>
