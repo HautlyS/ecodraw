@@ -122,7 +122,8 @@ const Index = () => {
         <div className="flex-1 flex min-h-0">
           {/* Canvas - Performance Optimized */}
           <div className="flex-1 relative canvas-area">
-            <MemoizedCanvas 
+            <Canvas 
+              ref={canvasRef}
               selectedTool={selectedTool}
               selectedPlant={selectedPlant}
               selectedTerrain={selectedTerrain}
