@@ -103,7 +103,6 @@ export interface CanvasProps {
   onToolChange: (tool: string) => void;
   canvasSize?: Dimensions;
   onCanvasSizeChange?: (size: Dimensions) => void;
-  onExportCanvas?: () => void;
 }
 
 // Event handler types
