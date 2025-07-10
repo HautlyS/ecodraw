@@ -132,12 +132,50 @@ export const UnifiedToolbar = memo(({
   const { theme, toggleTheme } = useTheme();
 
   const handleExport = useCallback(() => {
-    if (onExportCanvas) {
-      onExportCanvas();
-    } else {
-      toast.error("Função de exportação não disponível");
+    // Simple export function - try to find canvas and export it
+    const canvasElement = document.querySelector('[data-canvas="true"]') as HTMLElement;
+    if (!canvasElement) {
+      toast.error("Canvas não encontrado para exportação");
+      return;
     }
-  }, [onExportCanvas]);
+
+    import('html2canvas').then(({ default: html2canvas }) => {
+      html2canvas(canvasElement, {
+        backgroundColor: '#f9fafb',
+        scale: 2,
+        logging: false,
+        allowTaint: true,
+        useCORS: true
+      }).then(canvas => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            toast.error('Erro ao gerar imagem');
+            return;
+          }
+          
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `canvas-export-${Date.now()}.png`;
+          link.style.display = 'none';
+          
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          URL.revokeObjectURL(url);
+          
+          toast.success('Canvas exportado com sucesso!');
+        }, 'image/png', 0.9);
+      }).catch((error) => {
+        console.error('Export error:', error);
+        toast.error('Erro ao exportar canvas');
+      });
+    }).catch((error) => {
+      console.error('Failed to load html2canvas:', error);
+      toast.error('Erro ao carregar biblioteca de exportação');
+    });
+  }, []);
 
   const handleSave = useCallback(() => {
     const projectData = {
