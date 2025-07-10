@@ -1123,47 +1123,45 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
   };
 
   return (
-    <div className="w-full h-full relative bg-white dark:bg-gray-900 overflow-hidden">
-      {/* Canvas Info & Controls */}
-      <div className="absolute top-4 left-4 z-20 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
-        <div className="flex flex-col gap-1">
-          <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            Posição: {Math.round(-panOffset.x / (zoom / 100))}, {Math.round(-panOffset.y / (zoom / 100))}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500">
-            Zoom: {zoom}% • {Math.round(PIXELS_PER_METER * 10) / 10} px/m
+    <div className="w-full h-full relative bg-gray-50 dark:bg-gray-950 overflow-hidden canvas-container">
+      {/* Modern Floating Controls - Top Left */}
+      <div className="absolute top-3 left-3 z-20 flex items-center gap-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-efficient rounded-lg p-1 shadow-sm">
+        <div className="px-2 py-1">
+          <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+            {Math.round(-panOffset.x / (zoom / 100))}, {Math.round(-panOffset.y / (zoom / 100))}
           </div>
         </div>
       </div>
       
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg">
+      {/* Modern Floating Controls - Top Right */}
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-white/95 dark:bg-gray-900/95 backdrop-blur-efficient rounded-lg p-1 shadow-sm">
         <Button
           variant="ghost"
           size="sm"
           onClick={zoomOut}
           disabled={!canZoomOut}
-          className="h-8 w-8 p-0"
+          className="h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
           title="Zoom Out"
         >
-          <span className="text-lg font-bold">-</span>
+          <Minus className="h-4 w-4" />
         </Button>
         
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[3rem] text-center">
+        <div className="px-2 text-xs font-medium text-gray-600 dark:text-gray-400 min-w-[2.5rem] text-center">
           {Math.round(zoom)}%
-        </span>
+        </div>
         
         <Button
           variant="ghost"
           size="sm"
           onClick={zoomIn}
           disabled={!canZoomIn}
-          className="h-8 w-8 p-0"
+          className="h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
           title="Zoom In"
         >
-          <span className="text-lg font-bold">+</span>
+          <Plus className="h-4 w-4" />
         </Button>
         
-        <Separator orientation="vertical" className="h-6" />
+        <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
         
         <Button
           variant="ghost"
@@ -1171,69 +1169,61 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
           onClick={() => {
             const newState = !showGrid;
             setShowGrid(newState);
-            toast.success(newState ? "Grid enabled" : "Grid disabled");
+            toast.success(newState ? "Grade ativada" : "Grade desativada");
           }}
-          className={cn("h-8 w-8 p-0", showGrid && "bg-emerald-100 dark:bg-emerald-900")}
-          title="Toggle Grid (G)"
+          className={cn(
+            "h-7 w-7 p-0 transition-colors duration-150",
+            showGrid 
+              ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400" 
+              : "hover:bg-gray-100 dark:hover:bg-gray-800"
+          )}
+          title="Alternar Grade (G)"
         >
-          <Grid3X3 className="h-4 w-4" />
+          <Grid3X3 className="h-3.5 w-3.5" />
         </Button>
         
         <Button
           variant="ghost"
           size="sm"
           onClick={resetZoom}
-          className="h-8 w-8 p-0"
-          title="Reset View"
+          className="h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
+          title="Resetar Visualização"
         >
-          <span className="text-xs font-bold">1:1</span>
-        </Button>
-        
-        <Separator orientation="vertical" className="h-6" />
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            onToolChange('selectArea');
-            toast.info("Ferramenta de Seleção ativada");
-          }}
-          className={cn("h-8 w-8 p-0", selectedTool === 'selectArea' && "bg-blue-100 dark:bg-blue-900")}
-          title="Select Area (A)"
-        >
-          <Square className="h-4 w-4" />
+          <RotateCcw className="h-3.5 w-3.5" />
         </Button>
         
         {selectionArea && (
           <>
+            <div className="w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1" />
+            
             <Button
               variant="ghost"
               size="sm"
               onClick={centerSelectionArea}
-              className="h-8 w-8 p-0"
-              title="Center Selection"
+              className="h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
+              title="Centralizar Seleção"
             >
-              <Target className="h-4 w-4" />
+              <Target className="h-3.5 w-3.5" />
             </Button>
             
             <Button
               variant="ghost"
               size="sm"
               onClick={exportSelectionAsPNG}
-              className="h-8 w-8 p-0"
-              title="Export Selection as PNG"
+              className="h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150"
+              title="Exportar Seleção"
             >
-              <Download className="h-4 w-4" />
+              <Download className="h-3.5 w-3.5" />
             </Button>
             
             <Button
               variant="ghost"
               size="sm"
               onClick={clearSelectionArea}
-              className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-              title="Clear Selection"
+              className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 hover:text-red-600 transition-colors duration-150"
+              title="Limpar Seleção"
             >
-              ×
+              <span className="text-sm font-bold">×</span>
             </Button>
           </>
         )}
