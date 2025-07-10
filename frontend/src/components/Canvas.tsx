@@ -1279,52 +1279,30 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
             willChange: 'transform',
           }}
         >
-          {/* Working Area Indicator - Enhanced Visibility */}
+          {/* Modern Working Area Indicator */}
           <div 
-            className="absolute border-4 border-dashed border-emerald-500/70 dark:border-emerald-400/70 bg-emerald-50/15 dark:bg-emerald-900/25 rounded-xl pointer-events-none shadow-lg"
+            className="absolute border-2 border-dashed border-blue-300 dark:border-blue-700 bg-blue-50/20 dark:bg-blue-950/20 rounded-lg pointer-events-none"
             style={{
               width: `${(canvasSize?.width || canvasRealSize.width) * PIXELS_PER_METER}px`,
               height: `${(canvasSize?.height || canvasRealSize.height) * PIXELS_PER_METER}px`,
               left: '50%',
               top: '50%',
               transform: 'translate(-50%, -50%)',
-              boxShadow: 'inset 0 0 0 2px rgba(16, 185, 129, 0.2), 0 0 20px rgba(16, 185, 129, 0.1)',
             }}
           >
-            {/* Corner indicators */}
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-white dark:border-gray-800 shadow-md"></div>
+            {/* Clean corner indicators */}
+            <div className="absolute -top-1 -left-1 w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-full"></div>
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-full"></div>
+            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-full"></div>
+            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-blue-400 dark:bg-blue-500 rounded-full"></div>
             
-            {/* Working area info - Enhanced */}
-            <div className="absolute top-4 left-4 bg-emerald-500/90 dark:bg-emerald-600/90 backdrop-blur-sm px-3 py-2 rounded-lg text-xs text-white font-medium shadow-lg border border-emerald-400/50">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                <span>Área de Trabalho: {(canvasSize?.width || canvasRealSize.width)} × {(canvasSize?.height || canvasRealSize.height)}m</span>
-              </div>
+            {/* Clean working area info */}
+            <div className="absolute -top-6 left-0 bg-blue-500 dark:bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium">
+              {(canvasSize?.width || canvasRealSize.width)} × {(canvasSize?.height || canvasRealSize.height)}m
             </div>
             
-            {/* Center cross indicator */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-              <div className="relative">
-                <div className="absolute w-8 h-0.5 bg-emerald-500/60 dark:bg-emerald-400/60 -translate-x-1/2 -translate-y-1/2"></div>
-                <div className="absolute h-8 w-0.5 bg-emerald-500/60 dark:bg-emerald-400/60 -translate-x-1/2 -translate-y-1/2"></div>
-                <div className="absolute w-2 h-2 bg-emerald-500 dark:bg-emerald-400 rounded-full border border-white dark:border-gray-800 -translate-x-1/2 -translate-y-1/2"></div>
-              </div>
-            </div>
-            
-            {/* Grid pattern overlay for better definition */}
-            <div 
-              className="absolute inset-2 opacity-20 dark:opacity-30 pointer-events-none rounded-lg"
-              style={{
-                backgroundImage: `
-                  linear-gradient(rgba(16, 185, 129, 0.3) 1px, transparent 1px),
-                  linear-gradient(90deg, rgba(16, 185, 129, 0.3) 1px, transparent 1px)
-                `,
-                backgroundSize: `${GRID_SIZE_PIXELS * zoom / 100}px ${GRID_SIZE_PIXELS * zoom / 100}px`
-              }}
-            ></div>
+            {/* Simple center indicator */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-blue-400 dark:bg-blue-500 rounded-full"></div>
           </div>
         
         {/* Selection Area Visualization */}
