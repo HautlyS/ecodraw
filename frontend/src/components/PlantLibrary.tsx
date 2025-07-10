@@ -1,5 +1,5 @@
 import React, { useState, useMemo, memo, useCallback } from "react";
-import { Search, Star, Leaf, Apple, Pill, Wheat, Carrot, Tree, Flower, Plant, Sprout, Trees } from "lucide-react";
+import { Search, Star, Leaf, Apple, Pill, Wheat, Carrot, Tree, Flower, Seedling, Sprout, Trees } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
