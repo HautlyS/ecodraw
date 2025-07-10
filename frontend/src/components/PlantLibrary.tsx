@@ -15,7 +15,7 @@ const PLANT_CATEGORIES = [
   { id: "trees", name: "Árvores", icon: Tree, color: "bg-gradient-to-r from-green-600 to-emerald-700" },
   { id: "fruits", name: "Frutíferas", icon: Apple, color: "bg-gradient-to-r from-red-400 to-pink-500" },
   { id: "vegetables", name: "Hortaliças", icon: Leaf, color: "bg-gradient-to-r from-green-400 to-lime-500" },
-  { id: "herbs", name: "Ervas", icon: Plant, color: "bg-gradient-to-r from-teal-400 to-cyan-500" },
+  { id: "herbs", name: "Ervas", icon: Seedling, color: "bg-gradient-to-r from-teal-400 to-cyan-500" },
   { id: "flowers", name: "Flores", icon: Flower, color: "bg-gradient-to-r from-purple-400 to-pink-500" },
   { id: "medicinal", name: "Medicinais", icon: Pill, color: "bg-gradient-to-r from-blue-400 to-indigo-500" },
   { id: "grains", name: "Grãos", icon: Wheat, color: "bg-gradient-to-r from-amber-400 to-yellow-500" },
