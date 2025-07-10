@@ -1342,15 +1342,15 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
         {/* Welcome message for empty canvas */}
         {elements.length === 0 && !currentShape && <CanvasWelcome />}
         
-        {/* Scale Ruler */}
-        <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 p-2 shadow-lg z-20">
+        {/* Modern Scale Ruler */}
+        <div className="absolute bottom-3 left-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-efficient rounded-lg p-2 shadow-sm z-20">
           <div className="flex items-center gap-2">
             <div className="text-xs font-medium text-gray-600 dark:text-gray-400">Escala:</div>
             <div 
-              className="h-1 bg-emerald-500 rounded"
+              className="h-0.5 bg-blue-500 rounded"
               style={{ width: `${GRID_SIZE_PIXELS * zoom / 100}px` }}
             />
-            <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+            <div className="text-xs font-medium text-blue-600 dark:text-blue-400">
               {GRID_SIZE_METERS}m
             </div>
           </div>
