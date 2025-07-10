@@ -1,5 +1,5 @@
 
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import React, { useRef, useEffect, useState, useCallback, useMemo, memo } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -10,7 +10,7 @@ import { useCanvasZoom } from "@/hooks/useCanvasZoom";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
-import { Grid3X3, Download, Square, Target, Move } from "lucide-react";
+import { Grid3X3, Download, Square, Target, Move, Plus, Minus, RotateCcw } from "lucide-react";
 import html2canvas from "html2canvas";
 
 import { CANVAS_CONSTANTS } from "../utils/canvasConstants";
