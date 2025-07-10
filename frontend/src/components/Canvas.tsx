@@ -111,58 +111,163 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
   const metersToPixels = useCallback((meters: number) => meters * PIXELS_PER_METER, [PIXELS_PER_METER]);
   const pixelsToMeters = useCallback((pixels: number) => pixels / PIXELS_PER_METER, [PIXELS_PER_METER]);
 
-  const { getMousePosition, snapToGrid, findElementAtPosition } = useCanvasEvents();
+  // Enhanced element selection with better hit detection
+  const findElementAtPosition = useCallback((x: number, y: number) => {
+    // Find elements in reverse order (top to bottom in z-index)
+    for (let i = elements.length - 1; i >= 0; i--) {
+      const element = elements[i];
+      
+      if (element.type === 'plant') {
+        const realWorldSize = parsePlantSpacing(element.plant?.spacing || '1x1m');
+        const plantSize = {
+          width: realWorldSize.width * PIXELS_PER_METER,
+          height: realWorldSize.height * PIXELS_PER_METER
+        };
+        
+        // Minimum clickable area for small plants
+        const minClickableSize = 32;
+        const clickableSize = {
+          width: Math.max(plantSize.width, minClickableSize),
+          height: Math.max(plantSize.height, minClickableSize)
+        };
+        
+        const left = element.x - clickableSize.width / 2;
+        const right = element.x + clickableSize.width / 2;
+        const top = element.y - clickableSize.height / 2;
+        const bottom = element.y + clickableSize.height / 2;
+        
+        if (x >= left && x <= right && y >= top && y <= bottom) {
+          return element;
+        }
+      } else if (element.type === 'terrain') {
+        if (element.pathPoints && element.pathPoints.length > 1) {
+          // Check if point is near the path
+          const strokeWidth = element.brushThickness || 8;
+          const threshold = strokeWidth / 2 + 5; // Add some padding for easier selection
+          
+          for (let j = 0; j < element.pathPoints.length - 1; j++) {
+            const p1 = element.pathPoints[j];
+            const p2 = element.pathPoints[j + 1];
+            
+            // Calculate distance from point to line segment
+            const A = x - p1.x;
+            const B = y - p1.y;
+            const C = p2.x - p1.x;
+            const D = p2.y - p1.y;
+            
+            const dot = A * C + B * D;
+            const lenSq = C * C + D * D;
+            let param = -1;
+            if (lenSq !== 0) param = dot / lenSq;
+            
+            let xx, yy;
+            if (param < 0) {
+              xx = p1.x;
+              yy = p1.y;
+            } else if (param > 1) {
+              xx = p2.x;
+              yy = p2.y;
+            } else {
+              xx = p1.x + param * C;
+              yy = p1.y + param * D;
+            }
+            
+            const dx = x - xx;
+            const dy = y - yy;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance <= threshold) {
+              return element;
+            }
+          }
+        } else {
+          // Area-based terrain
+          const terrainWidth = element.width || 40;
+          const terrainHeight = element.height || 40;
+          
+          // Minimum clickable area
+          const minClickableSize = 32;
+          const clickableWidth = Math.max(terrainWidth, minClickableSize);
+          const clickableHeight = Math.max(terrainHeight, minClickableSize);
+          
+          const left = element.x - (clickableWidth - terrainWidth) / 2;
+          const right = left + clickableWidth;
+          const top = element.y - (clickableHeight - terrainHeight) / 2;
+          const bottom = top + clickableHeight;
+          
+          if (element.brushType === 'circle') {
+            const centerX = left + clickableWidth / 2;
+            const centerY = top + clickableHeight / 2;
+            const radius = Math.min(clickableWidth, clickableHeight) / 2;
+            const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            if (distance <= radius) return element;
+          } else {
+            if (x >= left && x <= right && y >= top && y <= bottom) {
+              return element;
+            }
+          }
+        }
+      } else if (element.type === 'rectangle') {
+        if (x >= element.x && x <= element.x + (element.width || 0) &&
+            y >= element.y && y <= element.y + (element.height || 0)) {
+          return element;
+        }
+      } else if (element.type === 'circle') {
+        const centerX = element.x + (element.radius || 0);
+        const centerY = element.y + (element.radius || 0);
+        const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+        if (distance <= (element.radius || 0)) {
+          return element;
+        }
+      }
+    }
+    return null;
+  }, [elements, PIXELS_PER_METER]);
+
+  const { getMousePosition, snapToGrid } = useCanvasEvents();
   
-  // Export function for selected area
+  // Enhanced export function for selected area
   const exportSelectionAsPNG = useCallback(async () => {
     if (!selectionArea || !canvasRef.current) {
       toast.error("Nenhuma área selecionada para exportar!");
       return;
     }
 
-    try {
-      toast.info("Exportando imagem...");
-      
-      // Create a temporary div with the selected area content
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.width = `${selectionArea.width}px`;
-      tempDiv.style.height = `${selectionArea.height}px`;
-      tempDiv.style.background = 'white';
-      tempDiv.style.overflow = 'hidden';
-      
-      // Clone the canvas content within the selection area
-      const canvasClone = canvasRef.current.cloneNode(true) as HTMLElement;
-      canvasClone.style.position = 'relative';
-      canvasClone.style.left = `-${selectionArea.x}px`;
-      canvasClone.style.top = `-${selectionArea.y}px`;
-      canvasClone.style.transform = 'none';
-      
-      tempDiv.appendChild(canvasClone);
-      document.body.appendChild(tempDiv);
-      
-      const canvas = await html2canvas(tempDiv, {
-        width: selectionArea.width,
-        height: selectionArea.height,
-        backgroundColor: '#ffffff',
-        scale: 1,
-      });
-      
-      document.body.removeChild(tempDiv);
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = `canvas-export-${Date.now()}.png`;
-      link.click();
-      
-      toast.success("Imagem exportada com sucesso!");
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error("Erro ao exportar imagem");
+    const canvasElement = canvasRef.current.querySelector('[data-canvas="true"]') as HTMLElement;
+    if (!canvasElement) {
+      toast.error("Área do canvas não encontrada!");
+      return;
     }
+
+    await exportCanvasArea(canvasElement, selectionArea, {
+      quality: 0.9,
+      format: 'png',
+      filename: `area-selecionada-${Date.now()}`,
+      backgroundColor: '#f9fafb'
+    });
   }, [selectionArea]);
+  
+  // Export selected elements
+  const exportSelectedElementsAsPNG = useCallback(async () => {
+    const selectedElements = elements.filter(el => el.selected);
+    if (selectedElements.length === 0) {
+      toast.error("Nenhum elemento selecionado para exportar!");
+      return;
+    }
+
+    const canvasElement = canvasRef.current?.querySelector('[data-canvas="true"]') as HTMLElement;
+    if (!canvasElement) {
+      toast.error("Área do canvas não encontrada!");
+      return;
+    }
+
+    await exportSelectedElements(selectedElements, canvasElement, {
+      quality: 0.9,
+      format: 'png',
+      filename: `elementos-selecionados-${Date.now()}`,
+      backgroundColor: '#f9fafb'
+    });
+  }, [elements]);
   
   // Center selection area in canvas
   const centerSelectionArea = useCallback(() => {
