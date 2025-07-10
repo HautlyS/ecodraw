@@ -18,7 +18,13 @@ import { CANVAS_CONSTANTS } from "../utils/canvasConstants";
 import { calculatePixelsPerMeter, metersToPixels, getCanvasMousePosition, snapToGrid } from "../utils/canvasCoordinates";
 import { CanvasProps, DrawingElement } from "../types/canvasTypes";
 
-export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange, canvasSize = CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE, onCanvasSizeChange, onExportCanvas }: CanvasProps) => {
+export interface CanvasRef {
+  exportFullCanvas: () => Promise<void>;
+  exportSelectionAsPNG: () => Promise<void>;
+  exportSelectedElementsAsPNG: () => Promise<void>;
+}
+
+export const Canvas = React.forwardRef<CanvasRef, CanvasProps>(({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange, canvasSize = CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE, onCanvasSizeChange }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [elements, elementsActions] = useUndoRedo<DrawingElement[]>([], {
     maxHistorySize: 50,
