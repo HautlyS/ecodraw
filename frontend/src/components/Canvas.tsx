@@ -1054,14 +1054,33 @@ export const Canvas = ({ selectedTool, selectedPlant, selectedTerrain, onPlantUs
       >
         {/* Canvas Boundary Visualization */}
         <div 
-          className="absolute border-2 border-dashed border-emerald-500/60 bg-emerald-50/10 dark:bg-emerald-900/10 pointer-events-none"
+          className="absolute border-4 border-dashed bg-gradient-to-br from-emerald-50/20 via-green-50/10 to-emerald-100/20 dark:from-emerald-900/10 dark:via-green-900/5 dark:to-emerald-800/10 pointer-events-none rounded-lg shadow-inner"
           style={{
             width: `${(canvasSize?.width || canvasRealSize.width) * PIXELS_PER_METER}px`,
             height: `${(canvasSize?.height || canvasRealSize.height) * PIXELS_PER_METER}px`,
             top: 0,
             left: 0,
+            borderColor: '#10B981', // Emerald-500
+            borderImage: 'linear-gradient(45deg, #10B981, #059669, #047857, #065F46) 1',
+            boxShadow: `inset 0 0 20px rgba(16, 185, 129, 0.1), 0 0 30px rgba(16, 185, 129, 0.05)`,
           }}
-        />
+        >
+          {/* Corner indicators */}
+          <div className="absolute -top-2 -left-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
+          <div className="absolute -top-2 -right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
+          <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
+          <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-md"></div>
+          
+          {/* Canvas info overlay */}
+          <div className="absolute bottom-2 right-2 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-700 shadow-sm">
+            <div className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+              {(canvasSize?.width || canvasRealSize.width)} × {(canvasSize?.height || canvasRealSize.height)}m
+            </div>
+            <div className="text-xs text-emerald-600 dark:text-emerald-400">
+              {((canvasSize?.width || canvasRealSize.width) * (canvasSize?.height || canvasRealSize.height)).toLocaleString()}m²
+            </div>
+          </div>
+        </div>
         
         {/* Grid Labels for Scale Reference */}
         {showGrid && (
