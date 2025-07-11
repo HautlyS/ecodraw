@@ -28,15 +28,31 @@ interface DrawingElement {
 interface CanvasElementProps {
   element: DrawingElement;
   pixelsPerMeter?: number;
+  onResizeStart?: (elementId: number, handle: string, event: React.MouseEvent) => void;
+  onElementClick?: (elementId: number, event: React.MouseEvent) => void;
 }
 
-const CanvasElementComponent = ({ element, pixelsPerMeter = 10 }: CanvasElementProps) => {
+const CanvasElementComponent = ({ element, pixelsPerMeter = 10, onResizeStart, onElementClick }: CanvasElementProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const isSelected = element.selected;
   const selectionStyle = isSelected ? 'ring-2 ring-blue-500 ring-offset-2 shadow-lg' : '';
 
   const handleMouseEnter = useCallback(() => setShowTooltip(true), []);
   const handleMouseLeave = useCallback(() => setShowTooltip(false), []);
+  
+  const handleResizeStart = useCallback((handle: string) => (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onResizeStart) {
+      onResizeStart(element.id, handle, e);
+    }
+  }, [element.id, onResizeStart]);
+  
+  const handleElementClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onElementClick) {
+      onElementClick(element.id, e);
+    }
+  }, [element.id, onElementClick]);
 
   // Improved plant rendering with better selection area
   if (element.type === 'plant') {
@@ -122,10 +138,22 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10 }: CanvasElementP
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
+            <div 
+              className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-nw-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('nw')}
+            ></div>
+            <div 
+              className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-ne-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('ne')}
+            ></div>
+            <div 
+              className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-sw-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('sw')}
+            ></div>
+            <div 
+              className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-se-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('se')}
+            ></div>
           </>
         )}
         
@@ -377,10 +405,22 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10 }: CanvasElementP
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
+            <div 
+              className="absolute -top-2 -left-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-nw-resize hover:bg-orange-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('nw')}
+            ></div>
+            <div 
+              className="absolute -top-2 -right-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-ne-resize hover:bg-orange-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('ne')}
+            ></div>
+            <div 
+              className="absolute -bottom-2 -left-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-sw-resize hover:bg-orange-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('sw')}
+            ></div>
+            <div 
+              className="absolute -bottom-2 -right-2 w-4 h-4 bg-orange-500 rounded-full border-2 border-white shadow-md cursor-se-resize hover:bg-orange-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('se')}
+            ></div>
           </>
         )}
         
@@ -437,10 +477,22 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10 }: CanvasElementP
         {/* Selection handles */}
         {isSelected && (
           <>
-            <div className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-nw-resize"></div>
-            <div className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-ne-resize"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-sw-resize"></div>
-            <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-se-resize"></div>
+            <div 
+              className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-nw-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('nw')}
+            ></div>
+            <div 
+              className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-ne-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('ne')}
+            ></div>
+            <div 
+              className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-sw-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('sw')}
+            ></div>
+            <div 
+              className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md cursor-se-resize hover:bg-blue-600 transition-colors z-20"
+              onMouseDown={handleResizeStart('se')}
+            ></div>
           </>
         )}
         

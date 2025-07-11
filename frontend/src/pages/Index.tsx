@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight, Leaf, Mountain, Building } from "lucide-reac
 const MemoizedCanvas = memo(Canvas);
 const MemoizedPlantLibrary = memo(PlantLibrary);
 const MemoizedTerrainLibrary = memo(TerrainLibrary);
+const MemoizedStructuresLibrary = memo(StructureLibrary);
 
 const Index = () => {
   const [selectedStructure, setSelectedStructure] = useState<Structure | null>(null);
@@ -74,20 +75,20 @@ const Index = () => {
 
   // Memoized sidebar content to prevent unnecessary re-renders
   const sidebarContent = useMemo(() => (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-gradient-to-b from-transparent to-gray-50/20 dark:to-gray-900/20">
       <Tabs 
         value={activeLibrary} 
         onValueChange={(value) => handleLibraryChange(value as "plants" | "terrain" | "structures")} 
         className="flex-1 flex flex-col"
       >
-        <div className="mx-4 mt-4 mb-2 space-y-2">
+        <div className="sticky top-0 z-10 mx-4 mt-4 mb-2 space-y-2 bg-gradient-to-b from-white/90 to-transparent dark:from-gray-900/90 backdrop-blur-sm pt-2 pb-4">
           {/* First row: Plants and Terrain */}
-          <TabsList className="grid w-full grid-cols-2 h-9">
-            <TabsTrigger value="plants" className="flex items-center gap-2 text-xs">
+          <TabsList className="grid w-full grid-cols-2 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-200/50 dark:border-gray-700/50">
+            <TabsTrigger value="plants" className="flex items-center gap-2 text-xs data-[state=active]:bg-green-500 data-[state=active]:text-white transition-all duration-200">
               <Leaf className="h-3.5 w-3.5" />
               Plantas
             </TabsTrigger>
-            <TabsTrigger value="terrain" className="flex items-center gap-2 text-xs">
+            <TabsTrigger value="terrain" className="flex items-center gap-2 text-xs data-[state=active]:bg-orange-500 data-[state=active]:text-white transition-all duration-200">
               <Mountain className="h-3.5 w-3.5" />
               Terreno
             </TabsTrigger>
@@ -95,8 +96,8 @@ const Index = () => {
           
           {/* Second row: Structures (centered) */}
           <div className="flex justify-center">
-            <TabsList className="w-48 h-9">
-              <TabsTrigger value="structures" className="flex items-center gap-2 text-xs w-full">
+            <TabsList className="w-48 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm shadow-md border border-gray-200/50 dark:border-gray-700/50">
+              <TabsTrigger value="structures" className="flex items-center gap-2 text-xs w-full data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-200">
                 <Building className="h-3.5 w-3.5" />
                 Estruturas
               </TabsTrigger>
@@ -119,7 +120,7 @@ const Index = () => {
         </TabsContent>
 
         <TabsContent value="structures" className="flex-1 mt-0">
-          <StructureLibrary 
+          <MemoizedStructuresLibrary
             selectedStructure={selectedStructure}
             onStructureSelect={setSelectedStructure}
             className="flex-1"
@@ -167,8 +168,11 @@ const Index = () => {
           {!isCompact && (
             <div className={cn(
               "sidebar transition-all duration-300 ease-in-out relative",
-              "border-l border-gray-200 dark:border-gray-800",
-              sidebarCollapsed ? "w-0" : "w-80"
+              "bg-gradient-to-br from-gray-50/50 to-gray-100/30 dark:from-gray-900/50 dark:to-gray-800/30",
+              "backdrop-blur-sm shadow-2xl",
+              "border-l border-gray-200/50 dark:border-gray-700/50",
+              "max-w-[320px] min-w-0 mr-2",
+              sidebarCollapsed ? "w-0 overflow-hidden mr-0" : "w-80"
             )}>
               {/* Sidebar Toggle - Floating Design */}
               <Button
@@ -176,10 +180,12 @@ const Index = () => {
                 size="sm"
                 onClick={toggleSidebar}
                 className={cn(
-                  "absolute top-4 z-20 h-8 w-8 rounded-full transition-all duration-300",
-                  "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-md",
-                  "hover:bg-gray-50 dark:hover:bg-gray-700 hover:shadow-lg",
-                  sidebarCollapsed ? "-left-4" : "left-4"
+                  "absolute top-4 z-20 h-10 w-10 rounded-full transition-all duration-300",
+                  "bg-gradient-to-br from-white to-gray-100 dark:from-gray-800 dark:to-gray-700",
+                  "border border-gray-200/50 dark:border-gray-600/50 shadow-lg",
+                  "hover:shadow-xl hover:scale-110",
+                  "backdrop-blur-sm",
+                  sidebarCollapsed ? "-left-5" : "left-4"
                 )}
               >
                 {sidebarCollapsed ? (

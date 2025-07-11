@@ -133,9 +133,9 @@ const PlantCard = memo(({ plant, isSelected, onSelect }: {
   return (
     <div
       className={cn(
-        "group relative p-3 rounded-lg border-0 bg-white dark:bg-gray-900 transition-all duration-150 cursor-pointer",
-        "hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm",
-        isSelected && "bg-blue-50 dark:bg-blue-950 ring-1 ring-blue-200 dark:ring-blue-800"
+        "group relative p-4 rounded-xl border border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm transition-all duration-200 cursor-pointer",
+        "hover:shadow-lg hover:scale-[1.02] hover:border-green-300 dark:hover:border-green-700",
+        isSelected && "bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-950 dark:to-emerald-950 ring-2 ring-green-400 dark:ring-green-600 shadow-lg scale-[1.02]"
       )}
       onClick={handleClick}
       draggable
@@ -143,8 +143,8 @@ const PlantCard = memo(({ plant, isSelected, onSelect }: {
     >
       <div className="flex items-center gap-3">
         <div 
-          className="flex items-center justify-center w-10 h-10 rounded-lg text-lg"
-          style={{ backgroundColor: `${plant.color}15` }}
+          className="flex items-center justify-center w-12 h-12 rounded-xl text-lg shadow-md transition-transform group-hover:scale-110"
+          style={{ backgroundColor: `${plant.color}20`, boxShadow: `0 4px 12px ${plant.color}30` }}
         >
           {plant.icon}
         </div>
@@ -153,7 +153,7 @@ const PlantCard = memo(({ plant, isSelected, onSelect }: {
             <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
               {plant.name}
             </h3>
-            <Badge variant="outline" className="text-xs px-1.5 py-0.5 h-auto">
+            <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700">
               {PLANT_CATEGORIES.find(cat => cat.id === plant.category)?.name || plant.category}
             </Badge>
           </div>
@@ -165,7 +165,7 @@ const PlantCard = memo(({ plant, isSelected, onSelect }: {
       
       {/* Selection indicator */}
       {isSelected && (
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-blue-500/10 rounded-lg pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-emerald-500/10 rounded-xl pointer-events-none" />
       )}
     </div>
   );
@@ -188,10 +188,10 @@ const CategoryButton = memo(({ category, isSelected, onSelect }: {
       size="sm"
       onClick={handleClick}
       className={cn(
-        "h-8 px-3 text-xs font-medium border-0 bg-transparent transition-all duration-150",
+        "h-10 px-4 text-xs font-semibold border border-transparent rounded-lg transition-all duration-300",
         isSelected 
-          ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300" 
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? "bg-gradient-to-r from-green-500 to-emerald-400 text-white shadow-lg border-green-500 hover:shadow-xl" 
+          : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-green-300 dark:hover:border-emerald-600"
       )}
     >
       <category.icon className="w-3.5 h-3.5 mr-1.5" />
@@ -242,12 +242,18 @@ export const PlantLibrary = memo(({ selectedPlant, onPlantSelect }: PlantLibrary
   )), [filteredPlants, selectedPlant?.id, handlePlantSelect]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Biblioteca de Plantas
-        </h2>
+      <div className="sticky top-0 z-10 p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-900 dark:to-gray-800 backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-400">
+            Biblioteca de Plantas
+          </h2>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{SAMPLE_PLANTS.length} plantas</span>
+          </div>
+        </div>
         
         {/* Search */}
         <div className="relative mb-3">
@@ -256,26 +262,31 @@ export const PlantLibrary = memo(({ selectedPlant, onPlantSelect }: PlantLibrary
             placeholder="Buscar plantas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+            className="pl-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200/50 dark:border-gray-700/50 focus:border-green-400 dark:focus:border-green-600 focus:ring-2 focus:ring-green-200 dark:focus:ring-green-800 transition-all duration-200"
           />
         </div>
 
         {/* Categories */}
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-2">
           {memoizedCategories}
         </div>
       </div>
 
       {/* Plants List */}
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-3">
           {memoizedPlants.length > 0 ? (
             memoizedPlants
           ) : (
-            <div className="text-center py-8">
-              <Leaf className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/20 dark:to-emerald-900/20 flex items-center justify-center">
+                <Leaf className="w-10 h-10 text-green-500 dark:text-green-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Nenhuma planta encontrada
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Tente ajustar os filtros ou buscar por outro termo
               </p>
             </div>
           )}
@@ -284,11 +295,11 @@ export const PlantLibrary = memo(({ selectedPlant, onPlantSelect }: PlantLibrary
 
       {/* Selected Plant Info */}
       {selectedPlant && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-green-50/50 to-emerald-50/50 dark:from-gray-900/50 dark:to-gray-800/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-              style={{ backgroundColor: `${selectedPlant.color}15` }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-md"
+              style={{ backgroundColor: `${selectedPlant.color}20`, boxShadow: `0 2px 8px ${selectedPlant.color}30` }}
             >
               {selectedPlant.icon}
             </div>

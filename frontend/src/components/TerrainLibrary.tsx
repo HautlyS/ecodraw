@@ -194,19 +194,26 @@ const TerrainCard = memo(({ terrain, isSelected, onSelect }: {
     onSelect(terrain);
   }, [terrain, onSelect]);
 
+  const handleDragStart = useCallback((e: React.DragEvent) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify(terrain));
+    e.dataTransfer.effectAllowed = 'copy';
+  }, [terrain]);
+
   return (
     <div
       className={cn(
-        "group relative p-3 rounded-lg border-0 bg-white dark:bg-gray-900 transition-all duration-150 cursor-pointer",
-        "hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-sm",
-        isSelected && "bg-orange-50 dark:bg-orange-950 ring-1 ring-orange-200 dark:ring-orange-800"
+        "group relative p-4 rounded-xl border border-gray-200/50 dark:border-gray-700/50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm transition-all duration-200 cursor-pointer",
+        "hover:shadow-lg hover:scale-[1.02] hover:border-orange-300 dark:hover:border-orange-700",
+        isSelected && "bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-950 dark:to-amber-950 ring-2 ring-orange-400 dark:ring-orange-600 shadow-lg scale-[1.02]"
       )}
       onClick={handleClick}
+      draggable
+      onDragStart={handleDragStart}
     >
       <div className="flex items-center gap-3">
         <div 
-          className="flex items-center justify-center w-10 h-10 rounded-lg text-lg"
-          style={{ backgroundColor: `${terrain.color}15` }}
+          className="flex items-center justify-center w-12 h-12 rounded-xl text-lg shadow-md transition-transform group-hover:scale-110"
+          style={{ backgroundColor: `${terrain.color}20`, boxShadow: `0 4px 12px ${terrain.color}30` }}
         >
           {terrain.icon}
         </div>
@@ -215,7 +222,7 @@ const TerrainCard = memo(({ terrain, isSelected, onSelect }: {
             <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
               {terrain.name}
             </h3>
-            <Badge variant="outline" className="text-xs px-1.5 py-0.5 h-auto">
+            <Badge variant="outline" className="text-xs px-2 py-0.5 h-auto bg-orange-100 dark:bg-orange-900/50 border-orange-300 dark:border-orange-700">
               {terrain.size}
             </Badge>
           </div>
@@ -227,7 +234,7 @@ const TerrainCard = memo(({ terrain, isSelected, onSelect }: {
       
       {/* Selection indicator */}
       {isSelected && (
-        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-orange-500/10 rounded-lg pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-amber-500/10 rounded-xl pointer-events-none" />
       )}
     </div>
   );
@@ -250,10 +257,10 @@ const CategoryButton = memo(({ category, isSelected, onSelect }: {
       size="sm"
       onClick={handleClick}
       className={cn(
-        "h-8 px-3 text-xs font-medium border-0 bg-transparent transition-all duration-150",
+        "h-10 px-4 text-xs font-semibold border border-transparent rounded-lg transition-all duration-300",
         isSelected 
-          ? "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300" 
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? "bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow-lg border-orange-500 hover:shadow-xl" 
+          : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-orange-300 dark:hover:border-amber-600"
       )}
     >
       <category.icon className="w-3.5 h-3.5 mr-1.5" />
@@ -279,10 +286,10 @@ const BrushModeButton = memo(({ mode, isSelected, onSelect }: {
       size="sm"
       onClick={handleClick}
       className={cn(
-        "h-8 px-3 text-xs font-medium border-0 bg-transparent transition-all duration-150",
+        "h-10 px-4 text-xs font-semibold border border-transparent rounded-lg transition-all duration-300",
         isSelected 
-          ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300" 
-          : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+          ? "bg-gradient-to-r from-blue-500 to-indigo-400 text-white shadow-lg border-blue-500 hover:shadow-xl" 
+          : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:border-blue-300 dark:hover:border-indigo-600"
       )}
       title={mode.description}
     >
@@ -353,12 +360,18 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
   )), [filteredTerrains, selectedTerrain?.id, handleTerrainSelect]);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col h-full bg-gradient-to-b from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-800/50">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
-          Biblioteca de Terreno
-        </h2>
+      <div className="sticky top-0 z-10 p-4 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-gray-900 dark:to-gray-800 backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent dark:from-orange-400 dark:to-amber-400">
+            Biblioteca de Terreno
+          </h2>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{SAMPLE_TERRAINS.length} terrenos</span>
+          </div>
+        </div>
         
         {/* Search */}
         <div className="relative mb-3">
@@ -367,12 +380,12 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
             placeholder="Buscar terrenos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 h-9 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+            className="pl-10 h-10 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200/50 dark:border-gray-700/50 focus:border-orange-400 dark:focus:border-orange-600 focus:ring-2 focus:ring-orange-200 dark:focus:ring-orange-800 transition-all duration-200"
           />
         </div>
 
         {/* Categories */}
-        <div className="flex flex-wrap gap-1 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           {memoizedCategories}
         </div>
 
@@ -382,7 +395,7 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
             <Label className="text-xs text-gray-600 dark:text-gray-400 mb-2 block">
               Modo de Aplicação
             </Label>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-2">
               {memoizedBrushModes}
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -411,15 +424,20 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
       </div>
 
       {/* Terrains List */}
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
+      <ScrollArea className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-3">
           {memoizedTerrains.length > 0 ? (
             memoizedTerrains
           ) : (
-            <div className="text-center py-8">
-              <Mountain className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/20 dark:to-amber-900/20 flex items-center justify-center">
+                <Mountain className="w-10 h-10 text-orange-500 dark:text-orange-400" />
+              </div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Nenhum terreno encontrado
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Tente ajustar os filtros ou buscar por outro termo
               </p>
             </div>
           )}
@@ -428,11 +446,11 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
 
       {/* Selected Terrain Info */}
       {selectedTerrain && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="p-4 border-t border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-orange-50/50 to-amber-50/50 dark:from-gray-900/50 dark:to-gray-800/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div 
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-sm"
-              style={{ backgroundColor: `${selectedTerrain.color}15` }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shadow-md"
+              style={{ backgroundColor: `${selectedTerrain.color}20`, boxShadow: `0 2px 8px ${selectedTerrain.color}30` }}
             >
               {selectedTerrain.icon}
             </div>
