@@ -154,7 +154,7 @@ const PlantCard = memo(({ plant, isSelected, onSelect }: {
               {plant.name}
             </h3>
             <Badge variant="outline" className="text-xs px-1.5 py-0.5 h-auto">
-              {plant.spacing}
+              {PLANT_CATEGORIES.find(cat => cat.id === plant.category)?.name || plant.category}
             </Badge>
           </div>
           <p className="text-xs text-gray-600 dark:text-gray-400 truncate mt-0.5">

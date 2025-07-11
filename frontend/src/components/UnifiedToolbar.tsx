@@ -26,7 +26,7 @@ import {
   Moon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/ThemeProvider";
+import { useTheme } from "@/hooks/useTheme";
 import { toast } from "sonner";
 
 interface UnifiedToolbarProps {

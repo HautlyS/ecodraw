@@ -2,7 +2,7 @@ import * as React from "react"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { useSidebar } from "@/components/ui/sidebar"
+import { useSidebar } from "@/lib/sidebar-utils"
 import {
   Tooltip,
   TooltipContent,

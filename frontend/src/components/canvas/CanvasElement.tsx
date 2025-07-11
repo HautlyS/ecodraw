@@ -44,11 +44,16 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10 }: CanvasElementP
     const pixelSize = realWorldSizeToPixels(realWorldSize, pixelsPerMeter);
     const iconSize = calculateIconSize(pixelSize);
     
-    // Minimum clickable area for small plants
-    const minClickableSize = 32;
+    // Proportional clickable area - smaller minimum size for better proportionality
+    const minClickableSize = 24; // Reduced from 32 to 24
+    const maxClickableSize = 120; // Add maximum to prevent huge selection areas
+    
+    // Scale factor for clickable area relative to actual size
+    const scaleFactor = 1.2; // 20% larger than actual size for easier selection
+    
     const clickableSize = {
-      width: Math.max(pixelSize.width, minClickableSize),
-      height: Math.max(pixelSize.height, minClickableSize)
+      width: Math.max(minClickableSize, Math.min(maxClickableSize, pixelSize.width * scaleFactor)),
+      height: Math.max(minClickableSize, Math.min(maxClickableSize, pixelSize.height * scaleFactor))
     };
     
     const borderColor = getPlantBorderColor(element.plant?.id || String(element.id));
@@ -304,10 +309,12 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10 }: CanvasElementP
     const isCircle = brushType === 'circle';
     const borderRadius = isCircle ? '50%' : '8px';
     
-    // Minimum clickable size for small terrain elements
-    const minClickableSize = 32;
-    const clickableWidth = Math.max(terrainWidth, minClickableSize);
-    const clickableHeight = Math.max(terrainHeight, minClickableSize);
+    // Proportional clickable size for small terrain elements
+    const minClickableSize = 24;
+    const maxClickableSize = 120;
+    const scaleFactor = 1.2;
+    const clickableWidth = Math.max(minClickableSize, Math.min(maxClickableSize, terrainWidth * scaleFactor));
+    const clickableHeight = Math.max(minClickableSize, Math.min(maxClickableSize, terrainHeight * scaleFactor));
     
     return (
       <div

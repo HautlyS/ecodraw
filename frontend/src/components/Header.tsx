@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Download, Share2, Save, Sprout, Undo, Redo, FileText, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
-import { useTheme } from "@/components/ThemeProvider";
+import { useTheme } from "@/hooks/useTheme";
 
 export const Header = () => {
   const { theme, toggleTheme } = useTheme();

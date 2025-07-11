@@ -8,6 +8,7 @@ import {
   Palette,
   Leaf,
   Mountain,
+  Building,
   Grid3X3,
   Trash2
 } from "lucide-react";
@@ -16,8 +17,8 @@ import { cn } from "@/lib/utils";
 interface MobileNavigationProps {
   selectedTool: string;
   onToolSelect: (tool: string) => void;
-  activeLibrary: "plants" | "terrain";
-  onLibraryChange: (library: "plants" | "terrain") => void;
+  activeLibrary: "plants" | "terrain" | "structures";
+  onLibraryChange: (library: "plants" | "terrain" | "structures") => void;
 }
 
 const tools = [
@@ -64,16 +65,16 @@ const MobileToolButton = memo(({ tool, isSelected, onSelect }: {
 MobileToolButton.displayName = "MobileToolButton";
 
 const LibraryButton = memo(({ library, isActive, onSelect }: {
-  library: "plants" | "terrain";
+  library: "plants" | "terrain" | "structures";
   isActive: boolean;
-  onSelect: (library: "plants" | "terrain") => void;
+  onSelect: (library: "plants" | "terrain" | "structures") => void;
 }) => {
   const handleClick = useCallback(() => {
     onSelect(library);
   }, [library, onSelect]);
 
-  const Icon = library === "plants" ? Leaf : Mountain;
-  const label = library === "plants" ? "Plantas" : "Terreno";
+  const Icon = library === "plants" ? Leaf : library === "terrain" ? Mountain : Building;
+  const label = library === "plants" ? "Plantas" : library === "terrain" ? "Terreno" : "Estruturas";
 
   return (
     <Button
@@ -120,6 +121,11 @@ export const MobileNavigation = memo(({
       <LibraryButton
         library="terrain"
         isActive={activeLibrary === "terrain"}
+        onSelect={onLibraryChange}
+      />
+      <LibraryButton
+        library="structures"
+        isActive={activeLibrary === "structures"}
         onSelect={onLibraryChange}
       />
     </>

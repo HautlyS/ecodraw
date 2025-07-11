@@ -1,30 +1,33 @@
 import React, { useState, useCallback, useMemo, memo, useRef } from "react";
-import { Plant, Terrain } from "@/types/canvasTypes";
+import { Plant, Terrain, Structure } from "@/types/canvasTypes";
 import { UnifiedToolbar } from "@/components/UnifiedToolbar";
 import { PlantLibrary } from "@/components/PlantLibrary";
-import { Canvas } from "@/components/Canvas";
+import { Canvas, CanvasRef } from "@/components/Canvas";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { TerrainLibrary } from "@/components/TerrainLibrary";
 import { MobileNavigation } from "@/components/MobileNavigation";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { StructureLibrary } from "@/components/StructureLibrary";
 import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ChevronLeft, ChevronRight, Leaf, Mountain } from "lucide-react";
+import { ChevronLeft, ChevronRight, Leaf, Mountain, Building } from "lucide-react";
 
 const MemoizedCanvas = memo(Canvas);
 const MemoizedPlantLibrary = memo(PlantLibrary);
 const MemoizedTerrainLibrary = memo(TerrainLibrary);
 
 const Index = () => {
+  const [selectedStructure, setSelectedStructure] = useState<Structure | null>(null);
   const [selectedTool, setSelectedTool] = useState<string>("select");
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
   const [selectedTerrain, setSelectedTerrain] = useState<Terrain | null>(null);
   const [showWelcome, setShowWelcome] = useState(true);
-  const [activeLibrary, setActiveLibrary] = useState<"plants" | "terrain">("plants");
+  const [activeLibrary, setActiveLibrary] = useState<"plants" | "terrain" | "structures">("plants");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 50, height: 30 });
+  const canvasRef = useRef<CanvasRef>(null);
 
   const { isMobile, isTablet } = useResponsive();
   const isCompact = isMobile || isTablet;
@@ -44,11 +47,13 @@ const Index = () => {
     }
   }, []);
 
-  const handleLibraryChange = useCallback((library: "plants" | "terrain") => {
+  const handleLibraryChange = useCallback((library: "plants" | "terrain" | "structures") => {
     setActiveLibrary(library);
     if (library === "terrain" && selectedTool !== "terrain") {
       setSelectedTool("terrain");
     } else if (library === "plants" && selectedTool === "terrain") {
+      setSelectedTool("select");
+    } else if (library === "structures" && selectedTool === "terrain") {
       setSelectedTool("select");
     }
   }, [selectedTool]);
@@ -56,6 +61,8 @@ const Index = () => {
   const handlePlantUsed = useCallback(() => {}, []);
   const handleTerrainUsed = useCallback(() => {}, []);
   const handleWelcomeClose = useCallback(() => setShowWelcome(false), []);
+
+  const handleStructureUsed = useCallback(() => {}, []);
   
   const handleCanvasSizeChange = useCallback((size: { width: number; height: number }) => {
     setCanvasSize(size);
@@ -70,36 +77,57 @@ const Index = () => {
     <div className="h-full flex flex-col">
       <Tabs 
         value={activeLibrary} 
-        onValueChange={(value) => handleLibraryChange(value as "plants" | "terrain")} 
+        onValueChange={(value) => handleLibraryChange(value as "plants" | "terrain" | "structures")} 
         className="flex-1 flex flex-col"
       >
-        <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 mb-2 h-9">
-          <TabsTrigger value="plants" className="flex items-center gap-2 text-xs">
-            <Leaf className="h-3.5 w-3.5" />
-            Plantas
-          </TabsTrigger>
-          <TabsTrigger value="terrain" className="flex items-center gap-2 text-xs">
-            <Mountain className="h-3.5 w-3.5" />
-            Terreno
-          </TabsTrigger>
-        </TabsList>
-        
+        <div className="mx-4 mt-4 mb-2 space-y-2">
+          {/* First row: Plants and Terrain */}
+          <TabsList className="grid w-full grid-cols-2 h-9">
+            <TabsTrigger value="plants" className="flex items-center gap-2 text-xs">
+              <Leaf className="h-3.5 w-3.5" />
+              Plantas
+            </TabsTrigger>
+            <TabsTrigger value="terrain" className="flex items-center gap-2 text-xs">
+              <Mountain className="h-3.5 w-3.5" />
+              Terreno
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* Second row: Structures (centered) */}
+          <div className="flex justify-center">
+            <TabsList className="w-48 h-9">
+              <TabsTrigger value="structures" className="flex items-center gap-2 text-xs w-full">
+                <Building className="h-3.5 w-3.5" />
+                Estruturas
+              </TabsTrigger>
+            </TabsList>
+          </div>
+        </div>
+
         <TabsContent value="plants" className="flex-1 mt-0">
           <MemoizedPlantLibrary 
             selectedPlant={selectedPlant}
             onPlantSelect={setSelectedPlant}
           />
         </TabsContent>
-        
+
         <TabsContent value="terrain" className="flex-1 mt-0">
           <MemoizedTerrainLibrary 
             selectedTerrain={selectedTerrain}
             onTerrainSelect={setSelectedTerrain}
           />
         </TabsContent>
+
+        <TabsContent value="structures" className="flex-1 mt-0">
+          <StructureLibrary 
+            selectedStructure={selectedStructure}
+            onStructureSelect={setSelectedStructure}
+            className="flex-1"
+          />
+        </TabsContent>
       </Tabs>
     </div>
-  ), [activeLibrary, selectedPlant, selectedTerrain, handleLibraryChange]);
+  ), [activeLibrary, selectedPlant, selectedTerrain, selectedStructure, handleLibraryChange]);
 
   return (
     <ThemeProvider>
@@ -125,8 +153,10 @@ const Index = () => {
               selectedTool={selectedTool}
               selectedPlant={selectedPlant}
               selectedTerrain={selectedTerrain}
+              selectedStructure={selectedStructure}
               onPlantUsed={handlePlantUsed}
               onTerrainUsed={handleTerrainUsed}
+              onStructureUsed={handleStructureUsed}
               onToolChange={handleToolSelect}
               canvasSize={canvasSize}
               onCanvasSizeChange={handleCanvasSizeChange}

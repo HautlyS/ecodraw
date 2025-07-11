@@ -1,5 +1,5 @@
 
-import React, { useRef, useEffect, useState, useCallback, useMemo, memo } from "react";
+import React, { useRef, useEffect, useState, useCallback, useMemo, memo, forwardRef, useImperativeHandle } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -11,15 +11,21 @@ import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useResponsive } from "@/hooks/useResponsive";
 import { cn } from "@/lib/utils";
 import { Grid3X3, Download, Square, Target, Move, Plus, Minus, RotateCcw } from "lucide-react";
-import html2canvas from "html2canvas";
 import { exportCanvasArea, exportSelectedElements } from "@/utils/canvasExport";
 
 import { CANVAS_CONSTANTS } from "../utils/canvasConstants";
 import { calculatePixelsPerMeter, metersToPixels, getCanvasMousePosition, snapToGrid } from "../utils/canvasCoordinates";
 import { CanvasProps, DrawingElement } from "../types/canvasTypes";
+import { parseSpacingToMeters } from "../utils/plantSizes";
 
+// Canvas ref interface
+export interface CanvasRef {
+  exportFullCanvas: () => Promise<void>;
+  exportSelectionAsPNG: () => Promise<void>;
+  exportSelectedElementsAsPNG: () => Promise<void>;
+}
 
-export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPlantUsed, onTerrainUsed, onToolChange, canvasSize = CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE, onCanvasSizeChange }: CanvasProps) => {
+export const Canvas = memo(forwardRef<CanvasRef, CanvasProps>(({ selectedTool, selectedPlant, selectedTerrain, selectedStructure, onPlantUsed, onTerrainUsed, onStructureUsed, onToolChange, canvasSize = CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE, onCanvasSizeChange }, ref) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [elements, elementsActions] = useUndoRedo<DrawingElement[]>([], {
     maxHistorySize: 50,
@@ -82,6 +88,15 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
   const [selectionEnd, setSelectionEnd] = useState({ x: 0, y: 0 });
   const [selectionArea, setSelectionArea] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [showSelectionTool, setShowSelectionTool] = useState(false);
+  
+  // Performance optimization states
+  const [isDragOptimized, setIsDragOptimized] = useState(false);
+  const dragAnimationFrame = useRef<number | null>(null);
+  const lastDragUpdate = useRef<number>(0);
+  const pendingDragUpdate = useRef<{ elementId: number; x: number; y: number } | null>(null);
+  const panAnimationFrame = useRef<number | null>(null);
+  const lastPanUpdate = useRef<number>(0);
+  const pendingPanUpdate = useRef<{ x: number; y: number } | null>(null);
 
   // World-to-pixel conversion constants (responsive and based on canvas real size)
   // Use the smaller dimension to ensure consistent scaling
@@ -114,22 +129,27 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
 
   // Enhanced element selection with better hit detection
   const findElementAtPosition = useCallback((x: number, y: number) => {
+    const scaleFactor = 1.5; // Increase scale factor for better selection size
+    const minClickableSize = 20;
+    const maxClickableSize = 150;
+    
     // Find elements in reverse order (top to bottom in z-index)
     for (let i = elements.length - 1; i >= 0; i--) {
       const element = elements[i];
       
       if (element.type === 'plant') {
-        const realWorldSize = parsePlantSpacing(element.plant?.spacing || '1x1m');
+        const realWorldSize = parseSpacingToMeters(element.plant?.spacing || '1x1m');
         const plantSize = {
           width: realWorldSize.width * PIXELS_PER_METER,
           height: realWorldSize.height * PIXELS_PER_METER
         };
         
-        // Minimum clickable area for small plants
-        const minClickableSize = 32;
+        // Adaptive clickable area based on zoom level
+        const zoomAdjustedScaleFactor = scaleFactor + (100 / zoom) * 0.5; // Larger hitbox at lower zoom
+        
         const clickableSize = {
-          width: Math.max(plantSize.width, minClickableSize),
-          height: Math.max(plantSize.height, minClickableSize)
+          width: Math.max(minClickableSize, Math.min(maxClickableSize, plantSize.width * zoomAdjustedScaleFactor)),
+          height: Math.max(minClickableSize, Math.min(maxClickableSize, plantSize.height * zoomAdjustedScaleFactor))
         };
         
         const left = element.x - clickableSize.width / 2;
@@ -186,10 +206,11 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
           const terrainWidth = element.width || 40;
           const terrainHeight = element.height || 40;
           
-          // Minimum clickable area
-          const minClickableSize = 32;
-          const clickableWidth = Math.max(terrainWidth, minClickableSize);
-          const clickableHeight = Math.max(terrainHeight, minClickableSize);
+          // Adaptive clickable area for terrain based on zoom level
+          const zoomAdjustedScaleFactor = scaleFactor + (100 / zoom) * 0.5;
+          
+          const clickableWidth = Math.max(minClickableSize, Math.min(maxClickableSize, terrainWidth * zoomAdjustedScaleFactor));
+          const clickableHeight = Math.max(minClickableSize, Math.min(maxClickableSize, terrainHeight * zoomAdjustedScaleFactor));
           
           const left = element.x - (clickableWidth - terrainWidth) / 2;
           const right = left + clickableWidth;
@@ -223,9 +244,81 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
       }
     }
     return null;
-  }, [elements, PIXELS_PER_METER]);
+  }, [elements, PIXELS_PER_METER, zoom]);
 
   const { getMousePosition, snapToGrid } = useCanvasEvents();
+  
+  // Optimized panning function using requestAnimationFrame
+  const schedulePanUpdate = useCallback((x: number, y: number) => {
+    pendingPanUpdate.current = { x, y };
+    
+    if (panAnimationFrame.current) {
+      return; // Update already scheduled
+    }
+    
+    panAnimationFrame.current = requestAnimationFrame(() => {
+      const now = performance.now();
+      const timeSinceLastUpdate = now - lastPanUpdate.current;
+      
+      // Throttle updates to max 60fps (16.67ms)
+      if (timeSinceLastUpdate >= 16.67 && pendingPanUpdate.current) {
+        const { x, y } = pendingPanUpdate.current;
+        setPanOffset({ x, y });
+        lastPanUpdate.current = now;
+        pendingPanUpdate.current = null;
+      }
+      
+      panAnimationFrame.current = null;
+    });
+  }, [setPanOffset]);
+
+  // Optimized drag update function using requestAnimationFrame
+  const scheduleDragUpdate = useCallback((elementId: number, x: number, y: number) => {
+    console.log('Scheduling drag update for element:', elementId, 'to position:', { x, y });
+    pendingDragUpdate.current = { elementId, x, y };
+    
+    if (dragAnimationFrame.current) {
+      return; // Update already scheduled
+    }
+    
+    dragAnimationFrame.current = requestAnimationFrame(() => {
+      const now = performance.now();
+      const timeSinceLastUpdate = now - lastDragUpdate.current;
+      
+      // Throttle updates to max 60fps (16.67ms)
+      if (timeSinceLastUpdate >= 16.67 && pendingDragUpdate.current) {
+        const { elementId, x, y } = pendingDragUpdate.current;
+        console.log('Applying drag update for element:', elementId, 'to position:', { x, y });
+        
+        const updatedElements = elements.map(el => {
+          if (el.id === elementId) {
+            // Handle terrain brush elements with path points
+            if (el.type === 'terrain' && el.pathPoints && el.pathPoints.length > 0) {
+              const deltaX = x - el.x;
+              const deltaY = y - el.y;
+              
+              // Move all path points along with the element
+              const updatedPathPoints = el.pathPoints.map(point => ({
+                x: point.x + deltaX,
+                y: point.y + deltaY
+              }));
+              
+              return { ...el, x, y, pathPoints: updatedPathPoints };
+            }
+            // Regular element update
+            return { ...el, x, y };
+          }
+          return el;
+        });
+        
+        elementsActions.set(updatedElements);
+        lastDragUpdate.current = now;
+        pendingDragUpdate.current = null;
+      }
+      
+      dragAnimationFrame.current = null;
+    });
+  }, [elements, elementsActions]);
   
   // Enhanced export function for selected area
   const exportSelectionAsPNG = useCallback(async () => {
@@ -257,6 +350,8 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
 
     try {
       toast.info('Preparando exportação do canvas...', { duration: 2000 });
+      
+      const { default: html2canvas } = await import('html2canvas');
       
       const canvas = await html2canvas(canvasElement, {
         backgroundColor: '#f9fafb',
@@ -340,7 +435,7 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
       setPanOffset({ x: centerX, y: centerY });
       toast.info("Área selecionada centralizada");
     }
-  }, [selectionArea]);
+  }, [selectionArea, setPanOffset]);
   
   // Clear selection area
   const clearSelectionArea = useCallback(() => {
@@ -378,28 +473,12 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
     
     // For plants
     if (element.type === 'plant') {
-      const parsePlantSpacing = (spacing: string) => {
-        const PIXELS_PER_METER = 10;
-        if (spacing.includes('x')) {
-          const match = spacing.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
-          if (match) {
-            const width = parseFloat(match[1]);
-            const height = parseFloat(match[2]);
-            return { width: width * PIXELS_PER_METER, height: height * PIXELS_PER_METER };
-          }
-        }
-        const singleMatch = spacing.match(/(\d+(?:\.\d+)?)(cm|m)/);
-        if (singleMatch) {
-          const value = parseFloat(singleMatch[1]);
-          const unit = singleMatch[2];
-          const meters = unit === 'cm' ? value / 100 : value;
-          const pixels = meters * PIXELS_PER_METER;
-          return { width: pixels, height: pixels };
-        }
-        return { width: 40, height: 40 };
+      const realWorldSize = parseSpacingToMeters(element.plant?.spacing || '1x1m');
+      const plantSize = {
+        width: realWorldSize.width * PIXELS_PER_METER,
+        height: realWorldSize.height * PIXELS_PER_METER
       };
       
-      const plantSize = parsePlantSpacing(element.plant?.spacing || '1x1m');
       const left = element.x - plantSize.width / 2;
       const top = element.y - plantSize.height / 2;
       const right = left + plantSize.width;
@@ -411,8 +490,24 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
       if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'sw';
       if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'se';
     } 
+    // For terrain with path points (brush/trail elements)
+    else if (element.type === 'terrain' && element.pathPoints && element.pathPoints.length > 0) {
+      // Calculate bounding box of path points
+      const xs = element.pathPoints.map(p => p.x);
+      const ys = element.pathPoints.map(p => p.y);
+      const left = Math.min(...xs);
+      const right = Math.max(...xs);
+      const top = Math.min(...ys);
+      const bottom = Math.max(...ys);
+      
+      // Check resize handles around the bounding box
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'nw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - top) <= handleSize) return 'ne';
+      if (Math.abs(pos.x - left) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'sw';
+      if (Math.abs(pos.x - right) <= handleSize && Math.abs(pos.y - bottom) <= handleSize) return 'se';
+    }
     // For rectangles and terrain rectangles
-    else if (element.type === 'rectangle' || (element.type === 'terrain' && element.brushType !== 'circle')) {
+    else if (element.type === 'rectangle' || (element.type === 'terrain' && element.brushType !== 'circle' && !element.pathPoints)) {
       const left = element.x;
       const top = element.y;
       const right = left + (element.width || 0);
@@ -438,7 +533,7 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
     }
     
     return null;
-  }, []);
+  }, [PIXELS_PER_METER]);
 
   const selectElement = useCallback((elementId: number) => {
     const updatedElements = elements.map(el => ({
@@ -530,7 +625,7 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
     const worldY = (canvasY - panOffset.y) / (zoom / 100);
     
     const rawPos = { x: worldX, y: worldY };
-    const pos = snapToGrid(rawPos, showGrid, GRID_SIZE_PIXELS);
+    const pos = snapToGrid(rawPos, showGrid);
     
     console.log('Mouse down at:', pos, 'Elements count:', elements.length);
     
@@ -556,11 +651,12 @@ export const Canvas = memo(({ selectedTool, selectedPlant, selectedTerrain, onPl
       return;
     }
 
-    // Check if clicking on an existing element for auto-selection or resize
-const clickedElement = findElementAtPosition(pos, elements);
+    // Check if clicking on an existing element for selection or interaction
+    const clickedElement = findElementAtPosition(pos.x, pos.y);
+    console.log('Clicked element:', clickedElement ? `ID: ${clickedElement.id}, Type: ${clickedElement.type}` : 'none');
     
     if (clickedElement && selectedTool !== 'delete') {
-      // Check if clicking on a resize handle
+      // Check if clicking on a resize handle first
       const handle = detectResizeHandle(pos, clickedElement);
       
       if (handle && clickedElement.selected) {
@@ -572,31 +668,31 @@ const clickedElement = findElementAtPosition(pos, elements);
         
         // Store original bounds for calculation
         if (clickedElement.type === 'plant') {
-          const parsePlantSpacing = (spacing: string) => {
-            if (spacing.includes('x')) {
-              const match = spacing.match(/(\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)/);
-              if (match) {
-                const width = parseFloat(match[1]);
-                const height = parseFloat(match[2]);
-                return { width: width * PIXELS_PER_METER, height: height * PIXELS_PER_METER };
-              }
-            }
-            const singleMatch = spacing.match(/(\d+(?:\.\d+)?)(cm|m)/);
-            if (singleMatch) {
-              const value = parseFloat(singleMatch[1]);
-              const unit = singleMatch[2];
-              const meters = unit === 'cm' ? value / 100 : value;
-              const pixels = meters * PIXELS_PER_METER;
-              return { width: pixels, height: pixels };
-            }
-            return { width: PIXELS_PER_METER, height: PIXELS_PER_METER }; // Default 1x1m
+          const realWorldSize = parseSpacingToMeters(clickedElement.plant?.spacing || '1x1m');
+          const plantSize = {
+            width: realWorldSize.width * PIXELS_PER_METER,
+            height: realWorldSize.height * PIXELS_PER_METER
           };
-          const plantSize = parsePlantSpacing(clickedElement.plant?.spacing || '1x1m');
           setOriginalElementBounds({
             x: clickedElement.x - plantSize.width / 2,
             y: clickedElement.y - plantSize.height / 2,
             width: plantSize.width,
             height: plantSize.height
+          });
+        } else if (clickedElement.type === 'terrain' && clickedElement.pathPoints && clickedElement.pathPoints.length > 0) {
+          // For terrain path elements, calculate bounding box from path points
+          const xs = clickedElement.pathPoints.map(p => p.x);
+          const ys = clickedElement.pathPoints.map(p => p.y);
+          const minX = Math.min(...xs);
+          const maxX = Math.max(...xs);
+          const minY = Math.min(...ys);
+          const maxY = Math.max(...ys);
+          
+          setOriginalElementBounds({
+            x: minX,
+            y: minY,
+            width: maxX - minX || 10,
+            height: maxY - minY || 10
           });
         } else {
           setOriginalElementBounds({
@@ -609,25 +705,30 @@ const clickedElement = findElementAtPosition(pos, elements);
         return;
       }
       
-      // Regular element selection and dragging
-      handleElementClick(clickedElement.id);
-      setIsDragging(true);
-      setDragElement(clickedElement);
-      setDragOffset({
-        x: pos.x - clickedElement.x,
-        y: pos.y - clickedElement.y
-      });
-      return;
-    }
-
-    if (selectedTool === 'select' && clickedElement) {
+      // Element selection and dragging for any tool (except delete)
+      console.log('Selecting and starting drag for element:', clickedElement.id);
+      console.log('Element position:', { x: clickedElement.x, y: clickedElement.y });
+      console.log('Click position:', pos);
+      
+      // Select the element
       selectElement(clickedElement.id);
+      
+      // Start dragging
+      console.log('Setting isDragging to true');
       setIsDragging(true);
       setDragElement(clickedElement);
-      setDragOffset({
+      const offset = {
         x: pos.x - clickedElement.x,
         y: pos.y - clickedElement.y
-      });
+      };
+      console.log('Setting drag offset:', offset);
+      setDragOffset(offset);
+      
+      // Switch to select tool if not already selected and not placing elements
+      if (selectedTool !== 'select' && !selectedPlant && !selectedTerrain) {
+        onToolChange('select');
+      }
+      
       return;
     }
 
@@ -734,7 +835,7 @@ const clickedElement = findElementAtPosition(pos, elements);
       
       setCurrentShape(newShape);
     }
-  }, [selectedTool, selectedPlant, selectedTerrain, elements, getMousePosition, snapToGrid, selectElement, clearSelection, onPlantUsed, onTerrainUsed, deleteElementAtPosition, findElementAtPosition, zoom, showGrid, isSpacePressed, panOffset, metersToPixels, parseTerrainSize, elementsActions, PIXELS_PER_METER]);
+  }, [selectedTool, selectedPlant, selectedTerrain, elements, snapToGrid, selectElement, clearSelection, onTerrainUsed, deleteElementAtPosition, findElementAtPosition, zoom, showGrid, isSpacePressed, panOffset, metersToPixels, parseTerrainSize, elementsActions, PIXELS_PER_METER, detectResizeHandle, onToolChange]);
 
 const handleMouseMove = useCallback((e: React.MouseEvent) => {
     // Calculate mouse position relative to the canvas viewport
@@ -749,16 +850,17 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const worldY = (canvasY - panOffset.y) / (zoom / 100);
     
     const rawPos = { x: worldX, y: worldY };
-    const pos = snapToGrid(rawPos, showGrid, GRID_SIZE_PIXELS);
+    const pos = snapToGrid(rawPos, showGrid);
 
-    // Handle panning
+    // Handle panning with optimized performance
     if (isPanning) {
       const deltaX = e.clientX - lastPanPoint.x;
       const deltaY = e.clientY - lastPanPoint.y;
-      setPanOffset(prev => ({
-        x: prev.x + deltaX,
-        y: prev.y + deltaY
-      }));
+      const newOffset = {
+        x: panOffset.x + deltaX,
+        y: panOffset.y + deltaY
+      };
+      schedulePanUpdate(newOffset.x, newOffset.y);
       setLastPanPoint({ x: e.clientX, y: e.clientY });
       return;
     }
@@ -823,6 +925,25 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
             const newCenterX = newBounds.x + newBounds.width / 2;
             const newCenterY = newBounds.y + newBounds.height / 2;
             return { ...el, x: newCenterX, y: newCenterY };
+          } else if (el.type === 'terrain' && el.pathPoints && el.pathPoints.length > 0) {
+            // For terrain brush elements with path points
+            const originalBounds = originalElementBounds;
+            const scaleX = newBounds.width / originalBounds.width;
+            const scaleY = newBounds.height / originalBounds.height;
+            
+            // Scale and translate all path points
+            const updatedPathPoints = el.pathPoints.map(point => ({
+              x: newBounds.x + (point.x - originalBounds.x) * scaleX,
+              y: newBounds.y + (point.y - originalBounds.y) * scaleY
+            }));
+            
+            return {
+              ...el,
+              x: newBounds.x,
+              y: newBounds.y,
+              pathPoints: updatedPathPoints,
+              brushThickness: Math.max(2, (el.brushThickness || 8) * Math.min(scaleX, scaleY))
+            };
           } else if (el.type === 'circle' || (el.type === 'terrain' && el.brushType === 'circle')) {
             // For circles, update radius
             const newRadius = Math.min(newBounds.width, newBounds.height) / 2;
@@ -835,7 +956,7 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
               height: newRadius * 2
             };
           } else {
-            // For rectangles
+            // For rectangles and other terrain elements
             return {
               ...el,
               x: newBounds.x,
@@ -851,19 +972,18 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
       return;
     }
 
-    // Handle dragging elements
+    // Handle dragging elements with optimized performance
     if (isDragging && dragElement) {
+      console.log('Dragging element:', dragElement.id, 'isDragging:', isDragging);
       const newPos = snapToGrid({
         x: pos.x - dragOffset.x,
         y: pos.y - dragOffset.y
       }, showGrid);
       
-      const updatedElements = elements.map(el =>
-        el.id === dragElement.id 
-          ? { ...el, x: newPos.x, y: newPos.y }
-          : el
-      );
-      elementsActions.set(updatedElements);
+      console.log('New position calculated:', newPos, 'Original pos:', pos, 'Drag offset:', dragOffset);
+      
+      // Use optimized drag update for better performance
+      scheduleDragUpdate(dragElement.id, newPos.x, newPos.y);
       return;
     }
 
@@ -909,10 +1029,23 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
       };
       setCurrentShape(updatedShape);
     }
-  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, getMousePosition, snapToGrid, zoom, showGrid, isPanning, lastPanPoint, panOffset, isDrawingTerrain, selectedTerrain, elements, elementsActions, isSelecting, selectionStart, selectionArea]);
+  }, [isDragging, dragElement, dragOffset, isDrawing, currentShape, startPos, snapToGrid, zoom, showGrid, isPanning, lastPanPoint, panOffset, isDrawingTerrain, selectedTerrain, elements, elementsActions, isSelecting, selectionStart, selectionArea, isResizing, resizeElement, resizeHandle, resizeStartPos, originalElementBounds, currentTerrainPath, scheduleDragUpdate, schedulePanUpdate]);
 
   const handleMouseUp = useCallback(() => {
     if (isPanning) {
+      // Cancel any pending pan updates
+      if (panAnimationFrame.current) {
+        cancelAnimationFrame(panAnimationFrame.current);
+        panAnimationFrame.current = null;
+      }
+      
+      // Apply final pending update if any
+      if (pendingPanUpdate.current) {
+        const { x, y } = pendingPanUpdate.current;
+        setPanOffset({ x, y });
+        pendingPanUpdate.current = null;
+      }
+      
       setIsPanning(false);
     }
 
@@ -932,6 +1065,22 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
     }
 
     if (isDragging) {
+      // Cancel any pending drag updates
+      if (dragAnimationFrame.current) {
+        cancelAnimationFrame(dragAnimationFrame.current);
+        dragAnimationFrame.current = null;
+      }
+      
+      // Apply final pending update if any
+      if (pendingDragUpdate.current) {
+        const { elementId, x, y } = pendingDragUpdate.current;
+        const updatedElements = elements.map(el =>
+          el.id === elementId ? { ...el, x, y } : el
+        );
+        elementsActions.set(updatedElements);
+        pendingDragUpdate.current = null;
+      }
+      
       setIsDragging(false);
       setDragElement(null);
       setDragOffset({ x: 0, y: 0 });
@@ -985,7 +1134,7 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
     }
     
     setIsDrawing(false);
-  }, [isDragging, isDrawing, currentShape, isPanning, isDrawingTerrain, currentTerrainPath, selectedTerrain, onTerrainUsed, elements, elementsActions]);
+  }, [isDragging, isDrawing, currentShape, isPanning, isDrawingTerrain, currentTerrainPath, selectedTerrain, onTerrainUsed, elements, elementsActions, isResizing, isSelecting, selectionArea, setPanOffset]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -1037,7 +1186,7 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
       }));
       setLastPanPoint({ x: touch.clientX, y: touch.clientY });
     }
-  }, [isPanning, lastPanPoint]);
+  }, [isPanning, lastPanPoint, setPanOffset]);
 
   const handleTouchEnd = useCallback(() => {
     setIsPanning(false);
@@ -1081,7 +1230,7 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
         }
       }
     }
-  }, [zoom, panOffset, zoomIn, zoomOut]);
+  }, [zoom, panOffset, zoomIn, zoomOut, setPanOffset]);
 
   // Update canvas dimensions when the container resizes
   useEffect(() => {
@@ -1267,7 +1416,7 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [deleteSelectedElements, clearSelection, copySelectedElements, onToolChange, elementsActions, resetZoom, zoomToFit]);
+  }, [deleteSelectedElements, clearSelection, copySelectedElements, onToolChange, elementsActions, resetZoom, zoomToFit, elements]);
 
   const handleReset = useCallback(() => {
     resetZoom();
@@ -1525,6 +1674,6 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
       </div>
     </div>
   );
-});
+}));
 
 Canvas.displayName = "Canvas";

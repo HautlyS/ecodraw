@@ -7,8 +7,9 @@ export interface Plant {
   name: string;
   icon: string;
   spacing: string;
-  season: string;
+  season?: string;
   category: string;
+  color?: string;
   description?: string;
   difficulty?: string;
   waterNeeds?: string;
@@ -19,14 +20,26 @@ export interface Plant {
 export interface Terrain {
   id: string;
   name: string;
-  icon: string;
+  icon?: string;
   color: string;
-  size: string;
-  texture: string;
+  pattern?: string;
+  category: string;
   description?: string;
   selectedBrushMode?: 'rectangle' | 'circle' | 'brush';
   brushThickness?: number;
   brushType?: BrushType;
+  [key: string]: unknown;
+}
+
+// Structure interface
+export interface Structure {
+  id: string;
+  name: string;
+  category: string;
+  icon: string;
+  color: string;
+  size: { width: number; height: number };
+  description: string;
   [key: string]: unknown;
 }
 
@@ -41,6 +54,7 @@ export interface DrawingElement {
   radius?: number;
   plant?: Plant;
   terrain?: Terrain;
+  structure?: Structure;
   selected?: boolean;
   rotation?: number;
   // Real-world size in meters (for terrain elements)
@@ -62,6 +76,7 @@ export interface CanvasState {
   selectedTool: CanvasTool;
   selectedPlant: Plant | null;
   selectedTerrain: Terrain | null;
+  selectedStructure: Structure | null;
   zoom: number;
   panOffset: Point;
   showGrid: boolean;
@@ -98,8 +113,10 @@ export interface CanvasProps {
   selectedTool: string;
   selectedPlant: Plant | null;
   selectedTerrain: Terrain | null;
+  selectedStructure?: Structure | null;
   onPlantUsed: () => void;
   onTerrainUsed: () => void;
+  onStructureUsed?: () => void;
   onToolChange: (tool: string) => void;
   canvasSize?: Dimensions;
   onCanvasSizeChange?: (size: Dimensions) => void;

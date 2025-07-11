@@ -1,5 +1,5 @@
-import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
+import { DrawingElement } from '@/types/canvasTypes';
 
 export interface ExportOptions {
   quality?: number;
@@ -59,6 +59,7 @@ export const exportCanvasArea = async (
     toast.info('Gerando imagem...', { duration: 3000 });
     
     // Generate the image using html2canvas
+    const { default: html2canvas } = await import('html2canvas');
     const canvas = await html2canvas(tempContainer, {
       width: selectionArea.width,
       height: selectionArea.height,
@@ -127,6 +128,7 @@ export const exportFullCanvas = async (
   try {
     toast.info('Exportando canvas completo...', { duration: 2000 });
     
+    const { default: html2canvas } = await import('html2canvas');
     const canvas = await html2canvas(canvasElement, {
       backgroundColor: backgroundColor,
       scale: 2,
@@ -171,7 +173,7 @@ export const exportFullCanvas = async (
 };
 
 export const exportSelectedElements = async (
-  elements: any[],
+  elements: DrawingElement[],
   canvasElement: HTMLElement,
   options: ExportOptions = {}
 ): Promise<void> => {
