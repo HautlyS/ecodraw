@@ -269,7 +269,7 @@ const Index = () => {
 
   return (
     <ThemeProvider>
-      <div className="h-screen flex flex-col overflow-hidden layout-container">
+      <div className="h-screen flex flex-col overflow-hidden layout-container bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 dark:from-gray-900 dark:via-green-900 dark:to-emerald-900">
         {/* Enhanced Unified Toolbar */}
         <UnifiedToolbar 
           selectedTool={selectedTool}

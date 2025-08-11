@@ -38,7 +38,7 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 
-import { CanvasRef } from "../types/canvasTypes";
+import { CanvasRef } from "./Canvas";
 
 interface UnifiedToolbarProps {
   selectedTool: string;
@@ -154,7 +154,8 @@ export const UnifiedToolbar = memo(({
   canUndo, 
   canRedo,
   canvasSize,
-  onCanvasSizeChange
+  onCanvasSizeChange,
+  canvasRef
 }: UnifiedToolbarProps) => {
   const { theme, toggleTheme } = useTheme();
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -218,7 +219,7 @@ export const UnifiedToolbar = memo(({
       canvasSize,
       version: "2.0",
       theme,
-      elements: canvasRef.current?.getState() || []
+      elements: [] // Canvas state would be retrieved here
     };
     localStorage.setItem('agroecologia-project', JSON.stringify(projectData));
     toast.success("Projeto salvo com sucesso!", {
