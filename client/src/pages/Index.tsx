@@ -92,11 +92,26 @@ const Index = () => {
   }, []);
 
   const handleToolSelect = useCallback((tool: string) => {
+    // Handle special tool behaviors
+    if (tool === 'grid') {
+      // Toggle grid instead of setting it as active tool
+      canvasRef.current?.toggleGrid?.();
+      return;
+    }
+    
     setSelectedTool(tool);
+    
     if (tool === "terrain") {
       setActiveLibrary("terrain");
     } else if (tool === "select" || tool === "rectangle" || tool === "circle") {
       setActiveLibrary("plants");
+    }
+    
+    // Clear selections when switching tools for better UX
+    if (tool !== 'select') {
+      setSelectedPlant(null);
+      setSelectedTerrain(null);
+      setSelectedStructure(null);
     }
   }, []);
 

@@ -27,6 +27,8 @@ export interface CanvasRef {
   exportHighResolution: (options?: { scale?: number; format?: 'png' | 'jpeg' }) => Promise<void>;
   undo: () => void;
   redo: () => void;
+  toggleGrid: () => void;
+  setShowGrid: (show: boolean) => void;
 }
 
 export const Canvas = memo(forwardRef<CanvasRef, CanvasProps>(({ selectedTool, selectedPlant, selectedTerrain, selectedStructure, onPlantUsed, onTerrainUsed, onStructureUsed, onToolChange, canvasSize = CANVAS_CONSTANTS.DEFAULT_CANVAS_REAL_SIZE, onCanvasSizeChange, onHistoryChange }, ref) => {
@@ -647,8 +649,8 @@ export const Canvas = memo(forwardRef<CanvasRef, CanvasProps>(({ selectedTool, s
     const pos = snapToGrid(rawPos, showGrid);
     
         
-    // Handle panning with space key
-    if (isSpacePressed) {
+    // Handle panning with space key or move tool
+    if (isSpacePressed || selectedTool === 'move') {
       setIsPanning(true);
       setLastPanPoint({ x: e.clientX, y: e.clientY });
       return;
@@ -1485,6 +1487,23 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
     };
   }, [deleteSelectedElements, clearSelection, copySelectedElements, onToolChange, elementsActions, resetZoom, zoomToFit, elements]);
 
+  // Expose methods through ref
+  useImperativeHandle(ref, () => ({
+    exportFullCanvas: exportFullCanvasFunction,
+    exportSelectionAsPNG,
+    exportSelectedElementsAsPNG,
+    exportHighResolution,
+    undo: elementsActions.undo,
+    redo: elementsActions.redo,
+    toggleGrid: () => {
+      setShowGrid(prev => !prev);
+      toast.info(showGrid ? "Grade ocultada" : "Grade exibida");
+    },
+    setShowGrid: (show: boolean) => {
+      setShowGrid(show);
+    }
+  }), [exportFullCanvasFunction, exportSelectionAsPNG, exportSelectedElementsAsPNG, exportHighResolution, elementsActions.undo, elementsActions.redo, showGrid]);
+
   const handleReset = useCallback(() => {
     resetZoom();
     elementsActions.reset([]);
@@ -1497,7 +1516,7 @@ const handleMouseMove = useCallback((e: React.MouseEvent) => {
   }, [resetZoom, elementsActions, clearSelection]);
 
   const getCursorStyle = () => {
-    if (isSpacePressed || isPanning) return 'cursor-grab';
+    if (isSpacePressed || isPanning || selectedTool === 'move') return 'cursor-grab';
     if (selectedTool === 'select') return 'cursor-default';
     if (selectedTool === 'selectArea') return 'cursor-crosshair';
     if (selectedTool === 'delete') return 'cursor-pointer';

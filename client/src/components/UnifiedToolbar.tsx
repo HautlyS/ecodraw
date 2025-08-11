@@ -230,11 +230,13 @@ export const UnifiedToolbar = memo(({
   const handleLoad = useCallback(() => {
     const savedData = localStorage.getItem('agroecologia-project');
     if (savedData) {
-      const parsed = JSON.parse(savedData);
-      onCanvasSizeChange(parsed.canvasSize);
-      // set theme if needed
-      canvasRef.current?.setState(parsed.elements || []);
-      toast.success("Projeto carregado com sucesso!");
+      try {
+        const parsed = JSON.parse(savedData);
+        onCanvasSizeChange(parsed.canvasSize || { width: 50, height: 50 });
+        toast.success("Projeto carregado com sucesso!");
+      } catch (error) {
+        toast.error("Erro ao carregar projeto salvo");
+      }
     } else {
       toast.info("Nenhum projeto salvo encontrado");
     }
