@@ -129,11 +129,15 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10, onResizeStart, o
           {element.plant?.icon}
         </div>
         
-        {/* Plant name label - Always visible */}
+        {/* Plant name label - Always visible with improved contrast */}
         <div 
-          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-md font-semibold shadow-lg border whitespace-nowrap"
           style={{
-            backgroundColor: borderColor,
+            backgroundColor: '#ffffff',
+            color: borderColor,
+            borderColor: borderColor + '40',
+            textShadow: 'none',
+            boxShadow: `0 2px 8px rgba(0,0,0,0.15), 0 0 0 1px ${borderColor}20`
           }}
         >
           {element.plant?.name}
@@ -306,10 +310,16 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10, onResizeStart, o
             )}
           </svg>
           
-          {/* Trail name label */}
+          {/* Trail name label with improved contrast */}
           <div 
-            className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
-            style={{ backgroundColor: element.terrain?.color }}
+            className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-md font-semibold shadow-lg border whitespace-nowrap"
+            style={{
+              backgroundColor: '#ffffff',
+              color: element.terrain?.color,
+              borderColor: element.terrain?.color + '40',
+              textShadow: 'none',
+              boxShadow: `0 2px 8px rgba(0,0,0,0.15), 0 0 0 1px ${element.terrain?.color}20`
+            }}
           >
             {element.terrain?.name}
           </div>
@@ -404,10 +414,16 @@ const CanvasElementComponent = ({ element, pixelsPerMeter = 10, onResizeStart, o
           {element.terrain?.icon}
         </div>
         
-        {/* Terrain name label - Always visible */}
+        {/* Terrain name label - Always visible with improved contrast */}
         <div 
-          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded font-medium shadow-sm text-white whitespace-nowrap"
-          style={{ backgroundColor: element.terrain?.color }}
+          className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs px-2 py-1 rounded-md font-semibold shadow-lg border whitespace-nowrap"
+          style={{
+            backgroundColor: '#ffffff',
+            color: element.terrain?.color,
+            borderColor: element.terrain?.color + '40',
+            textShadow: 'none',
+            boxShadow: `0 2px 8px rgba(0,0,0,0.15), 0 0 0 1px ${element.terrain?.color}20`
+          }}
         >
           {element.terrain?.name}
         </div>

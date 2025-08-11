@@ -637,9 +637,9 @@ export const TerrainLibrary = memo(({ selectedTerrain, onTerrainSelect }: Terrai
     const isCurrentlySelected = selectedTerrain?.id === terrain.id;
     const terrainWithSettings = isCurrentlySelected ? null : {
       ...terrain,
-      selectedBrushMode,
+      selectedBrushMode: selectedBrushMode as 'rectangle' | 'circle' | 'brush',
       brushThickness: brushThickness[0],
-      supportedModes: ["rectangle", "circle", "brush"]
+      supportedModes: ["rectangle", "circle", "brush"] as const
     };
     onTerrainSelect(terrainWithSettings);
   }, [selectedTerrain?.id, onTerrainSelect, selectedBrushMode, brushThickness]);

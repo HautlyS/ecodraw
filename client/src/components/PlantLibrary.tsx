@@ -1,9 +1,10 @@
 import React, { useState, useMemo, memo, useCallback } from "react";
-import { Search, Star, Leaf, Apple, Pill, Wheat, Carrot, Trees, Flower, Sprout } from "lucide-react";
+import { Search, Star, Leaf, Apple, Pill, Wheat, Carrot, Trees, Flower, Sprout, Grid, List as ListIcon, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
 import { useEnhancedSearch } from "@/hooks/useEnhancedSearch";
 import { Plant as PlantType } from "@/types/canvasTypes";
 import { AutoSizer, List } from 'react-virtualized';
@@ -440,7 +441,8 @@ CategoryButton.displayName = "CategoryButton";
 
 export const PlantLibrary = memo(({ selectedPlant, onPlantSelect }: PlantLibraryProps) => {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const { searchTerm, setSearchTerm, searchResults } = useEnhancedSearch(PLANTS_DATA, {
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchTerm, setSearchTerm, searchResults] = useEnhancedSearch(PLANTS_DATA, {
     searchFields: ['name', 'description'],
     debounceMs: 200
   });
