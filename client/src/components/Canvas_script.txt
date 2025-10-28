@@ -1,0 +1,54 @@
+
+<script setup lang="ts">
+import { ref, reactive, onMounted, watch, nextTick, computed } from 'vue'
+import { Icon } from '@iconify/vue'
+import type { Plant, Terrain, Structure, CanvasElement, DrawingTool, BrushSettings } from '@/types/canvas'
+
+interface Props {
+  selectedTool: DrawingTool | null
+  selectedElement: Plant | Terrain | Structure | null
+  brushSettings: BrushSettings
+  canvasSettings?: {
+    widthMeters: number
+    heightMeters: number
+    gridSizeMeters: number
+    showGrid: boolean
+    snapToGrid: boolean
+    pixelsPerMeter: number
+  }
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  'history-change': [canUndo: boolean, canRedo: boolean]
+  'item-placed': []
+  'canvas-hover': [isHovered: boolean]
+  'show-help': []
+}>()
+
+const canvasElement = ref<HTMLCanvasElement>()
+const ctx = ref<CanvasRenderingContext2D | null>(null)
+
+const state = reactive({
+  elements: [] as CanvasElement[],
+  history: [] as CanvasElement[][],
+  historyIndex: -1,
+  zoom: 1,
+  pan: { x: 0, y: 0 },
+  showGrid: true,
+  isDrawing: false,
+  isPanning: false,
+  currentPath: [] as { x: number, y: number }[],
+  lastPos: { x: 0, y: 0 },
+  touches: new Map<number, { x: number, y: number }>(),
+  initialPinchDist: 0,
+  initialZoom: 1,
+  initialPan: { x: 0, y: 0 }
+})
+
+const canvasSettings = computed(() => props.canvasSettings)
+const currentCursor = computed(() => {
+  if (state.isPanning) return 'grabbing'
+  if (!props.selectedTool) return 'default'
+  return 'crosshair'
+})

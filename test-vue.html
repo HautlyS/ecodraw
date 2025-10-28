@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Vue.js - Agroecologia Planner</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="app">
+        <div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+            <!-- Header -->
+            <header class="bg-white/80 backdrop-blur-xl border-b border-white/20 p-4">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-2xl font-bold text-green-600">🌱 Agroecologia Planner</h1>
+                    <div class="flex gap-2">
+                        <button 
+                            v-for="tool in tools" 
+                            :key="tool.id"
+                            @click="selectedTool = tool.id"
+                            :class="[
+                                'px-4 py-2 rounded-lg font-medium transition-all',
+                                selectedTool === tool.id 
+                                    ? 'bg-green-500 text-white shadow-lg' 
+                                    : 'bg-white/60 text-gray-700 hover:bg-white/80'
+                            ]"
+                        >
+                            {{ tool.name }}
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <div class="flex h-screen">
+                <!-- Canvas Area -->
+                <div class="flex-1 p-4">
+                    <div class="bg-white/60 backdrop-blur-xl rounded-2xl shadow-xl h-full relative overflow-hidden">
+                        <canvas 
+                            ref="canvas"
+                            class="w-full h-full cursor-crosshair"
+                            @mousedown="startDrawing"
+                            @mousemove="draw"
+                            @mouseup="stopDrawing"
+                        ></canvas>
+                        
+                        <!-- Info Panel -->
+                        <div class="absolute top-4 left-4 bg-white/80 backdrop-blur-xl rounded-lg p-3 shadow-lg">
+                            <p class="text-sm text-gray-600">Ferramenta: {{ selectedTool }}</p>
+                            <p class="text-sm text-gray-600">Status: {{ isDrawing ? 'Desenhando' : 'Pronto' }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="w-80 p-4">
+                    <div class="bg-white/60 backdrop-blur-xl rounded-2xl shadow-xl h-full p-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">Biblioteca</h2>
+                        
+                        <!-- Library Tabs -->
+                        <div class="flex gap-2 mb-4">
+                            <button 
+                                v-for="library in libraries"
+                                :key="library.id"
+                                @click="activeLibrary = library.id"
+                                :class="[
+                                    'px-3 py-2 rounded-lg text-sm font-medium transition-all',
+                                    activeLibrary === library.id 
+                                        ? 'bg-green-500 text-white' 
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ]"
+                            >
+                                {{ library.name }}
+                            </button>
+                        </div>
+
+                        <!-- Library Content -->
+                        <div class="space-y-2">
+                            <div v-if="activeLibrary === 'plants'">
+                                <h3 class="font-semibold text-green-600 mb-2">Plantas Disponíveis</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button 
+                                        v-for="plant in plants"
+                                        :key="plant.id"
+                                        @click="selectedItem = plant"
+                                        :class="[
+                                            'p-2 rounded-lg text-sm border transition-all',
+                                            selectedItem?.id === plant.id 
+                                                ? 'bg-green-100 border-green-300 text-green-700' 
+                                                : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        ]"
+                                    >
+                                        {{ plant.name }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div v-if="activeLibrary === 'terrain'">
+                                <h3 class="font-semibold text-orange-600 mb-2">Tipos de Terreno</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button 
+                                        v-for="terrain in terrains"
+                                        :key="terrain.id"
+                                        @click="selectedItem = terrain"
+                                        :class="[
+                                            'p-2 rounded-lg text-sm border transition-all',
+                                            selectedItem?.id === terrain.id 
+                                                ? 'bg-orange-100 border-orange-300 text-orange-700' 
+                                                : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        ]"
+                                    >
+                                        {{ terrain.name }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div v-if="activeLibrary === 'structures'">
+                                <h3 class="font-semibold text-blue-600 mb-2">Estruturas</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button 
+                                        v-for="structure in structures"
+                                        :key="structure.id"
+                                        @click="selectedItem = structure"
+                                        :class="[
+                                            'p-2 rounded-lg text-sm border transition-all',
+                                            selectedItem?.id === structure.id 
+                                                ? 'bg-blue-100 border-blue-300 text-blue-700' 
+                                                : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        ]"
+                                    >
+                                        {{ structure.name }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Selected Item Info -->
+                        <div v-if="selectedItem" class="mt-6 p-4 bg-gray-50 rounded-lg">
+                            <h4 class="font-semibold text-gray-800">{{ selectedItem.name }}</h4>
+                            <p class="text-sm text-gray-600">{{ selectedItem.description }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const selectedTool = ref('select');
+                const activeLibrary = ref('plants');
+                const selectedItem = ref(null);
+                const isDrawing = ref(false);
+                const canvas = ref(null);
+
+                const tools = [
+                    { id: 'select', name: 'Selecionar' },
+                    { id: 'plant', name: 'Planta' },
+                    { id: 'terrain', name: 'Terreno' },
+                    { id: 'structure', name: 'Estrutura' }
+                ];
+
+                const libraries = [
+                    { id: 'plants', name: 'Plantas' },
+                    { id: 'terrain', name: 'Terreno' },
+                    { id: 'structures', name: 'Estruturas' }
+                ];
+
+                const plants = [
+                    { id: '1', name: 'Tomate', description: 'Planta de tomate para horta' },
+                    { id: '2', name: 'Alface', description: 'Verdura folhosa' },
+                    { id: '3', name: 'Cenoura', description: 'Raiz comestível' },
+                    { id: '4', name: 'Pimentão', description: 'Pimento doce' }
+                ];
+
+                const terrains = [
+                    { id: '1', name: 'Solo Fértil', description: 'Solo rico em nutrientes' },
+                    { id: '2', name: 'Solo Arenoso', description: 'Solo com boa drenagem' },
+                    { id: '3', name: 'Solo Argiloso', description: 'Solo que retém água' }
+                ];
+
+                const structures = [
+                    { id: '1', name: 'Estufa', description: 'Estrutura para proteção' },
+                    { id: '2', name: 'Cerca', description: 'Delimitação da área' },
+                    { id: '3', name: 'Sistema de Irrigação', description: 'Rega automática' }
+                ];
+
+                const startDrawing = (event) => {
+                    isDrawing.value = true;
+                    draw(event);
+                };
+
+                const draw = (event) => {
+                    if (!isDrawing.value) return;
+                    
+                    const ctx = canvas.value.getContext('2d');
+                    const rect = canvas.value.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+
+                    ctx.fillStyle = getToolColor();
+                    ctx.fillRect(x - 2, y - 2, 4, 4);
+                };
+
+                const stopDrawing = () => {
+                    isDrawing.value = false;
+                };
+
+                const getToolColor = () => {
+                    switch (selectedTool.value) {
+                        case 'plant': return '#22c55e';
+                        case 'terrain': return '#f59e0b';
+                        case 'structure': return '#3b82f6';
+                        default: return '#6b7280';
+                    }
+                };
+
+                onMounted(() => {
+                    if (canvas.value) {
+                        const ctx = canvas.value.getContext('2d');
+                        canvas.value.width = canvas.value.offsetWidth;
+                        canvas.value.height = canvas.value.offsetHeight;
+                        
+                        // Background
+                        ctx.fillStyle = '#f0fdf4';
+                        ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
+                        
+                        // Grid
+                        ctx.strokeStyle = '#e5e7eb';
+                        ctx.lineWidth = 1;
+                        for (let i = 0; i < canvas.value.width; i += 20) {
+                            ctx.beginPath();
+                            ctx.moveTo(i, 0);
+                            ctx.lineTo(i, canvas.value.height);
+                            ctx.stroke();
+                        }
+                        for (let i = 0; i < canvas.value.height; i += 20) {
+                            ctx.beginPath();
+                            ctx.moveTo(0, i);
+                            ctx.lineTo(canvas.value.width, i);
+                            ctx.stroke();
+                        }
+                    }
+                });
+
+                return {
+                    selectedTool,
+                    activeLibrary,
+                    selectedItem,
+                    isDrawing,
+                    canvas,
+                    tools,
+                    libraries,
+                    plants,
+                    terrains,
+                    structures,
+                    startDrawing,
+                    draw,
+                    stopDrawing
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
